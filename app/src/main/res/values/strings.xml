@@ -122,6 +122,15 @@
     <string name="inspection_distance_label">Distance: —</string>
     <string name="inspection_shock_label">Shock: —</string>
     <string name="inspection_elapsed_label">Elapsed: —</string>
+    <string name="inspection_tracking_value">Tracking: %1$s</string>
+    <string name="inspection_distance_value">Distance: %1$.0f mm</string>
+    <string name="inspection_shock_value">Shock: %1$d</string>
+    <string name="inspection_elapsed_value">Elapsed: %1$.1f s</string>
+    <string name="inspection_no_route">No route — complete Commissioning first</string>
+    <string name="result_summary_format">Summary\nSession: %1$s\nDistance: %2$.0f mm\nDuration: %3$d s\nShock Count: %4$d\nMax Shock: %5$.2f\nAvg Confidence: %6$.2f</string>
+    <string name="result_summary_empty">No inspection result for current zone</string>
+    <string name="history_empty">No inspections for current zone</string>
+    <string name="history_item_format">Session: %1$s\nDuration: %2$d s\nDistance: %3$.0f mm\nShock: %4$d\nMax Shock: %5$.2f</string>
     <string name="heatmap_session">Session</string>
     <string name="heatmap_timeline">Timeline</string>
     <string name="heatmap_filter">Filter</string>

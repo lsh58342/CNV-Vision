@@ -1,43 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/cnv_bg"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/developer_title"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/screen_developer"
-        android:textAppearance="@style/TextAppearance.CNV.Title"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:padding="12dp">
 
-    <TextView
-        android:id="@+id/developer_body"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:background="@color/cnv_surface"
-        android:padding="14dp"
-        android:text="@string/developer_skeleton"
-        android:textAppearance="@style/TextAppearance.CNV.Body"
-        android:lineSpacingExtra="4dp"
-        app:layout_constraintBottom_toTopOf="@id/button_developer_back"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/developer_title" />
+        <TextView
+            android:id="@+id/developer_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/screen_developer"
+            android:textAppearance="@style/TextAppearance.CNV.Title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_developer_back"
-        style="@style/Widget.CNV.Button.Secondary"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/nav_back"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/opencv_gray_view"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/cnv_surface"
+            android:contentDescription="@string/opencv_gray_preview"
+            android:scaleType="fitCenter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/developer_title" />
+
+        <TextView
+            android:id="@+id/pipeline_perf_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/opencv_gray_view" />
+
+        <TextView
+            android:id="@+id/imu_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toStartOf="@id/fusion_debug_hud"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/pipeline_perf_debug_hud" />
+
+        <TextView
+            android:id="@+id/fusion_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toEndOf="@id/imu_debug_hud"
+            app:layout_constraintTop_toTopOf="@id/imu_debug_hud" />
+
+        <TextView
+            android:id="@+id/map_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toStartOf="@id/dwg_debug_hud"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imu_debug_hud" />
+
+        <TextView
+            android:id="@+id/dwg_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toEndOf="@id/map_debug_hud"
+            app:layout_constraintTop_toTopOf="@id/map_debug_hud" />
+
+        <TextView
+            android:id="@+id/route_gen_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/map_debug_hud" />
+
+        <TextView
+            android:id="@+id/inspection_debug_hud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@color/cnv_surface"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/route_gen_debug_hud" />
+
+        <com.example.cnv.debug.RouteDebugView
+            android:id="@+id/route_debug_view"
+            android:layout_width="0dp"
+            android:layout_height="160dp"
+            android:layout_marginTop="6dp"
+            android:background="@color/cnv_surface"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/inspection_debug_hud" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_route_zoom_in"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginEnd="6dp"
+            android:text="@string/route_zoom_in"
+            app:layout_constraintEnd_toStartOf="@id/button_route_zoom_out"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/route_debug_view" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_route_zoom_out"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/route_zoom_out"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toEndOf="@id/button_route_zoom_in"
+            app:layout_constraintTop_toTopOf="@id/button_route_zoom_in" />
+
+        <TextView
+            android:id="@+id/developer_body"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/developer_skeleton"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_route_zoom_in" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_developer_back"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/nav_back"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/developer_body" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -16,10 +16,20 @@ class ZoneInspectionRepository(
     private val zoneToSessionIds = LinkedHashMap<String, ArrayDeque<String>>()
 
     fun save(zoneId: String, result: InspectionResult) {
-        inspectionRepository.save(result)
+        val exists = inspectionRepository.all().any { it.sessionId == result.sessionId }
+        if (!exists) {
+            inspectionRepository.save(result)
+        }
+        index(zoneId, result.sessionId)
+    }
+
+    /** Link an already-saved inspection result to a Zone (no algorithm change). */
+    fun index(zoneId: String, sessionId: String) {
         synchronized(lock) {
             val q = zoneToSessionIds.getOrPut(zoneId) { ArrayDeque() }
-            q.addLast(result.sessionId)
+            if (!q.contains(sessionId)) {
+                q.addLast(sessionId)
+            }
             while (q.size > 50) q.removeFirst()
         }
     }

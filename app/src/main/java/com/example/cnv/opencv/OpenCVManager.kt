@@ -14,7 +14,7 @@ import com.example.cnv.config.CalibrationManager
  */
 class OpenCVManager(
     private val activity: AppCompatActivity,
-    private val grayImageView: ImageView,
+    private var grayImageView: ImageView,
 ) {
 
     private val viewModel: OpenCVViewModel =
@@ -26,6 +26,11 @@ class OpenCVManager(
     private var analyzer: GrayScaleFrameAnalyzer? = null
     private var observing: Boolean = false
 
+    /** Rebind gray preview for Developer screen migration (wiring only). */
+    fun attachGrayImageView(view: ImageView) {
+        grayImageView = view
+    }
+
     fun start(): ImageAnalysis.Analyzer? {
         if (!viewModel.initialize()) {
             return null
@@ -33,15 +38,16 @@ class OpenCVManager(
 
         if (!observing) {
             viewModel.grayFrame.observe(activity) { bitmap ->
-                val previous = (grayImageView.drawable as? BitmapDrawable)?.bitmap
+                val target = grayImageView
+                val previous = (target.drawable as? BitmapDrawable)?.bitmap
                 if (bitmap == null) {
-                    grayImageView.setImageDrawable(null)
+                    target.setImageDrawable(null)
                     if (previous != null && !previous.isRecycled) {
                         previous.recycle()
                     }
                     return@observe
                 }
-                grayImageView.setImageBitmap(bitmap)
+                target.setImageBitmap(bitmap)
                 if (previous != null &&
                     previous !== bitmap &&
                     !previous.isRecycled

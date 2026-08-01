@@ -4,15 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.TextView
 import androidx.core.view.isVisible
 import com.example.cnv.R
+import com.example.cnv.ui.feature.FeatureRuntime
+import com.example.cnv.ui.feature.requireFeatureRuntime
 import com.google.android.material.button.MaterialButton
 
 /**
- * Product HeatMap Viewer UI — CAD ≥80%. Algorithm wiring deferred.
+ * HeatMap Viewer — CAD + Overlay + Timeline/Filter (migrated).
  */
 class HeatMapViewerFragment : BaseScreenFragment() {
+
+    private var features: FeatureRuntime? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -22,30 +26,35 @@ class HeatMapViewerFragment : BaseScreenFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val runtime = requireActivity().requireFeatureRuntime()
+        features = runtime
+        runtime.attachHeatMap(view)
+
         val statsPanel = view.findViewById<View>(R.id.heatmap_stats_panel)
-        val statsHeader = view.findViewById<MaterialButton>(R.id.heatmap_stats_header)
-
-        statsHeader.setOnClickListener {
-            val open = !statsPanel.isVisible
-            statsPanel.isVisible = open
-            statsHeader.setText(
-                if (open) R.string.heatmap_stats_toggle else R.string.heatmap_stats_toggle,
-            )
+        view.findViewById<MaterialButton>(R.id.heatmap_stats_header).setOnClickListener {
+            statsPanel.isVisible = !statsPanel.isVisible
+            val stats = runtime.heatMapController()?.latestStatistics()
+            val sessionStats = runtime.heatMapController()?.latestSessionStatistics()
+            if (stats != null) {
+                view.findViewById<TextView>(R.id.heatmap_stats_body).text = buildString {
+                    appendLine("Shock Count / Points: ${stats.heatPointCount}")
+                    appendLine("Coverage Distance: %.0f mm".format(stats.coveredDistanceMm))
+                    appendLine("Cells: ${stats.heatCellCount}")
+                    appendLine("Average Shock: %.2f".format(stats.averageShock))
+                    appendLine("Maximum Shock: %.2f".format(stats.maximumShock))
+                    if (sessionStats != null) {
+                        appendLine("Inspection Time: %d ms".format(sessionStats.inspectionDurationMs))
+                    }
+                }
+            }
         }
-
-        fun later() {
-            Toast.makeText(requireContext(), R.string.skeleton_feature_later, Toast.LENGTH_SHORT).show()
-        }
-
-        view.findViewById<MaterialButton>(R.id.button_heatmap_session).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_timeline).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_filter).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_zoom_in).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_zoom_out).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_fit).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_reset).setOnClickListener { later() }
-        view.findViewById<MaterialButton>(R.id.button_heatmap_search).setOnClickListener { later() }
         view.findViewById<MaterialButton>(R.id.button_heatmap_back)
             .setOnClickListener { nav().navigateBack() }
+    }
+
+    override fun onDestroyView() {
+        features?.detachHeatMap()
+        features = null
+        super.onDestroyView()
     }
 }

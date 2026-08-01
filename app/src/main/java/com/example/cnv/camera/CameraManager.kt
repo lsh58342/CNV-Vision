@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModelProvider
 
 class CameraManager(
     private val activity: AppCompatActivity,
-    private val previewView: PreviewView,
+    private var previewView: PreviewView,
 ) {
 
     private val viewModel: CameraViewModel =
@@ -25,6 +25,11 @@ class CameraManager(
         if (granted) {
             startPreview()
         }
+    }
+
+    /** Rebind preview surface for Inspection screen migration (wiring only). */
+    fun attachPreviewView(view: PreviewView) {
+        previewView = view
     }
 
     fun start(analyzer: ImageAnalysis.Analyzer? = null) {

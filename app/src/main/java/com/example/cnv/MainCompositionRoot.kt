@@ -40,7 +40,9 @@ import com.example.cnv.route.ValidationSeverity
 import com.example.cnv.ui.calibration.CalibrationActivity
 
 /**
- * Composition root for MainActivity. Wires features only — no domain algorithms.
+ * Legacy monolith wiring for activity_main.xml.
+ * Superseded by [com.example.cnv.ui.feature.FeatureRuntime] (STEP UI-5).
+ * Kept as reference only — MainActivity no longer calls this.
  */
 class MainCompositionRoot(
     private val activity: AppCompatActivity,

@@ -13,6 +13,7 @@ import com.example.cnv.factory.model.Floor
 import com.example.cnv.factory.model.Zone
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.seed.FactorySeedData
+import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.zone.dashboard.ZoneDashboardController
 import com.example.cnv.zone.dashboard.ZoneDashboardState
 
@@ -47,6 +48,12 @@ class SiteNavigationViewModel : ViewModel() {
 
     private val _canOpenCommissioning = MutableLiveData(false)
     val canOpenCommissioning: LiveData<Boolean> = _canOpenCommissioning
+
+    private val _historyLines = MutableLiveData<List<InspectionResult>>(emptyList())
+    val historyLines: LiveData<List<InspectionResult>> = _historyLines
+
+    private val _latestResult = MutableLiveData<InspectionResult?>(null)
+    val latestResult: LiveData<InspectionResult?> = _latestResult
 
     fun bootstrap() {
         FactorySeedData.ensureSeeded(catalog)
@@ -104,6 +111,21 @@ class SiteNavigationViewModel : ViewModel() {
     fun loadDashboard() {
         bootstrap()
         _dashboard.value = ZoneDashboardController(catalog, context).load()
+        refreshSummary()
+    }
+
+    /** Zone-scoped history via CurrentContext (screens must not query repositories). */
+    fun loadHistory() {
+        bootstrap()
+        _historyLines.value = catalog.inspections.historyForCurrentZone(context)
+        refreshSummary()
+    }
+
+    /** Latest result for Current Zone, falling back to global latest. */
+    fun loadLatestResult() {
+        bootstrap()
+        val zoneLatest = catalog.inspections.historyForCurrentZone(context).lastOrNull()
+        _latestResult.value = zoneLatest ?: catalog.inspections.underlying().latest()
         refreshSummary()
     }
 

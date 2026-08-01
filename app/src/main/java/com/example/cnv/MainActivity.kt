@@ -6,17 +6,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.cnv.ui.feature.FeatureRuntime
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.navigation.NavHost
 import com.example.cnv.ui.navigation.ScreenNavigator
 
 /**
- * Navigation Host only — no feature / algorithm wiring.
- * Feature CompositionRoot is intentionally not started in UI-3 skeleton.
+ * Navigation Host. Feature engines live in [FeatureRuntime]; screens attach UI.
  */
 class MainActivity : AppCompatActivity(), NavHost {
 
     private lateinit var navigator: ScreenNavigator
+    private lateinit var features: FeatureRuntime
+
+    fun featureRuntime(): FeatureRuntime = features
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +30,7 @@ class MainActivity : AppCompatActivity(), NavHost {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+        features = FeatureRuntime(this)
         navigator = ScreenNavigator(this)
 
         onBackPressedDispatcher.addCallback(
@@ -45,6 +49,13 @@ class MainActivity : AppCompatActivity(), NavHost {
         if (savedInstanceState == null) {
             navigator.navigate(CnvDestination.SPLASH, addToBackStack = false)
         }
+    }
+
+    override fun onDestroy() {
+        if (::features.isInitialized) {
+            features.releaseAll()
+        }
+        super.onDestroy()
     }
 
     override fun navigate(to: CnvDestination, addToBackStack: Boolean) {

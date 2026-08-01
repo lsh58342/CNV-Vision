@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/nav_host_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cnv_bg" />
+    android:background="@color/cnv_bg">
+
+    <!-- Bootstrap surfaces for Camera/OpenCV managers (created in Activity.onCreate). -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/preview_view_bootstrap"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/opencv_gray_view_bootstrap"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:contentDescription="@string/opencv_gray_preview"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/nav_host_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>

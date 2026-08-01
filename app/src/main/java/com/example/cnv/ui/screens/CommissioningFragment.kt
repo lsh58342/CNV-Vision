@@ -30,7 +30,25 @@ class CommissioningFragment : BaseScreenFragment() {
         siteVm.contextSummary.observe(viewLifecycleOwner) {
             view.findViewById<TextView>(R.id.commissioning_context).text = it
         }
+        siteVm.dashboard.observe(viewLifecycleOwner) { state ->
+            val dwg = if (state.dwgReady) {
+                getString(R.string.status_ok_label)
+            } else {
+                getString(R.string.status_missing_label)
+            }
+            val cal = if (state.calibrationReady) {
+                getString(R.string.status_ok_label)
+            } else {
+                getString(R.string.status_missing_label)
+            }
+            view.findViewById<TextView>(R.id.commissioning_hint).text = buildString {
+                appendLine(getString(R.string.comm_workflow_hint))
+                appendLine(getString(R.string.zone_dash_dwg, dwg))
+                append(getString(R.string.zone_dash_calibration, cal))
+            }
+        }
         siteVm.bootstrap()
+        siteVm.loadDashboard()
 
         view.findViewById<MaterialButton>(R.id.button_comm_dwg).setOnClickListener {
             Toast.makeText(requireContext(), R.string.comm_dwg_structure, Toast.LENGTH_SHORT).show()

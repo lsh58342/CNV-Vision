@@ -6,13 +6,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.example.cnv.R
+import com.example.cnv.ui.feature.FeatureRuntime
+import com.example.cnv.ui.feature.requireFeatureRuntime
 import com.example.cnv.ui.navigation.CnvDestination
 import com.google.android.material.button.MaterialButton
 
 /**
- * Inspection skeleton only — no Camera/OpenCV/Fusion wiring in UI-3.
+ * Inspection Screen — Camera + live status + START/STOP only.
  */
 class InspectionFragment : BaseScreenFragment() {
+
+    private var features: FeatureRuntime? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -22,15 +26,32 @@ class InspectionFragment : BaseScreenFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        val runtime = requireActivity().requireFeatureRuntime()
+        features = runtime
+        runtime.attachInspection(
+            preview = view.findViewById(R.id.preview_view),
+            status = FeatureRuntime.InspectionStatusViews(
+                tracking = view.findViewById(R.id.inspection_tracking),
+                distance = view.findViewById(R.id.inspection_distance),
+                shock = view.findViewById(R.id.inspection_shock),
+                elapsed = view.findViewById(R.id.inspection_elapsed),
+            ),
+        )
+
         view.findViewById<MaterialButton>(R.id.button_inspection_start).setOnClickListener {
-            Toast.makeText(requireContext(), R.string.skeleton_feature_later, Toast.LENGTH_SHORT).show()
+            if (!runtime.startInspectionSession()) {
+                Toast.makeText(requireContext(), R.string.inspection_no_route, Toast.LENGTH_SHORT).show()
+            }
         }
         view.findViewById<MaterialButton>(R.id.button_inspection_stop).setOnClickListener {
-            Toast.makeText(requireContext(), R.string.skeleton_feature_later, Toast.LENGTH_SHORT).show()
+            runtime.stopInspectionSession()
+            nav().navigate(CnvDestination.INSPECTION_RESULT)
         }
-        view.findViewById<MaterialButton>(R.id.button_inspection_to_result)
-            .setOnClickListener { nav().navigate(CnvDestination.INSPECTION_RESULT) }
-        view.findViewById<MaterialButton>(R.id.button_inspection_back)
-            .setOnClickListener { nav().navigateBack() }
+    }
+
+    override fun onDestroyView() {
+        features?.detachInspection()
+        features = null
+        super.onDestroyView()
     }
 }
