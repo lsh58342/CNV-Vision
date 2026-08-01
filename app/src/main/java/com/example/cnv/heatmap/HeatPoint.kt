@@ -3,7 +3,8 @@ package com.example.cnv.heatmap
 import com.example.cnv.route.WorldCoordinate
 
 /**
- * Shock heat sample. [intensity] equals [shockLevel] (no extra scoring).
+ * Heat sample. [intensity] equals [shockLevel] for Shock mode (no extra scoring).
+ * [segmentId]/[nodeId] are metadata for filtering only.
  */
 data class HeatPoint(
     val position: WorldCoordinate,
@@ -12,4 +13,6 @@ data class HeatPoint(
     val confidence: Float,
     val sessionId: String,
     val intensity: Float,
+    val segmentId: String? = null,
+    val nodeId: String? = null,
 )

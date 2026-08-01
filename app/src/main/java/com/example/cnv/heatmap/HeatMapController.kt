@@ -8,8 +8,8 @@ import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.route.CoordinateMapper
 
 /**
- * Drives HeatMap overlay via Mode → Factory → Provider → Processor → Overlay.
- * Does not change [HeatMapRenderer]; mode is invisible to the renderer.
+ * Orchestrates Mode → Provider → Timeline/Filter → Processor → Overlay.
+ * Renderer never sees Timeline or Filter.
  */
 class HeatMapController(
     private val inspectionManager: InspectionManager,
@@ -18,6 +18,8 @@ class HeatMapController(
     private val mapperProvider: () -> CoordinateMapper?,
     private val debugHud: TextView? = null,
     private val modeController: HeatMapModeController = HeatMapModeController(),
+    private val timelineController: HeatMapTimelineController = HeatMapTimelineController(),
+    private val filterController: HeatMapFilterController = HeatMapFilterController(),
     private val refreshIntervalMs: Long = 250L,
 ) {
     private val processor = HeatMapProcessor()
@@ -28,8 +30,12 @@ class HeatMapController(
     private var lastSessionId: String? = null
     private var lastEventCount: Int = -1
     private var lastMode: HeatMapMode = modeController.currentMode()
+    private var cachedSourcePoints: List<HeatPoint> = emptyList()
     private var latestStats: HeatStatistics = HeatStatistics.EMPTY
+    private var latestFilterResult: HeatMapFilterResult = HeatMapFilterResult.EMPTY
     private var currentProviderName: String = "ShockHeatProvider"
+    private var filterRevision: Int = 0
+    private var appliedFilterRevision: Int = -1
 
     private val refreshRunnable = object : Runnable {
         override fun run() {
@@ -58,7 +64,15 @@ class HeatMapController(
 
     fun modeController(): HeatMapModeController = modeController
 
+    fun timelineController(): HeatMapTimelineController = timelineController
+
+    fun filterController(): HeatMapFilterController = filterController
+
     fun layers(): HeatMapLayerState = layers
+
+    fun latestStatistics(): HeatStatistics = latestStats
+
+    fun latestFilterResult(): HeatMapFilterResult = latestFilterResult
 
     fun setShockLayerEnabled(enabled: Boolean) {
         layers.setEnabled(HeatMapLayer.SHOCK, enabled)
@@ -72,7 +86,6 @@ class HeatMapController(
         overlay.invalidate()
     }
 
-    /** Attempts mode change (STEP 12-2: only SHOCK succeeds). */
     fun setMode(mode: HeatMapMode): Boolean {
         val changed = modeController.setMode(mode)
         if (changed) {
@@ -81,46 +94,98 @@ class HeatMapController(
         return changed
     }
 
+    /** Call after Timeline/Filter UI changes. */
+    fun notifyFilterChanged() {
+        filterRevision++
+        rebuildIfNeeded(force = true)
+    }
+
+    fun resetTimelineAndFilter() {
+        timelineController.reset()
+        filterController.reset()
+        filterRevision++
+        rebuildIfNeeded(force = true)
+    }
+
     private fun rebuildIfNeeded(force: Boolean = false) {
         val session = inspectionManager.currentSession()
         val sessionId = session?.sessionId
         val eventCount = session?.recorder()?.size() ?: 0
         val mode = modeController.currentMode()
-        if (!force &&
-            sessionId == lastSessionId &&
-            eventCount == lastEventCount &&
-            mode == lastMode
-        ) {
+        val sourceChanged = sessionId != lastSessionId ||
+            eventCount != lastEventCount ||
+            mode != lastMode
+        val filterChanged = filterRevision != appliedFilterRevision
+
+        if (!force && !sourceChanged && !filterChanged) {
             return
         }
-        lastSessionId = sessionId
-        lastEventCount = eventCount
-        lastMode = mode
 
-        if (session == null || eventCount == 0) {
-            latestStats = HeatStatistics.EMPTY
-            currentProviderName = HeatMapFactory.create(mode, mapperProvider).providerName
-            overlay.setShockHeatData(emptyList(), latestStats)
+        if (sourceChanged) {
+            lastSessionId = sessionId
+            lastEventCount = eventCount
+            lastMode = mode
+            if (session == null || eventCount == 0) {
+                cachedSourcePoints = emptyList()
+                timelineController.bindDataExtent(emptyList())
+                currentProviderName = HeatMapFactory.create(mode, mapperProvider).providerName
+                publishEmpty(filterRevision)
+                return
+            }
+            val provider = HeatMapFactory.create(mode, mapperProvider)
+            currentProviderName = provider.providerName
+            cachedSourcePoints = provider.generateHeatPoints(session)
+            timelineController.bindDataExtent(cachedSourcePoints)
+        }
+
+        if (cachedSourcePoints.isEmpty()) {
+            publishEmpty(filterRevision)
             return
         }
 
         val provider = HeatMapFactory.create(mode, mapperProvider)
         currentProviderName = provider.providerName
-        val points = provider.generateHeatPoints(session)
+        val filterResult = filterController.apply(
+            source = cachedSourcePoints,
+            timeline = timelineController.timeline(),
+        )
+        latestFilterResult = filterResult
+        val pointsForRender = provider.fromFilterResult(filterResult)
         val hint = inspectionManager.repository().latest()?.statistics?.totalDistanceMm ?: 0f
-        val result = processor.process(points, coveredDistanceMmHint = hint)
+        val coveredHint = if (filterResult.sourcePointCount <= 0) {
+            0f
+        } else {
+            hint * (filterResult.visiblePointCount.toFloat() / filterResult.sourcePointCount)
+        }
+        val result = processor.process(pointsForRender, coveredDistanceMmHint = coveredHint)
         latestStats = result.statistics
+        appliedFilterRevision = filterRevision
         overlay.setShockHeatData(result.cells, result.statistics)
+    }
+
+    private fun publishEmpty(revision: Int) {
+        latestFilterResult = HeatMapFilterResult.EMPTY
+        latestStats = HeatStatistics.EMPTY
+        appliedFilterRevision = revision
+        overlay.setShockHeatData(emptyList(), latestStats)
     }
 
     private fun updateDebugHud() {
         val hud = debugHud ?: return
         val snap = overlay.debugSnapshot()
+        val tl = timelineController.timeline()
+        val stats = latestStats
         hud.text = buildString {
-            append("HeatMap Mode\n")
-            append("Mode: %s\n".format(modeController.currentMode().name))
-            append("Provider: %s\n".format(currentProviderName))
-            append("Points: %d\n".format(snap.heatPointCount))
+            append("HeatMap Filter\n")
+            append("Timeline: %s\n".format(tl.summary()))
+            append("Filter: %s\n".format(filterController.state().summary()))
+            append("Visible HP: %d (src %d)\n".format(
+                latestFilterResult.visiblePointCount,
+                latestFilterResult.sourcePointCount,
+            ))
+            append("Visible Cells: %d\n".format(snap.visibleCellCount))
+            append("MaxShock: %.2f Avg: %.2f\n".format(stats.maximumShock, stats.averageShock))
+            append("Covered: %.0f mm\n".format(stats.coveredDistanceMm))
             append("Render: %.2f ms\n".format(snap.renderTimeMs))
             append("FPS: %.1f".format(snap.fps))
         }

@@ -19,6 +19,17 @@
     <string name="cad_layer_node">Node</string>
     <string name="cad_layer_branch">Branch</string>
     <string name="heat_toggle_shock">Shock Heat</string>
+    <string name="heat_timeline_label">Timeline Start / End / Range</string>
+    <string name="heat_timeline_reset">TL Reset</string>
+    <string name="heat_filter_apply">Filter</string>
+    <string name="heat_filter_reset">Flt Reset</string>
+    <string name="heat_filter_shock_min">Shock min</string>
+    <string name="heat_filter_shock_max">Shock max</string>
+    <string name="heat_filter_conf_min">Conf min</string>
+    <string name="heat_filter_conf_max">Conf max</string>
+    <string name="heat_filter_segment">Segment</string>
+    <string name="heat_filter_node">Node</string>
+    <string name="heat_filter_session">Session</string>
     <string name="inspection_start">Start Insp</string>
     <string name="inspection_stop">Stop Insp</string>
     <string name="calibration_title">Calibration</string>

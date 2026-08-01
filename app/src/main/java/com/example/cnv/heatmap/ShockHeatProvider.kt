@@ -24,6 +24,8 @@ class ShockHeatProvider(
 
         val out = ArrayList<HeatPoint>()
         var lastWorld: WorldCoordinate? = null
+        var lastSegmentId: String? = null
+        var lastNodeId: String? = null
         val sessionId = session.sessionId
 
         for (event in events) {
@@ -39,6 +41,8 @@ class ShockHeatProvider(
                         confidence = event.confidence,
                     )
                     lastWorld = mapper.toWorld(routePos) ?: lastWorld
+                    lastSegmentId = event.segmentId
+                    lastNodeId = event.nodeId
                 }
                 is FusionEvent -> {
                     if (event.shockLevel <= 0f) continue
@@ -51,6 +55,8 @@ class ShockHeatProvider(
                             confidence = event.confidence,
                             sessionId = sessionId,
                             intensity = event.shockLevel,
+                            segmentId = lastSegmentId,
+                            nodeId = lastNodeId,
                         ),
                     )
                 }

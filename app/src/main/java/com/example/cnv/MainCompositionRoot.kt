@@ -3,7 +3,10 @@ package com.example.cnv
 import android.content.Intent
 import android.os.Build
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import com.example.cnv.cad.CADController
@@ -241,6 +244,96 @@ class MainCompositionRoot(
         )
         activity.findViewById<Button>(R.id.button_heat_toggle)
             .setOnClickListener { heatMapController.toggleShockLayer() }
+        bindHeatMapTimelineAndFilterUi()
+    }
+
+    private fun bindHeatMapTimelineAndFilterUi() {
+        val timelineLabel = activity.findViewById<TextView>(R.id.heatmap_timeline_label)
+        val startSeek = activity.findViewById<SeekBar>(R.id.heatmap_timeline_start)
+        val endSeek = activity.findViewById<SeekBar>(R.id.heatmap_timeline_end)
+        val shockMin = activity.findViewById<EditText>(R.id.heatmap_filter_shock_min)
+        val shockMax = activity.findViewById<EditText>(R.id.heatmap_filter_shock_max)
+        val confMin = activity.findViewById<EditText>(R.id.heatmap_filter_conf_min)
+        val confMax = activity.findViewById<EditText>(R.id.heatmap_filter_conf_max)
+        val segmentInput = activity.findViewById<EditText>(R.id.heatmap_filter_segment)
+        val nodeInput = activity.findViewById<EditText>(R.id.heatmap_filter_node)
+        val sessionInput = activity.findViewById<EditText>(R.id.heatmap_filter_session)
+
+        fun refreshTimelineLabel() {
+            val tc = heatMapController.timelineController()
+            val (startText, endText) = tc.formatStartEnd()
+            timelineLabel.text = "%s | %s | %s".format(
+                startText,
+                endText,
+                tc.formatCurrentRange(),
+            )
+        }
+
+        fun applyTimelineFromSeekBars() {
+            var start01 = startSeek.progress / 1000f
+            var end01 = endSeek.progress / 1000f
+            if (end01 < start01) {
+                endSeek.progress = startSeek.progress
+                end01 = start01
+            }
+            heatMapController.timelineController().setRangeProgress(start01, end01)
+            refreshTimelineLabel()
+            heatMapController.notifyFilterChanged()
+        }
+
+        val seekListener = object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (!fromUser) return
+                applyTimelineFromSeekBars()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                applyTimelineFromSeekBars()
+            }
+        }
+        startSeek.setOnSeekBarChangeListener(seekListener)
+        endSeek.setOnSeekBarChangeListener(seekListener)
+
+        activity.findViewById<Button>(R.id.button_heatmap_timeline_reset).setOnClickListener {
+            heatMapController.timelineController().reset()
+            startSeek.progress = 0
+            endSeek.progress = 1000
+            refreshTimelineLabel()
+            heatMapController.notifyFilterChanged()
+        }
+
+        fun applyFilterFields() {
+            val fc = heatMapController.filterController()
+            val minShock = shockMin.text?.toString()?.toFloatOrNull() ?: 0f
+            val maxShock = shockMax.text?.toString()?.toFloatOrNull() ?: Float.MAX_VALUE
+            val minConf = confMin.text?.toString()?.toFloatOrNull() ?: 0f
+            val maxConf = confMax.text?.toString()?.toFloatOrNull() ?: 1f
+            fc.setShockRange(minShock, maxShock)
+            fc.setConfidenceRange(minConf, maxConf)
+            fc.setSegmentId(segmentInput.text?.toString())
+            fc.setNodeId(nodeInput.text?.toString())
+            fc.setSessionId(sessionInput.text?.toString())
+            heatMapController.notifyFilterChanged()
+        }
+
+        activity.findViewById<Button>(R.id.button_heatmap_filter_apply)
+            .setOnClickListener { applyFilterFields() }
+
+        activity.findViewById<Button>(R.id.button_heatmap_filter_reset).setOnClickListener {
+            heatMapController.filterController().reset()
+            shockMin.text = null
+            shockMax.text = null
+            confMin.text = null
+            confMax.text = null
+            segmentInput.text = null
+            nodeInput.text = null
+            sessionInput.text = null
+            heatMapController.notifyFilterChanged()
+        }
+
+        refreshTimelineLabel()
     }
 
     private fun bindInspectionAndUiActions() {
