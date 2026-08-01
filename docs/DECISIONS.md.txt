@@ -119,3 +119,23 @@ DWGImporter는 MapMatchingEngine / RouteRepository를 수정하지 않는다.
 ### Status
 
 Accepted
+
+---
+
+## Decision 011
+
+RouteGenerator만 RouteRepository에 Route를 저장하며, RouteOptimizer는 정규화만 수행한다.
+
+### Reason
+
+DWG 추출과 Map Matching을 유지한 채 Route 생성·좌표 변환을 분리하고, Optimizer가 토폴로지를 임의로 재작성하지 않도록 하기 위함.
+
+CoordinateMapper는 CAD를 참조하지 않으며 향후 CAD Viewer가 재사용한다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

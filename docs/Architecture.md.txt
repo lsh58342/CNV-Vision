@@ -1,21 +1,7 @@
 # CNV Inspector Architecture
 
-## Current
+STEP 10-2: RouteCandidate → Route + CoordinateMapper → RouteRepository.
 
-STEP 10-1 DWG Import + Conveyor Route Extraction (RouteCandidate only).
+See [ROUTE_GENERATOR.md](./ROUTE_GENERATOR.md)
 
-## Layers
-
-Core · Fusion · Map Matching · DWG/route extraction · (future CAD/HeatMap)
-
-## DWG Pipeline
-
-DWGReader → GeometryModel → Layer filter → Merge → CenterLine → RouteCandidate
-
-See [DWG.md](./DWG.md)
-
-## Rules
-
-- DWGImporter does not touch MapMatchingEngine / RouteRepository
-- DWGReader is swappable (Stub now)
-- No Route generation / Coordinate Mapping in this STEP
+Rules: RouteGenerator only writes RouteRepository; Optimizer = normalization only; no CAD drawing.

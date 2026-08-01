@@ -15,14 +15,15 @@ import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
 import com.example.cnv.debug.MapDebugHud
+import com.example.cnv.debug.RouteGenDebugHud
 import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.fusion.FusionEngine
 import com.example.cnv.imu.IMUManager
-import com.example.cnv.map.InMemoryDemoRouteFactory
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.map.RouteRepository
 import com.example.cnv.opencv.OpenCVManager
+import com.example.cnv.route.RouteGenerator
 import com.example.cnv.ui.calibration.CalibrationActivity
 
 class MainActivity : AppCompatActivity() {
@@ -33,10 +34,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusionEngine: FusionEngine
     private lateinit var mapMatchingEngine: MapMatchingEngine
     private lateinit var dwgImporter: DWGImporter
+    private lateinit var routeGenerator: RouteGenerator
     private lateinit var imuDebugHud: ImuDebugHud
     private lateinit var fusionDebugHud: FusionDebugHud
     private lateinit var mapDebugHud: MapDebugHud
     private lateinit var dwgDebugHud: DwgDebugHud
+    private lateinit var routeGenDebugHud: RouteGenDebugHud
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,20 +74,25 @@ class MainActivity : AppCompatActivity() {
             repository = fusionEngine.repository,
         )
 
-        val routeRepository = RouteRepository().apply {
-            setRoute(InMemoryDemoRouteFactory.create())
-        }
+        val routeRepository = RouteRepository()
+        routeGenerator = RouteGenerator(routeRepository = routeRepository)
+
+        dwgImporter = DWGImporter(reader = StubDWGReader())
+        val dwgResult = dwgImporter.importFrom("stub://demo-conveyor.dwg")
+        routeGenerator.generate(candidates = dwgResult.candidates)
+
         mapMatchingEngine = MapMatchingEngine(routeRepository = routeRepository)
         mapDebugHud = MapDebugHud(
             textView = findViewById(R.id.map_debug_hud),
             mapMatchingEngine = mapMatchingEngine,
         )
-
-        dwgImporter = DWGImporter(reader = StubDWGReader())
-        dwgImporter.importFrom("stub://demo-conveyor.dwg")
         dwgDebugHud = DwgDebugHud(
             textView = findViewById(R.id.dwg_debug_hud),
             importer = dwgImporter,
+        )
+        routeGenDebugHud = RouteGenDebugHud(
+            textView = findViewById(R.id.route_gen_debug_hud),
+            routeGenerator = routeGenerator,
         )
 
         findViewById<Button>(R.id.button_open_calibration).setOnClickListener {
@@ -101,9 +109,11 @@ class MainActivity : AppCompatActivity() {
         fusionDebugHud.start()
         mapDebugHud.start()
         dwgDebugHud.start()
+        routeGenDebugHud.start()
     }
 
     override fun onStop() {
+        routeGenDebugHud.stop()
         dwgDebugHud.stop()
         mapDebugHud.stop()
         fusionDebugHud.stop()
