@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CNV</string>
+    <string name="opencv_gray_preview">OpenCV grayscale preview</string>
 </resources>

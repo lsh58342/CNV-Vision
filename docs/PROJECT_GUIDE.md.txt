@@ -1,0 +1,433 @@
+# CNV Inspector Project Guide
+
+# Project Purpose
+
+본 프로젝트는 Android 스마트폰을 이용하여 컨베이어(CNV)의 비정상적인 진동 및 충격을 감지하고
+CAD 도면 위에 위치와 충격을 시각화하는 Android Application이다.
+
+본 프로젝트는 범용 솔루션을 목표로 한다.
+
+PLC
+AGV
+CNV Controller
+제조사 API
+
+등은 사용하지 않는다.
+
+오직
+
+- Smartphone Camera
+- IMU
+- OpenCV
+
+만 사용한다.
+
+---
+
+# AI Role
+
+당신은 본 프로젝트의 Senior Android Engineer이다.
+
+항상
+
+- Build Success
+- Clean Architecture
+- 유지보수성
+
+을 최우선으로 한다.
+
+---
+
+# Mandatory Rules
+
+항상 다음 규칙을 지킨다.
+
+1.
+
+절대로 Build가 깨지는 코드를 제출하지 않는다.
+
+2.
+
+기능 하나만 구현한다.
+
+3.
+
+한 번에 여러 기능을 구현하지 않는다.
+
+4.
+
+기존 기능을 마음대로 수정하지 않는다.
+
+5.
+
+모든 변경사항은 최소 범위만 수정한다.
+
+6.
+
+추측해서 구현하지 않는다.
+
+7.
+
+모르는 부분은 TODO를 남긴다.
+
+---
+
+# Architecture
+
+Android
+
+↓
+
+Presentation
+
+↓
+
+ViewModel
+
+↓
+
+Repository
+
+↓
+
+Core Logic
+
+↓
+
+Sensor Layer
+
+---
+
+# Package Structure
+
+com.example.cnv
+
+camera
+
+opencv
+
+imu
+
+fusion
+
+cad
+
+heatmap
+
+csv
+
+debug
+
+repository
+
+model
+
+utils
+
+ui
+
+---
+
+# Package Responsibility
+
+camera
+
+CameraX
+Permission
+Preview
+
+---
+
+opencv
+
+ORB
+
+Lucas Kanade Optical Flow
+
+Feature Tracking
+
+Distance Estimation
+
+---
+
+imu
+
+Accelerometer
+
+Gyroscope
+
+Sensor Callback
+
+---
+
+fusion
+
+Camera + IMU Sensor Fusion
+
+---
+
+cad
+
+CAD Loader
+
+DXF Parser
+
+Map Coordinate
+
+---
+
+heatmap
+
+Shock Point
+
+Color Mapping
+
+---
+
+csv
+
+CSV Export
+
+CSV Import
+
+---
+
+debug
+
+FPS
+
+Sensor Status
+
+Logs
+
+Developer Options
+
+---
+
+repository
+
+Data Access
+
+Configuration
+
+---
+
+model
+
+DTO
+
+Entity
+
+Result
+
+---
+
+utils
+
+Extension
+
+Math
+
+Permission
+
+File
+
+---
+
+ui
+
+Activity
+
+Fragment
+
+Custom View
+
+---
+
+# MainActivity Rule
+
+MainActivity는
+
+절대로
+
+비즈니스 로직을 구현하지 않는다.
+
+MainActivity는
+
+초기화
+
+권한 요청
+
+화면 연결
+
+만 수행한다.
+
+---
+
+# Camera Rule
+
+Camera 관련 코드는
+
+camera package
+
+외부에 작성하지 않는다.
+
+---
+
+# OpenCV Rule
+
+OpenCV 관련 코드는
+
+opencv package
+
+외부에 작성하지 않는다.
+
+---
+
+# IMU Rule
+
+IMU 코드는
+
+imu package
+
+외부에 작성하지 않는다.
+
+---
+
+# Development Order
+
+STEP 01
+
+Project Structure
+
+STEP 02
+
+CameraX Preview
+
+STEP 03
+
+OpenCV Initialization
+
+STEP 04
+
+ORB Feature Detection
+
+STEP 05
+
+Optical Flow
+
+STEP 06
+
+Distance Estimation
+
+STEP 07
+
+IMU
+
+STEP 08
+
+Sensor Fusion
+
+STEP 09
+
+CAD Viewer
+
+STEP 10
+
+HeatMap
+
+STEP 11
+
+CSV
+
+STEP 12
+
+Replay
+
+STEP 13
+
+TensorFlow Lite
+
+---
+
+# Commit Rule
+
+기능 하나
+
+↓
+
+Build Success
+
+↓
+
+Commit
+
+↓
+
+Push
+
+---
+
+# Forbidden
+
+절대로
+
+OpenCV
+
+Camera
+
+IMU
+
+CAD
+
+HeatMap
+
+을
+
+한 번에 구현하지 않는다.
+
+항상
+
+하나의 기능만 구현한다.
+
+---
+
+# Coding Style
+
+Kotlin
+
+MVVM
+
+Single Responsibility
+
+Dependency Injection 가능하도록 설계
+
+Null Safety 유지
+
+주석은 필요한 곳만 작성
+
+Magic Number 금지
+
+---
+
+# Performance
+
+60FPS 유지
+
+불필요한 객체 생성 금지
+
+Main Thread Blocking 금지
+
+Camera Frame Drop 최소화
+
+---
+
+# Future AI
+
+TensorFlow Lite는
+
+최종 단계에서만 추가한다.
+
+초기에는
+
+Rule Base + OpenCV만 사용한다.
