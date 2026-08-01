@@ -332,9 +332,11 @@ STEP 09  Sensor Fusion Engine
 
 STEP 10  Map Matching Engine
 
-STEP 11  CAD/DXF Viewer
+STEP11 CAD Viewer
 
-STEP 12  HeatMap Engine
+STEP11-2 CAD Interaction
+
+STEP12 HeatMap
 
 STEP 13  CSV Recording
 
