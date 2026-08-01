@@ -1,5 +1,6 @@
 package com.example.cnv.opencv
 
+import com.example.cnv.config.CalibrationManager
 import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
 import org.opencv.core.Point
@@ -9,16 +10,16 @@ import kotlin.math.sqrt
 
 /**
  * Camera + OpenCV distance pipeline:
- * ORB seed → LK → RANSAC → Median → Calibration → Δd → Accumulated.
+ * ORB seed → LK → RANSAC → Median → CalibrationManager scale → Δd → Accumulated.
  */
 class OpticalFlowDistanceEstimator(
-    private val calibrator: DistanceCalibrator = DistanceCalibrator(),
+    private val calibrationManager: CalibrationManager,
 ) : DistanceEstimator {
 
     private val opticalFlow = LucasKanadeOpticalFlow()
     private val ransacFlowFilter = RansacFlowFilter()
     private val pixelMovementEstimator = PixelMovementEstimator()
-    private val frameDistanceEstimator = FrameDistanceEstimator(calibrator)
+    private val frameDistanceEstimator = FrameDistanceEstimator(calibrationManager)
     private val accumulatedDistanceTracker = AccumulatedDistanceTracker()
 
     override fun estimate(
@@ -53,13 +54,14 @@ class OpticalFlowDistanceEstimator(
         drawFlow(overlay, filterResult.outliers, OUTLIER_COLOR)
 
         val medianPixel = pixelMovementEstimator.medianMagnitude(filterResult.inliers)
-        val pixelDistance = pixelMovementEstimator.meanMagnitude(filterResult.inliers)
+        val meanPixel = pixelMovementEstimator.meanMagnitude(filterResult.inliers)
         val consensusPixel = sqrt(
             filterResult.consensusTx * filterResult.consensusTx +
                 filterResult.consensusTy * filterResult.consensusTy,
         ).toFloat()
-        // Pixel Distance: consensus translation magnitude (fallback to mean if zero)
-        val displayPixelDistance = if (consensusPixel > 0f) consensusPixel else pixelDistance
+        val displayPixelDistance = if (consensusPixel > 0f) consensusPixel else meanPixel
+
+        calibrationManager.updateObservedPixelDistance(medianPixel)
 
         val distanceMm = frameDistanceEstimator.toMm(medianPixel)
         val applied = accumulatedDistanceTracker.tryAccumulate(
@@ -68,7 +70,7 @@ class OpticalFlowDistanceEstimator(
             trackedCount = trackedPairs.size,
             medianPixel = medianPixel,
             confidence = filterResult.confidence,
-            calibrated = calibrator.isCalibrated(),
+            calibrated = calibrationManager.isCalibrated(),
         )
 
         val result = DistanceEstimateResult(
@@ -117,6 +119,7 @@ class OpticalFlowDistanceEstimator(
             "mm Distance: %.2f mm".format(result.distanceMm),
             "Accumulated Distance: %.2f mm".format(result.accumulatedMm),
             "Tracking Feature Count: %d".format(result.trackingFeatureCount),
+            "mm/px: %.4f".format(calibrationManager.getMmPerPixel()),
         )
         var y = TEXT_ORIGIN_Y
         for (line in lines) {

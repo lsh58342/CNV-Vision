@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.material)
     implementation(libs.opencv)
     testImplementation(libs.junit)

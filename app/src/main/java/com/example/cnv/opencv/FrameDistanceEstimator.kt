@@ -1,16 +1,18 @@
 package com.example.cnv.opencv
 
+import com.example.cnv.config.CalibrationManager
+
 /**
- * Converts median pixel movement to millimeters.
+ * Converts median pixel movement to millimeters using [CalibrationManager].
  */
 class FrameDistanceEstimator(
-    private val calibrator: DistanceCalibrator,
+    private val calibrationManager: CalibrationManager,
 ) {
 
     fun toMm(medianPixel: Float): Float {
-        if (!calibrator.isCalibrated()) {
+        if (!calibrationManager.isCalibrated()) {
             return 0f
         }
-        return medianPixel * calibrator.mmPerPixel()
+        return medianPixel * calibrationManager.getMmPerPixel()
     }
 }

@@ -4,6 +4,7 @@ import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageAnalysis
 import androidx.lifecycle.ViewModelProvider
+import com.example.cnv.config.CalibrationManager
 
 /**
  * OpenCV entry point: library init, distance estimator, UI binding.
@@ -16,7 +17,8 @@ class OpenCVManager(
     private val viewModel: OpenCVViewModel =
         ViewModelProvider(activity)[OpenCVViewModel::class.java]
 
-    private val distanceEstimator: DistanceEstimator = OpticalFlowDistanceEstimator()
+    private val distanceEstimator: DistanceEstimator =
+        OpticalFlowDistanceEstimator(CalibrationManager.getInstance(activity))
 
     fun start(): ImageAnalysis.Analyzer? {
         if (!viewModel.initialize()) {
