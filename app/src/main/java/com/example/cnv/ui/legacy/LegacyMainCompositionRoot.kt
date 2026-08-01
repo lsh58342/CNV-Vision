@@ -17,7 +17,6 @@ import com.example.cnv.config.CalibrationManager
 import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
-import com.example.cnv.debug.InspectionDebugHud
 import com.example.cnv.debug.MapDebugHud
 import com.example.cnv.debug.PipelinePerfDebugHud
 import com.example.cnv.debug.RouteDebugController
@@ -61,13 +60,13 @@ class LegacyMainCompositionRoot(
     private lateinit var mapDebugHud: MapDebugHud
     private lateinit var dwgDebugHud: DwgDebugHud
     private lateinit var routeGenDebugHud: RouteGenDebugHud
-    private lateinit var inspectionDebugHud: InspectionDebugHud
     private lateinit var pipelinePerfDebugHud: PipelinePerfDebugHud
     private lateinit var heatMapController: HeatMapController
     private lateinit var routeRepository: RouteRepository
 
     fun bind() {
-        val previewView = activity.findViewById<PreviewView>(R.id.preview_view)
+        // PreviewView removed from legacy layout — Inspection Camera lives on InspectionScreen only.
+        val previewView = PreviewView(activity).apply { visibility = View.GONE }
         val grayImageView = activity.findViewById<ImageView>(R.id.opencv_gray_view)
 
         openCvManager = OpenCVManager(activity, grayImageView)
@@ -75,7 +74,7 @@ class LegacyMainCompositionRoot(
 
         bindImuAndFusion()
         bindRoutePipeline()
-        bindInspectionAndUiActions()
+        bindInspectionManagerOnly()
         bindCadViewer()
         bindHeatMap()
 
@@ -97,7 +96,6 @@ class LegacyMainCompositionRoot(
         dwgDebugHud.start()
         routeGenDebugHud.start()
         routeDebugController.start()
-        inspectionDebugHud.start()
         pipelinePerfDebugHud.start()
         cadController.start()
         heatMapController.start()
@@ -110,7 +108,6 @@ class LegacyMainCompositionRoot(
         heatMapController.stop()
         cadController.stop()
         pipelinePerfDebugHud.stop()
-        inspectionDebugHud.stop()
         routeDebugController.stop()
         routeGenDebugHud.stop()
         dwgDebugHud.stop()
@@ -336,19 +333,11 @@ class LegacyMainCompositionRoot(
         refreshTimelineLabel()
     }
 
-    private fun bindInspectionAndUiActions() {
-        // Inspection UI migrated to rebuild InspectionScreen (Phase 3).
-        // Legacy start/stop buttons are hidden; manager remains for HeatMap/debug only.
+    private fun bindInspectionManagerOnly() {
+        // Inspection UI removed — manager retained for HeatMap / debug consumers only.
         inspectionManager = InspectionManager()
-        inspectionDebugHud = InspectionDebugHud(
-            textView = activity.findViewById(R.id.inspection_debug_hud),
-            inspectionManager = inspectionManager,
-        )
-        activity.findViewById<Button>(R.id.button_inspection_start)?.visibility = View.GONE
-        activity.findViewById<Button>(R.id.button_inspection_stop)?.visibility = View.GONE
-        activity.findViewById<Button>(R.id.button_open_calibration)
-            .setOnClickListener {
-                activity.startActivity(Intent(activity, CalibrationActivity::class.java))
-            }
+        activity.findViewById<Button>(R.id.button_open_calibration)?.setOnClickListener {
+            activity.startActivity(Intent(activity, CalibrationActivity::class.java))
+        }
     }
 }

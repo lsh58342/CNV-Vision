@@ -211,4 +211,19 @@
     <string name="insp_shock_value">%1$d</string>
     <string name="insp_elapsed_value">%1$.1f s</string>
     <string name="insp_result_placeholder">Inspection finished.\nSummary will be shown in the next phase.</string>
+
+    <string name="result_zone_subtitle">Zone: %1$s</string>
+    <string name="result_summary_section">Inspection Summary</string>
+    <string name="result_actions_section">Primary Actions</string>
+    <string name="result_distance">Distance</string>
+    <string name="result_duration">Duration</string>
+    <string name="result_shock">Shock Count</string>
+    <string name="result_coverage">Coverage</string>
+    <string name="result_duration_value">%1$d s</string>
+    <string name="result_coverage_value">%1$.0f%%</string>
+    <string name="result_open_heatmap">Open HeatMap</string>
+    <string name="result_open_history">Inspection History</string>
+    <string name="result_export_csv">Export CSV</string>
+    <string name="result_finish">Finish</string>
+    <string name="result_empty">No inspection result available</string>
 </resources>

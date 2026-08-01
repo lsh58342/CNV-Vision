@@ -7,15 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/preview_view"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <ImageView
         android:id="@+id/opencv_gray_view"
         android:layout_width="0dp"
@@ -493,26 +484,10 @@
         android:padding="6dp"
         android:textColor="@android:color/white"
         android:textSize="8sp"
-        app:layout_constraintBottom_toTopOf="@id/inspection_debug_hud"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:text="Issues" />
-
-    <TextView
-        android:id="@+id/inspection_debug_hud"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="12dp"
-        android:layout_marginBottom="8dp"
-        android:background="#66000000"
-        android:fontFamily="monospace"
-        android:padding="8dp"
-        android:textColor="@android:color/white"
-        android:textSize="10sp"
         app:layout_constraintBottom_toTopOf="@id/heatmap_debug_hud"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:text="Inspection" />
+        tools:text="Issues" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_cad_zoom_in"
@@ -581,28 +556,6 @@
         android:text="@string/route_zoom_out"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_inspection_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:text="@string/inspection_start"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/button_cad_zoom_in"
-        app:layout_constraintStart_toEndOf="@id/button_cad_theme"
-        app:layout_constraintTop_toTopOf="@id/button_cad_zoom_in" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_inspection_stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:text="@string/inspection_stop"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/button_cad_zoom_in"
-        app:layout_constraintStart_toEndOf="@id/button_inspection_start"
-        app:layout_constraintTop_toTopOf="@id/button_cad_zoom_in" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_open_calibration"

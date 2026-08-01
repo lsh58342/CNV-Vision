@@ -1,42 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="@color/cnv_bg"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/screen_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Inspection Result"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/screen_body"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:text="@string/rebuild_phase1_skeleton"
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
+        <TextView
+            android:id="@+id/result_toolbar_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/screen_result"
+            android:textAppearance="@style/TextAppearance.CNV.Title" />
 
-    <Button
-        android:id="@+id/button_screen_next"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="52dp"
-        android:text="@string/rebuild_next" />
+        <TextView
+            android:id="@+id/result_toolbar_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
-    <Button
-        android:id="@+id/button_screen_back"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp"
-        android:text="@string/nav_back" />
-</LinearLayout>
+        <FrameLayout
+            android:id="@+id/result_summary_header_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/result_summary_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/cnv_surface"
+            app:cardCornerRadius="12dp"
+            app:strokeColor="@color/cnv_outline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:id="@+id/result_summary_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dp" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <FrameLayout
+            android:id="@+id/result_actions_header_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+
+        <FrameLayout
+            android:id="@+id/result_heatmap_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
+            android:id="@+id/result_history_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
+            android:id="@+id/result_csv_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
+            android:id="@+id/result_finish_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
