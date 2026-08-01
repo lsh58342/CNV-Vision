@@ -7,6 +7,7 @@ import com.example.cnv.ui.screen.dashboard.ZoneDashboardScreen
 import com.example.cnv.ui.screen.developer.DeveloperScreen
 import com.example.cnv.ui.screen.drawing.DrawingDashboardScreen
 import com.example.cnv.ui.screen.drawing.DrawingListScreen
+import com.example.cnv.ui.screen.drawing.OpenDrawingScreen
 import com.example.cnv.ui.screen.floor.FloorScreen
 import com.example.cnv.ui.screen.heatmap.HeatMapScreen
 import com.example.cnv.ui.screen.history.HistoryScreen
@@ -27,6 +28,7 @@ enum class CnvDestination {
     FLOOR_SELECT,
     DRAWING_LIST,
     DRAWING_DASHBOARD,
+    OPEN_DRAWING,
     ZONE_LIST,
     ZONE_DASHBOARD,
     INSPECTION,
@@ -45,6 +47,7 @@ enum class CnvDestination {
         FLOOR_SELECT -> FloorScreen()
         DRAWING_LIST -> DrawingListScreen()
         DRAWING_DASHBOARD -> DrawingDashboardScreen()
+        OPEN_DRAWING -> OpenDrawingScreen()
         ZONE_LIST -> ZoneListScreen()
         ZONE_DASHBOARD -> ZoneDashboardScreen()
         INSPECTION -> InspectionScreen()

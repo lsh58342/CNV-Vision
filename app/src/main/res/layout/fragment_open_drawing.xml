@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cnv_bg"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/open_drawing_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:text="@string/draw_open_drawing"
+        android:textAppearance="@style/TextAppearance.CNV.Title" />
+
+    <TextView
+        android:id="@+id/open_drawing_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="8dp"
+        android:text="@string/draw_open_drawing_hint"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <com.example.cnv.cad.CADView
+            android:id="@+id/open_drawing_cad"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_set_origin"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:minHeight="48dp"
+                android:text="@string/setup_set_origin" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_calibration"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:minHeight="48dp"
+                android:text="@string/comm_step_calibration" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_route"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:minHeight="48dp"
+                android:text="@string/setup_generate_route" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_zone"
+                style="@style/Widget.CNV.Button.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:minHeight="48dp"
+                android:text="@string/comm_step_zone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_route_lock"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:minHeight="48dp"
+                android:text="@string/setup_route_lock" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_open_drawing_back"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/nav_back" />
+        </LinearLayout>
+    </HorizontalScrollView>
+</LinearLayout>

@@ -292,4 +292,29 @@
     <string name="setup_replay_count">%1$d refs</string>
     <string name="setup_csv_drawing_scoped">CSV Export/Import — Drawing scoped (STEP 13)</string>
     <string name="setup_replay_drawing_scoped">Replay — Drawing scoped (later STEP)</string>
+
+    <string name="draw_open_drawing">Open Drawing</string>
+    <string name="draw_open_drawing_hint">CAD Viewer — Commissioning only (no Inspection here)</string>
+    <string name="draw_section_status">Status</string>
+    <string name="draw_section_actions">Actions</string>
+    <string name="draw_section_commissioning">Commissioning</string>
+    <string name="draw_commissioning_hint">Open Drawing에서 Calibration / Route / Zone / Lock을 수행합니다.</string>
+    <string name="draw_dwg_file">DWG: %1$s</string>
+    <string name="draw_registered_at">등록일: %1$s</string>
+    <string name="draw_no_description">Description: —</string>
+    <string name="draw_card_updated">Updated: %1$s</string>
+    <string name="draw_inspection_not_ready">Inspection 불가 — DWG / Calibration / Route를 완료하세요</string>
+    <string name="draw_status_dwg_required">DWG Required</string>
+    <string name="draw_status_calibration_required">Calibration Required</string>
+    <string name="draw_status_route_required">Route Required</string>
+    <string name="draw_status_zone_required">Zone Required</string>
+    <string name="draw_status_ready">Ready</string>
+    <string name="draw_status_inspection_available">Inspection Available</string>
+    <string name="draw_status_dwg_registered">Registered</string>
+    <string name="draw_status_calibration_completed">Completed</string>
+    <string name="draw_status_route_generated">Generated</string>
+    <string name="draw_status_zone_created">%1$d Created</string>
+    <string name="draw_status_inspection_ready">Ready</string>
+    <string name="draw_status_missing">Missing</string>
+    <string name="draw_status_not_ready">Not Ready</string>
 </resources>

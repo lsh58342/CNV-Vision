@@ -25,23 +25,6 @@
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
-        <FrameLayout
-            android:id="@+id/drawing_list_header_slot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp" />
-
-        <FrameLayout
-            android:id="@+id/drawing_empty_slot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <LinearLayout
-            android:id="@+id/drawing_list_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_add_drawing"
             style="@style/Widget.CNV.Button.Primary"
@@ -51,21 +34,25 @@
             android:minHeight="56dp"
             android:text="@string/setup_add_drawing" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_open_drawing"
-            style="@style/Widget.CNV.Button.Action"
+        <FrameLayout
+            android:id="@+id/drawing_empty_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <LinearLayout
+            android:id="@+id/drawing_list_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:minHeight="48dp"
-            android:text="@string/setup_open_drawing" />
+            android:orientation="vertical" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button_drawing_list_back"
             style="@style/Widget.CNV.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:minHeight="48dp"
             android:text="@string/nav_back" />
     </LinearLayout>

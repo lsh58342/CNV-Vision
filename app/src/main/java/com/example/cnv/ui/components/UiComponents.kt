@@ -133,6 +133,31 @@ object UiComponents {
         return card
     }
 
+    fun inflateDrawingCard(
+        parent: ViewGroup,
+        name: CharSequence,
+        status: CharSequence,
+        recentInspection: CharSequence,
+        updatedAt: CharSequence,
+        selected: Boolean,
+        onClick: () -> Unit,
+    ): MaterialCardView {
+        val card = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_drawing_card, parent, false) as MaterialCardView
+        card.findViewById<TextView>(R.id.drawing_card_name).text = name
+        card.findViewById<TextView>(R.id.drawing_card_status).text = status
+        card.findViewById<TextView>(R.id.drawing_card_inspection).text = recentInspection
+        card.findViewById<TextView>(R.id.drawing_card_updated).text = updatedAt
+        card.strokeWidth = if (selected) 3 else 1
+        card.strokeColor = if (selected) {
+            parent.context.getColor(R.color.cnv_accent)
+        } else {
+            parent.context.getColor(R.color.cnv_outline)
+        }
+        card.setOnClickListener { onClick() }
+        return card
+    }
+
     fun clearChildren(container: LinearLayout) {
         container.removeAllViews()
     }
