@@ -9,6 +9,15 @@
     <string name="cad_fit">Fit</string>
     <string name="cad_reset">Reset</string>
     <string name="cad_theme">Theme</string>
+    <string name="cad_goto_pos">Pos</string>
+    <string name="cad_goto_start">Start</string>
+    <string name="cad_goto_end">End</string>
+    <string name="cad_center">Center</string>
+    <string name="cad_search">Search</string>
+    <string name="cad_search_hint">Node/Seg ID</string>
+    <string name="cad_layer_grid">Grid</string>
+    <string name="cad_layer_node">Node</string>
+    <string name="cad_layer_branch">Branch</string>
     <string name="inspection_start">Start Insp</string>
     <string name="inspection_stop">Stop Insp</string>
     <string name="calibration_title">Calibration</string>

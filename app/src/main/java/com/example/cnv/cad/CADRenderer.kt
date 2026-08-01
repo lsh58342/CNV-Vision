@@ -81,25 +81,30 @@ class CADRenderer(
                 visibleSegments++
                 canvas.drawLine(x1, y1, x2, y2, routePaint)
             }
+        }
 
+        val drawNodes = layers.isEnabled(CADLayer.NODE)
+        val drawBranches = layers.isEnabled(CADLayer.BRANCH)
+        if (drawNodes || drawBranches) {
             for (node in route.nodes) {
                 val world = layout.nodeWorld[node.id] ?: continue
                 val vx = camera.worldToViewX(world.x)
                 val vy = camera.worldToViewY(world.y)
+                val isBranch = node.id in layout.branchNodeIds || node.type == RouteNodeType.JUNCTION
                 when {
-                    node.id == layout.startNodeId || node.type == RouteNodeType.START -> {
+                    (node.id == layout.startNodeId || node.type == RouteNodeType.START) && drawNodes -> {
                         nodePaint.applyFill(theme.startPoint)
                         canvas.drawCircle(vx, vy, style.startEndRadiusPx, nodePaint)
                     }
-                    node.id == layout.endNodeId || node.type == RouteNodeType.END -> {
+                    (node.id == layout.endNodeId || node.type == RouteNodeType.END) && drawNodes -> {
                         nodePaint.applyFill(theme.endPoint)
                         canvas.drawCircle(vx, vy, style.startEndRadiusPx, nodePaint)
                     }
-                    node.id in layout.branchNodeIds || node.type == RouteNodeType.JUNCTION -> {
+                    isBranch && drawBranches -> {
                         nodePaint.applyFill(theme.branch)
                         canvas.drawCircle(vx, vy, style.branchRadiusPx, nodePaint)
                     }
-                    else -> {
+                    !isBranch && drawNodes -> {
                         nodePaint.applyFill(theme.node)
                         canvas.drawCircle(vx, vy, style.nodeRadiusPx, nodePaint)
                     }

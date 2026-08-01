@@ -142,12 +142,123 @@
         android:padding="8dp"
         android:textColor="@android:color/white"
         android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="@id/cad_view"
+        app:layout_constraintBottom_toTopOf="@id/cad_selection_info"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@id/cad_view"
         app:layout_constraintTop_toTopOf="@id/cad_view"
         tools:text="CAD Debug" />
+
+    <TextView
+        android:id="@+id/cad_selection_info"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:background="#66000000"
+        android:fontFamily="monospace"
+        android:padding="6dp"
+        android:textColor="@android:color/white"
+        android:textSize="9sp"
+        app:layout_constraintBottom_toBottomOf="@id/cad_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/cad_view"
+        tools:text="Selection" />
+
+    <EditText
+        android:id="@+id/cad_search_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="4dp"
+        android:hint="@string/cad_search_hint"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:textColor="@android:color/white"
+        android:textColorHint="#99FFFFFF"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@id/button_cad_goto_pos"
+        app:layout_constraintEnd_toStartOf="@id/button_cad_search"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:text="@string/cad_search"
+        app:layout_constraintBottom_toBottomOf="@id/cad_search_input"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/cad_search_input" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_goto_pos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="4dp"
+        android:text="@string/cad_goto_pos"
+        app:layout_constraintBottom_toTopOf="@id/button_cad_zoom_in"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_goto_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_goto_start"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_goto_pos"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_goto_end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_goto_end"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_goto_start"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_center"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_goto_end"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_layer_grid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_layer_grid"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_center"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_layer_node"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_layer_node"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_layer_grid"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_cad_layer_branch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:text="@string/cad_layer_branch"
+        app:layout_constraintBottom_toBottomOf="@id/button_cad_goto_pos"
+        app:layout_constraintStart_toEndOf="@id/button_cad_layer_node"
+        app:layout_constraintTop_toTopOf="@id/button_cad_goto_pos" />
 
     <com.example.cnv.debug.RouteDebugView
         android:id="@+id/route_debug_view"
@@ -201,7 +312,7 @@
         android:padding="8dp"
         android:textColor="@android:color/white"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@id/button_cad_zoom_in"
+        app:layout_constraintBottom_toTopOf="@id/cad_search_input"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:text="Inspection" />

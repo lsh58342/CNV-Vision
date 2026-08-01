@@ -184,6 +184,13 @@ class MainCompositionRoot(
             inspectionStateProvider = {
                 "Inspection: ${inspectionManager.state().name}"
             },
+            errorSegmentIdsProvider = {
+                routeDebugController.latestValidation()?.issues.orEmpty()
+                    .filter { it.severity == ValidationSeverity.ERROR && it.segmentId != null }
+                    .mapNotNull { it.segmentId }
+                    .toSet()
+            },
+            selectionInfoView = activity.findViewById(R.id.cad_selection_info),
         )
         activity.findViewById<Button>(R.id.button_cad_zoom_in)
             .setOnClickListener { cadController.zoomIn() }
@@ -195,6 +202,25 @@ class MainCompositionRoot(
             .setOnClickListener { cadController.resetView() }
         activity.findViewById<Button>(R.id.button_cad_theme)
             .setOnClickListener { cadController.toggleTheme() }
+        activity.findViewById<Button>(R.id.button_cad_goto_pos)
+            .setOnClickListener { cadController.goToCurrentPosition() }
+        activity.findViewById<Button>(R.id.button_cad_goto_start)
+            .setOnClickListener { cadController.goToStart() }
+        activity.findViewById<Button>(R.id.button_cad_goto_end)
+            .setOnClickListener { cadController.goToEnd() }
+        activity.findViewById<Button>(R.id.button_cad_center)
+            .setOnClickListener { cadController.centerCurrentPosition() }
+        activity.findViewById<Button>(R.id.button_cad_search)
+            .setOnClickListener {
+                val query = activity.findViewById<android.widget.EditText>(R.id.cad_search_input).text?.toString().orEmpty()
+                cadController.search(query)
+            }
+        activity.findViewById<Button>(R.id.button_cad_layer_grid)
+            .setOnClickListener { cadController.toggleLayer(com.example.cnv.cad.CADLayer.GRID) }
+        activity.findViewById<Button>(R.id.button_cad_layer_node)
+            .setOnClickListener { cadController.toggleLayer(com.example.cnv.cad.CADLayer.NODE) }
+        activity.findViewById<Button>(R.id.button_cad_layer_branch)
+            .setOnClickListener { cadController.toggleLayer(com.example.cnv.cad.CADLayer.BRANCH) }
     }
 
     private fun bindInspectionAndUiActions() {

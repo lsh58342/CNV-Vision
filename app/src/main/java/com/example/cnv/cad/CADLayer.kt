@@ -2,9 +2,12 @@ package com.example.cnv.cad
 
 /**
  * CAD draw layers. Toggle independently via [CADLayerState].
+ * Session-scoped: [CADLayerState] lives on [CADView] for the Activity session.
  */
 enum class CADLayer {
     ROUTE,
+    NODE,
+    BRANCH,
     POSITION,
     DEBUG,
     GRID,

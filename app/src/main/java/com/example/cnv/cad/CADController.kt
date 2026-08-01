@@ -12,7 +12,7 @@ import com.example.cnv.route.CoordinateMapper
 
 /**
  * Wires RouteRepository (read-only) + CoordinateMapper + PositionEvent → [CADView].
- * Does not compute position/route/inspection; overlay strings are injected from composition root.
+ * STEP 11-2: optionally hosts [CADInteractionController] for gestures/selection/navigation.
  */
 class CADController(
     private val routeRepository: RouteRepository,
@@ -21,6 +21,8 @@ class CADController(
     private val debugHud: TextView? = null,
     private val validationErrorProvider: () -> String? = { null },
     private val inspectionStateProvider: () -> String? = { null },
+    private val errorSegmentIdsProvider: () -> Set<String> = { emptySet() },
+    private val selectionInfoView: TextView? = null,
     private val eventDispatcher: EventDispatcher = CoreEventModule.eventDispatcher(),
     private val refreshIntervalMs: Long = 200L,
 ) {
@@ -34,6 +36,13 @@ class CADController(
     @Volatile
     private var positionOverlayText: String? = null
 
+    private val interaction = CADInteractionController(
+        cadView = cadView,
+        selectionInfoView = selectionInfoView,
+        inspectionStateProvider = { inspectionStateProvider() ?: "—" },
+        errorSegmentIdsProvider = errorSegmentIdsProvider,
+    )
+
     private val onPosition: (PositionEvent) -> Unit = { event ->
         latestPositionEvent = event
         handler.post { applyPosition(event) }
@@ -46,6 +55,7 @@ class CADController(
             validationErrorText = validationErrorProvider()
             inspectionStateText = inspectionStateProvider()
             pushOverlay()
+            interaction.onPositionEvent(latestPositionEvent)
             updateDebugHud()
             handler.postDelayed(this, refreshIntervalMs)
         }
@@ -57,6 +67,7 @@ class CADController(
         eventDispatcher.subscribe(PositionEvent::class.java, onPosition)
         refreshRoute()
         cadView.fitToRoute()
+        interaction.start()
         handler.post(refreshRunnable)
     }
 
@@ -65,6 +76,7 @@ class CADController(
         running = false
         handler.removeCallbacks(refreshRunnable)
         eventDispatcher.unsubscribe(PositionEvent::class.java, onPosition)
+        interaction.stop()
     }
 
     fun zoomIn() = cadView.zoomIn()
@@ -73,14 +85,25 @@ class CADController(
 
     fun resetView() = cadView.resetView()
 
-    fun fitToRoute() = cadView.fitToRoute()
+    fun fitToRoute() = interaction.fitToRoute()
+
+    fun goToCurrentPosition() = interaction.goToCurrentPosition()
+
+    fun goToStart() = interaction.goToStart()
+
+    fun goToEnd() = interaction.goToEnd()
+
+    fun centerCurrentPosition() = interaction.centerCurrentPosition()
+
+    fun search(query: String): Boolean = interaction.search(query)
 
     fun toggleTheme() = cadView.toggleTheme()
 
     fun setLayerEnabled(layer: CADLayer, enabled: Boolean) {
-        cadView.layers.setEnabled(layer, enabled)
-        cadView.invalidate()
+        interaction.setLayerEnabled(layer, enabled)
     }
+
+    fun toggleLayer(layer: CADLayer) = interaction.toggleLayer(layer)
 
     private fun refreshRoute() {
         val route = routeRepository.current()
@@ -111,6 +134,7 @@ class CADController(
         } else {
             "Pos seg=${event.segmentId} p=%.2f".format(event.progress)
         }
+        interaction.onPositionEvent(event)
         pushOverlay()
     }
 
@@ -137,8 +161,10 @@ class CADController(
             append("CAD Debug\n")
             append("FPS: %.1f\n".format(snap.fps))
             append("Render: %.2f ms\n".format(snap.renderTimeMs))
-            append("Visible Seg: %d\n".format(snap.visibleSegmentCount))
+            append("Sel: %d\n".format(snap.selectionCount))
             append("Zoom: %.2f\n".format(snap.zoomLevel))
+            append("VP: %.0f,%.0f\n".format(snap.viewportX, snap.viewportY))
+            append("Visible Seg: %d\n".format(snap.visibleSegmentCount))
             append("Position: %s\n".format(snap.currentPositionText))
             append("Route: %s".format(snap.currentRouteName))
         }
