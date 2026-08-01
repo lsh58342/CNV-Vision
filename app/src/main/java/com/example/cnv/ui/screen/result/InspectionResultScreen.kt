@@ -5,11 +5,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.TextView
 import com.example.cnv.R
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 
-/** Inspection Result — UI Rebuild Phase 1 skeleton (no feature wiring). */
+/**
+ * Inspection Result — Phase 3: navigation shell only (summary in a later phase).
+ */
 class InspectionResultScreen : BaseScreen() {
 
     override fun onCreateView(
@@ -20,9 +23,13 @@ class InspectionResultScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<Button>(R.id.button_screen_next).setOnClickListener {
-            nav().navigate(CnvDestination.HEATMAP_VIEWER)
+        view.findViewById<TextView>(R.id.screen_title).text = getString(R.string.screen_result)
+        view.findViewById<TextView>(R.id.screen_body).text =
+            getString(R.string.insp_result_placeholder)
+
+        view.findViewById<Button>(R.id.button_screen_next).visibility = View.GONE
+        view.findViewById<Button>(R.id.button_screen_back).setOnClickListener {
+            nav().navigateClearTo(CnvDestination.ZONE_DASHBOARD)
         }
-        view.findViewById<Button>(R.id.button_screen_back).setOnClickListener { nav().navigateBack() }
     }
 }

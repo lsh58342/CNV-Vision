@@ -2,41 +2,85 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="@color/cnv_bg"
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/screen_title"
+    <LinearLayout
+        android:id="@+id/inspection_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Inspection"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:background="@color/cnv_surface"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
-    <TextView
-        android:id="@+id/screen_body"
+        <TextView
+            android:id="@+id/inspection_zone_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.CNV.Title"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/inspection_session_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    </LinearLayout>
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/inspection_preview"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:text="@string/rebuild_phase1_skeleton"
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
+        android:layout_marginTop="4dp"
+        android:layout_weight="7" />
 
-    <Button
-        android:id="@+id/button_screen_next"
+    <LinearLayout
+        android:id="@+id/inspection_status_section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="52dp"
-        android:text="@string/rebuild_next" />
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="4dp">
 
-    <Button
-        android:id="@+id/button_screen_back"
+        <FrameLayout
+            android:id="@+id/inspection_status_header_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:id="@+id/inspection_status_cards"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/inspection_actions"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp"
-        android:text="@string/nav_back" />
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_inspection_start"
+            style="@style/Widget.CNV.Button.Start"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:minHeight="56dp"
+            android:text="@string/inspection_start" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_inspection_stop"
+            style="@style/Widget.CNV.Button.Stop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minHeight="56dp"
+            android:text="@string/inspection_stop" />
+    </LinearLayout>
 </LinearLayout>

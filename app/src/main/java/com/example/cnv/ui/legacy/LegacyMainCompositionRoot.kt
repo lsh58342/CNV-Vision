@@ -1,7 +1,7 @@
 package com.example.cnv.ui.legacy
 
 import android.content.Intent
-import android.os.Build
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -14,7 +14,6 @@ import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADView
 import com.example.cnv.camera.CameraManager
 import com.example.cnv.config.CalibrationManager
-import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
@@ -32,7 +31,6 @@ import com.example.cnv.heatmap.HeatMapOverlay
 import com.example.cnv.imu.IMUManager
 import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.inspection.InspectionState
-import com.example.cnv.inspection.RouteQualityScore
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.map.RouteRepository
 import com.example.cnv.opencv.OpenCVManager
@@ -339,39 +337,18 @@ class LegacyMainCompositionRoot(
     }
 
     private fun bindInspectionAndUiActions() {
+        // Inspection UI migrated to rebuild InspectionScreen (Phase 3).
+        // Legacy start/stop buttons are hidden; manager remains for HeatMap/debug only.
         inspectionManager = InspectionManager()
         inspectionDebugHud = InspectionDebugHud(
             textView = activity.findViewById(R.id.inspection_debug_hud),
             inspectionManager = inspectionManager,
         )
-        activity.findViewById<Button>(R.id.button_inspection_start)
-            .setOnClickListener { startInspectionSession() }
-        activity.findViewById<Button>(R.id.button_inspection_stop)
-            .setOnClickListener { inspectionManager.stop() }
+        activity.findViewById<Button>(R.id.button_inspection_start)?.visibility = View.GONE
+        activity.findViewById<Button>(R.id.button_inspection_stop)?.visibility = View.GONE
         activity.findViewById<Button>(R.id.button_open_calibration)
             .setOnClickListener {
                 activity.startActivity(Intent(activity, CalibrationActivity::class.java))
             }
-    }
-
-    private fun startInspectionSession() {
-        val route = routeRepository.current() ?: return
-        val calibration = CalibrationManager.getInstance(activity)
-        val calData = calibration.getCalibrationData()
-        val quality = RouteQualityScore.from(routeDebugController.latestValidation())
-        val versionName = runCatching {
-            activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
-        }.getOrNull().orEmpty().ifBlank { "1.0" }
-        inspectionManager.start(
-            InspectionManager.StartRequest(
-                route = route,
-                calibrationVersion = calData?.version ?: 0,
-                calibrationValue = calibration.getMmPerPixel(),
-                appVersion = versionName,
-                deviceInformation = "${Build.MANUFACTURER} ${Build.MODEL}",
-                samplingRateHz = 1_000_000f / IMUConfig.DEFAULT_SAMPLING_PERIOD_US,
-                routeQualityScore = quality,
-            ),
-        )
     }
 }

@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import com.example.cnv.R
 import com.example.cnv.ui.components.UiComponents
+import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 import com.example.cnv.ui.screen.dummy.OperationDummyData
 import com.example.cnv.ui.screen.dummy.OperationUiSelection
@@ -104,7 +105,9 @@ class ZoneDashboardScreen : BaseScreen() {
         )
 
         val later = { Toast.makeText(requireContext(), R.string.op_feature_later, Toast.LENGTH_SHORT).show() }
-        view.findViewById<MaterialButton>(R.id.button_dashboard_start).setOnClickListener { later() }
+        view.findViewById<MaterialButton>(R.id.button_dashboard_start).setOnClickListener {
+            nav().navigate(CnvDestination.INSPECTION)
+        }
         view.findViewById<MaterialButton>(R.id.button_dashboard_heatmap).setOnClickListener { later() }
         view.findViewById<MaterialButton>(R.id.button_dashboard_history).setOnClickListener { later() }
         view.findViewById<MaterialButton>(R.id.button_dashboard_csv).setOnClickListener { later() }

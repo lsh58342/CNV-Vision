@@ -200,4 +200,15 @@
     <string name="op_select_zone_first">Select a Zone first</string>
     <string name="op_splash_body">Operation UI · Rebuild Phase 2</string>
     <string name="op_enter_operation">Enter Operation</string>
+
+    <string name="insp_status_section">Live Status</string>
+    <string name="insp_session_status">Status: %1$s</string>
+    <string name="insp_tracking">Tracking</string>
+    <string name="insp_distance">Distance</string>
+    <string name="insp_shock">Shock Count</string>
+    <string name="insp_elapsed">Elapsed Time</string>
+    <string name="insp_distance_value">%1$.0f mm</string>
+    <string name="insp_shock_value">%1$d</string>
+    <string name="insp_elapsed_value">%1$.1f s</string>
+    <string name="insp_result_placeholder">Inspection finished.\nSummary will be shown in the next phase.</string>
 </resources>

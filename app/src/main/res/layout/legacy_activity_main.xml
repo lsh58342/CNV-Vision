@@ -588,6 +588,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:text="@string/inspection_start"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/button_cad_zoom_in"
         app:layout_constraintStart_toEndOf="@id/button_cad_theme"
         app:layout_constraintTop_toTopOf="@id/button_cad_zoom_in" />
@@ -598,6 +599,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:text="@string/inspection_stop"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@id/button_cad_zoom_in"
         app:layout_constraintStart_toEndOf="@id/button_inspection_start"
         app:layout_constraintTop_toTopOf="@id/button_cad_zoom_in" />
