@@ -57,3 +57,25 @@ Feature Module은 Core EventBus를 통해서만 통신한다.
 ### Status
 
 Accepted
+
+---
+
+## Decision 008
+
+Sensor Fusion은 Event 기반으로 구현한다.
+
+### Reason
+
+Camera와 IMU를 독립적으로 유지하고 향후 Map Matching, CAD, HeatMap, AI를 독립적으로 확장하기 위함.
+
+Fusion은 Feature API를 호출하지 않고 Event만 구독하며 FusionEvent만 발행한다.
+
+FusionResult는 Position을 포함하지 않는다 (STEP 10 Map Matching).
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

@@ -18,7 +18,7 @@ Core
 
 ↓
 
-Feature Module (camera / opencv / imu / …)
+Feature Module (camera / opencv / imu / fusion / …)
 
 ↓
 
@@ -30,7 +30,7 @@ Platform
 
 ```
 core/
-  event/      EventBus, Dispatcher, Publisher, Subscriber, *Event
+  event/      EventBus, Dispatcher, Publisher, Subscriber, *Event (+ FusionEvent)
   config/     AppConfig, CameraConfig, OpenCVConfig, IMUConfig, …
   common/     Result, State, Logger, TimeProvider, Dispatchers
   math/       MathUtil, CoordinateUtil
@@ -38,6 +38,24 @@ core/
 ```
 
 공통 기능과 Event Driven 통신은 Core에서만 관리한다.
+
+---
+
+## Fusion Layer (STEP 09)
+
+Fusion은 Event만 Subscribe / FusionEvent만 Publish 한다.
+
+**FusionResult는 Position을 가지지 않는다.**
+
+상세: [FUSION.md](./FUSION.md)
+
+---
+
+## Future Layers
+
+- STEP 10 Map Matching — Position
+- STEP 11 CAD Viewer
+- STEP 12 HeatMap
 
 ---
 
@@ -56,7 +74,8 @@ MainActivity는 비즈니스 로직을 구현하지 않는다.
 | camera | CameraX only |
 | opencv | Vision / DistanceEstimator only |
 | imu | IMU / Shock only |
-| config (app) | CalibrationManager / Repository (feature service) |
+| fusion | Event-based Sensor Fusion |
+| config (app) | CalibrationManager / Repository |
 | ui | Presentation |
 | debug | Debug HUD |
 
@@ -78,6 +97,7 @@ UI → ViewModel → Repository → Core → Feature
 Feature → Feature
 Camera → IMU
 IMU → Camera
+Fusion → Camera / IMU API
 OpenCV → CAD
 CAD → OpenCV
 ```
@@ -89,10 +109,10 @@ Core EventBus를 통해서만 모듈 간 신호가 흐른다.
 ## Event Flow
 
 ```
-DistanceEstimator ──publish──► DistanceEvent ──subscribe──► (Fusion future)
-IMU ShockDetector ──publish──► ShockEvent     ──subscribe──► (Fusion / HeatMap future)
+DistanceEstimator ──publish──► DistanceEvent ──┐
+                                               ├──► FusionEngine ──► FusionEvent
+IMU ShockDetector ──publish──► ShockEvent     ──┘
 CalibrationManager ─publish──► CalibrationEvent
-SystemEvent (APP_READY / FEATURE_*)
 ```
 
 Camera와 IMU는 서로를 호출하지 않는다.
@@ -109,7 +129,7 @@ UI는 구현체를 직접 참조하지 않는다.
 
 ---
 
-## Sensor Fusion (future)
+## Sensor Fusion
 
 IMU는 Camera를 대체하지 않고 보조한다.
 
@@ -127,7 +147,7 @@ Session 누적 Pixel 정책 (Decision 005).
 
 ## Thread
 
-Camera / OpenCV / IMU / UI / Logging 은 독립 스레드에서 동작한다.
+Camera / OpenCV / IMU / Fusion / UI / Logging 은 독립적으로 동작한다.
 
 ---
 
@@ -139,6 +159,7 @@ GrayScale, ROI, Frame Skip, Object Pool, Bitmap reuse.
 
 ## Forbidden
 
-- MainActivity에 OpenCV / IMU / 거리 계산
+- MainActivity에 OpenCV / IMU / 거리·융합 계산
 - UI에서 OpenCV 직접 호출
 - Feature 간 직접 의존
+- FusionResult에 Position 포함

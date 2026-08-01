@@ -20,6 +20,7 @@ core/event/
   DistanceEvent
   ShockEvent
   CalibrationEvent
+  FusionEvent
   SystemEvent
 ```
 
@@ -34,6 +35,7 @@ core/event/
 | OpticalFlowDistanceEstimator | DistanceEvent |
 | IMUProcessor / ShockDetector | ShockEvent |
 | CalibrationManager | CalibrationEvent |
+| FusionEngine | FusionEvent |
 | App / Features (optional) | SystemEvent |
 
 발행은 `EventDispatcher.dispatch` / `EventPublisher.publish` 만 사용한다.
@@ -45,7 +47,7 @@ core/event/
 | Subscriber (current / future) | Events |
 |-------------------------------|--------|
 | Sensor Fusion (STEP 09) | DistanceEvent, ShockEvent, CalibrationEvent |
-| HeatMap (future) | FusionEvent (future) / ShockEvent |
+| Map Matching / CAD / HeatMap (future) | FusionEvent |
 | Debug tools | any |
 
 `EventSubscriber.subscribe(Class, listener)` 로 등록한다.
@@ -67,20 +69,19 @@ core/event/
 Camera Frame
     → OpenCV DistanceEstimator
     → DistanceEvent ─────────────────┐
-                                     ├──► Fusion (future)
+                                     ├──► FusionEngine → FusionEvent
 IMU samples                          │
     → GravityFilter / ShockDetector  │
     → ShockEvent ────────────────────┘
 Calibration session
-    → CalibrationEvent ──► scale / quality context
+    → CalibrationEvent ──► Fusion calibration context
 ```
 
 ---
 
 ## Future Expansion
 
-- `FusionEvent` (fused pose / shock map cell)
-- CAD / CSV / AI modules subscribe to FusionEvent only
+- Map Matching / CAD / CSV / AI modules subscribe to FusionEvent only
 - Replace `CoreEventModule` with Hilt/Koin providing `EventBus`
 
 ---
