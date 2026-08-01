@@ -113,7 +113,7 @@
             android:minHeight="48dp"
             android:text="@string/op_open_csv" />
 
-        <!-- Commissioning (shown only when incomplete) -->
+        <!-- Commissioning Wizard progress + entry -->
         <LinearLayout
             android:id="@+id/drawing_dash_commissioning_section"
             android:layout_width="match_parent"
@@ -129,6 +129,14 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/drawing_dash_wizard_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="@style/TextAppearance.CNV.Body"
+                android:textStyle="bold" />
+
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -136,37 +144,13 @@
                 android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_comm_open_calibration"
-                style="@style/Widget.CNV.Button.Action"
+                android:id="@+id/button_open_wizard"
+                style="@style/Widget.CNV.Button.Primary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:minHeight="48dp"
-                android:text="@string/comm_step_calibration" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_comm_open_route"
-                style="@style/Widget.CNV.Button.Action"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/setup_generate_route" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_comm_open_zone"
-                style="@style/Widget.CNV.Button.Action"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/comm_step_zone" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_comm_open_lock"
-                style="@style/Widget.CNV.Button.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:text="@string/setup_route_lock" />
+                android:minHeight="56dp"
+                android:text="@string/wiz_open_wizard" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton

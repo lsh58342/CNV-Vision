@@ -13,6 +13,7 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
+import com.example.cnv.ui.screen.commissioning.CommissioningWizardProgress
 import com.example.cnv.ui.vm.SiteNavigationViewModel
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
@@ -21,7 +22,7 @@ import java.util.Locale
 
 /**
  * Drawing Dashboard — management hub (no CAD / Camera / HeatMap / Debug HUD).
- * Commissioning work happens on Open Drawing; Operation starts Inspection here.
+ * Commissioning via Wizard; Operation starts Inspection when Wizard + Route Lock complete.
  */
 class DrawingDashboardScreen : BaseScreen() {
 
@@ -42,12 +43,10 @@ class DrawingDashboardScreen : BaseScreen() {
             nav().navigate(CnvDestination.OPEN_DRAWING)
         }
         view.findViewById<MaterialButton>(R.id.button_drawing_inspection).setOnClickListener {
-            val dash = siteVm.drawingDashboard.value
-            if (dash == null || !DrawingUiStatus.canStartInspection(dash.dwgReady, dash.calibrationReady, dash.routeReady)) {
+            if (!DrawingUiStatus.canStartInspection()) {
                 Toast.makeText(requireContext(), R.string.draw_inspection_not_ready, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            // Operation: Dashboard → (Zone if needed) → Inspection
             if (com.example.cnv.factory.context.CurrentContext.get().zoneId != null) {
                 nav().navigate(CnvDestination.INSPECTION)
             } else {
@@ -64,17 +63,13 @@ class DrawingDashboardScreen : BaseScreen() {
             Toast.makeText(requireContext(), R.string.setup_csv_drawing_scoped, Toast.LENGTH_SHORT).show()
         }
 
-        val openCommissioning = {
+        view.findViewById<MaterialButton>(R.id.button_open_wizard).setOnClickListener {
             if (!siteVm.enterCommissioningMode()) {
                 Toast.makeText(requireContext(), R.string.ws_operation_blocked, Toast.LENGTH_SHORT).show()
             } else {
-                nav().navigate(CnvDestination.OPEN_DRAWING)
+                nav().navigate(CnvDestination.COMMISSIONING)
             }
         }
-        view.findViewById<MaterialButton>(R.id.button_comm_open_calibration).setOnClickListener { openCommissioning() }
-        view.findViewById<MaterialButton>(R.id.button_comm_open_route).setOnClickListener { openCommissioning() }
-        view.findViewById<MaterialButton>(R.id.button_comm_open_zone).setOnClickListener { openCommissioning() }
-        view.findViewById<MaterialButton>(R.id.button_comm_open_lock).setOnClickListener { openCommissioning() }
 
         view.findViewById<MaterialButton>(R.id.button_drawing_back).setOnClickListener {
             nav().navigateBack()
@@ -97,6 +92,7 @@ class DrawingDashboardScreen : BaseScreen() {
         }
 
         val drawing = FactoryCatalog.get().drawings.current()
+        val snap = CommissioningWizardProgress.snapshot()
         view.findViewById<TextView>(R.id.drawing_dash_title).text = dash.drawingName
         view.findViewById<TextView>(R.id.drawing_dash_file).text = getString(
             R.string.draw_dwg_file,
@@ -115,19 +111,30 @@ class DrawingDashboardScreen : BaseScreen() {
             dash.floorName,
         )
 
-        val inspectionReady = DrawingUiStatus.canStartInspection(
-            dash.dwgReady, dash.calibrationReady, dash.routeReady,
-        )
+        view.findViewById<TextView>(R.id.drawing_dash_wizard_progress).text =
+            getString(
+                R.string.wiz_dashboard_progress,
+                snap.completedCount,
+                CommissioningWizardProgress.TOTAL_STEPS,
+            )
+
+        val inspectionReady = DrawingUiStatus.canStartInspection()
         val statusContainer = view.findViewById<LinearLayout>(R.id.drawing_dash_status_container)
         statusContainer.removeAllViews()
         val rows = listOf(
             getString(R.string.op_status_dwg) to DrawingUiStatus.dwgLabel(requireContext(), dash.dwgReady),
+            getString(R.string.setup_origin) to
+                if (snap.originOk) getString(R.string.draw_status_origin_set)
+                else getString(R.string.draw_status_missing),
             getString(R.string.op_status_calibration) to
                 DrawingUiStatus.calibrationLabel(requireContext(), dash.calibrationReady),
             getString(R.string.op_status_route) to
                 DrawingUiStatus.routeLabel(requireContext(), dash.routeReady),
             getString(R.string.op_zone_list_section) to
                 DrawingUiStatus.zoneLabel(requireContext(), dash.zoneCount),
+            getString(R.string.setup_route_lock) to
+                if (snap.routeLocked) getString(R.string.status_ok_label)
+                else getString(R.string.draw_status_missing),
             getString(R.string.screen_inspection) to
                 DrawingUiStatus.inspectionLabel(requireContext(), inspectionReady),
         )

@@ -2,7 +2,7 @@ package com.example.cnv.ui.navigation
 
 import androidx.fragment.app.Fragment
 import com.example.cnv.ui.screen.building.BuildingScreen
-import com.example.cnv.ui.screen.commissioning.CommissioningScreen
+import com.example.cnv.ui.screen.commissioning.CommissioningWizardScreen
 import com.example.cnv.ui.screen.dashboard.ZoneDashboardScreen
 import com.example.cnv.ui.screen.developer.DeveloperScreen
 import com.example.cnv.ui.screen.drawing.DrawingDashboardScreen
@@ -56,6 +56,6 @@ enum class CnvDestination {
         INSPECTION_HISTORY -> HistoryScreen()
         SETTINGS -> SettingsScreen()
         DEVELOPER -> DeveloperScreen()
-        COMMISSIONING -> CommissioningScreen()
+        COMMISSIONING -> CommissioningWizardScreen()
     }
 }
