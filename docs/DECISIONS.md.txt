@@ -79,3 +79,23 @@ FusionResult는 Position을 포함하지 않는다 (STEP 10 Map Matching).
 ### Status
 
 Accepted
+
+---
+
+## Decision 009
+
+Map Matching은 Route 토폴로지 위에서 FusionEvent만으로 RoutePosition을 계산한다.
+
+### Reason
+
+CAD/DWG와 검사 로직을 분리하고, STEP 10-3 Import 및 STEP 11 Viewer를 독립 확장하기 위함.
+
+RoutePosition / PositionEvent 는 CAD 좌표를 포함하지 않는다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

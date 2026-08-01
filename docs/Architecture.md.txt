@@ -2,164 +2,30 @@
 
 ## Layer
 
-Presentation
-
-↓
-
-ViewModel
-
-↓
-
-Repository
-
-↓
-
-Core
-
-↓
-
-Feature Module (camera / opencv / imu / fusion / …)
-
-↓
-
-Platform
-
----
+Presentation → ViewModel → Repository → Core → Feature (camera / opencv / imu / fusion / map / …) → Platform
 
 ## Core Layer
 
-```
-core/
-  event/      EventBus, Dispatcher, Publisher, Subscriber, *Event (+ FusionEvent)
-  config/     AppConfig, CameraConfig, OpenCVConfig, IMUConfig, …
-  common/     Result, State, Logger, TimeProvider, Dispatchers
-  math/       MathUtil, CoordinateUtil
-  model/      Shared DTOs (e.g. Vec3f)
-```
-
-공통 기능과 Event Driven 통신은 Core에서만 관리한다.
-
----
+`core/event`, `core/config`, `core/common`, `core/math`, `core/model`
 
 ## Fusion Layer (STEP 09)
 
-Fusion은 Event만 Subscribe / FusionEvent만 Publish 한다.
+FusionEvent only. No Position. See [FUSION.md](./FUSION.md)
 
-**FusionResult는 Position을 가지지 않는다.**
+## Map Matching Layer (STEP 10)
 
-상세: [FUSION.md](./FUSION.md)
+Route topology + MapMatchingEngine. FusionEvent → PositionEvent. No CAD coords. See [MAP.md](./MAP.md)
 
----
+## Future
 
-## Future Layers
-
-- STEP 10 Map Matching — Position
+- STEP 10-3 DWG / Route.json via RouteLoader
 - STEP 11 CAD Viewer
 - STEP 12 HeatMap
 
----
-
-## MainActivity
-
-MainActivity는 비즈니스 로직을 구현하지 않는다.
-
-초기화·권한·화면 연결만 수행한다.
-
----
-
-## Package / Feature Rule
-
-| Package | 책임 |
-|---------|------|
-| camera | CameraX only |
-| opencv | Vision / DistanceEstimator only |
-| imu | IMU / Shock only |
-| fusion | Event-based Sensor Fusion |
-| config (app) | CalibrationManager / Repository |
-| ui | Presentation |
-| debug | Debug HUD |
-
-Feature Module끼리는 **직접 참조하지 않는다**.
-
----
-
 ## Dependency Rule
 
-**허용**
-
-```
-UI → ViewModel → Repository → Core → Feature
-```
-
-**금지**
-
-```
-Feature → Feature
-Camera → IMU
-IMU → Camera
-Fusion → Camera / IMU API
-OpenCV → CAD
-CAD → OpenCV
-```
-
-Core EventBus를 통해서만 모듈 간 신호가 흐른다.
-
----
-
-## Event Flow
-
-```
-DistanceEstimator ──publish──► DistanceEvent ──┐
-                                               ├──► FusionEngine ──► FusionEvent
-IMU ShockDetector ──publish──► ShockEvent     ──┘
-CalibrationManager ─publish──► CalibrationEvent
-```
-
-Camera와 IMU는 서로를 호출하지 않는다.
-
----
-
-## Distance Estimator
-
-Interface: DistanceEstimator
-
-구현체: OpticalFlowDistanceEstimator → (future) FusionDistanceEstimator / AIDistanceEstimator
-
-UI는 구현체를 직접 참조하지 않는다.
-
----
-
-## Sensor Fusion
-
-IMU는 Camera를 대체하지 않고 보조한다.
-
-Fusion은 Feature API를 호출하지 않고 Event만 구독한다.
-
----
-
-## Calibration
-
-Calibration 값은 Config + CalibrationManager로 관리한다.
-
-Session 누적 Pixel 정책 (Decision 005).
-
----
-
-## Thread
-
-Camera / OpenCV / IMU / Fusion / UI / Logging 은 독립적으로 동작한다.
-
----
-
-## Performance
-
-GrayScale, ROI, Frame Skip, Object Pool, Bitmap reuse.
-
----
+Feature → Feature 금지. EventBus만 통신.
 
 ## Forbidden
 
-- MainActivity에 OpenCV / IMU / 거리·융합 계산
-- UI에서 OpenCV 직접 호출
-- Feature 간 직접 의존
-- FusionResult에 Position 포함
+MainActivity 비즈니스 로직, Fusion/RoutePosition에 CAD Position, 본 STEP DWG/CAD/HeatMap 구현

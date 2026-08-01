@@ -24,6 +24,8 @@ core/event/
   SystemEvent
 ```
 
+`PositionEvent` 는 `map` 패키지에 두며 `BaseEvent` 를 구현한다 (Route 토폴로지 전용).
+
 모든 Event는 **immutable data class / interface** 이다.
 
 ---
@@ -36,6 +38,7 @@ core/event/
 | IMUProcessor / ShockDetector | ShockEvent |
 | CalibrationManager | CalibrationEvent |
 | FusionEngine | FusionEvent |
+| MapMatchingEngine | PositionEvent |
 | App / Features (optional) | SystemEvent |
 
 발행은 `EventDispatcher.dispatch` / `EventPublisher.publish` 만 사용한다.
@@ -47,7 +50,8 @@ core/event/
 | Subscriber (current / future) | Events |
 |-------------------------------|--------|
 | Sensor Fusion (STEP 09) | DistanceEvent, ShockEvent, CalibrationEvent |
-| Map Matching / CAD / HeatMap (future) | FusionEvent |
+| Map Matching (STEP 10) | FusionEvent |
+| CAD / HeatMap (future) | PositionEvent (+ FusionEvent) |
 | Debug tools | any |
 
 `EventSubscriber.subscribe(Class, listener)` 로 등록한다.
@@ -70,8 +74,8 @@ Camera Frame
     → OpenCV DistanceEstimator
     → DistanceEvent ─────────────────┐
                                      ├──► FusionEngine → FusionEvent
-IMU samples                          │
-    → GravityFilter / ShockDetector  │
+IMU samples                          │                      ↓
+    → GravityFilter / ShockDetector  │              MapMatchingEngine → PositionEvent
     → ShockEvent ────────────────────┘
 Calibration session
     → CalibrationEvent ──► Fusion calibration context
@@ -81,7 +85,8 @@ Calibration session
 
 ## Future Expansion
 
-- Map Matching / CAD / CSV / AI modules subscribe to FusionEvent only
+- STEP 10-3 RouteLoader (JSON/DWG-derived)
+- CAD / HeatMap subscribe to PositionEvent
 - Replace `CoreEventModule` with Hilt/Koin providing `EventBus`
 
 ---
