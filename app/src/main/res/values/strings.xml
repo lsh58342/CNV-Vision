@@ -386,6 +386,31 @@
     <string name="ws_tab_heatmap">HeatMap</string>
     <string name="ws_tab_history">History</string>
 
+    <!-- Drawing State (Phase 11) -->
+    <string name="draw_state_not_configured">NOT_CONFIGURED</string>
+    <string name="draw_state_dwg_imported">DWG_IMPORTED</string>
+    <string name="draw_state_origin_set">ORIGIN_SET</string>
+    <string name="draw_state_calibrated">CALIBRATED</string>
+    <string name="draw_state_route_created">ROUTE_CREATED</string>
+    <string name="draw_state_zone_created">ZONE_CREATED</string>
+    <string name="draw_state_validated">VALIDATED</string>
+    <string name="draw_state_locked">LOCKED</string>
+    <string name="draw_state_ready_for_inspection">READY FOR INSPECTION</string>
+    <string name="draw_block_dwg">DWG가 등록되지 않았습니다.</string>
+    <string name="draw_block_origin">Origin이 지정되지 않았습니다.</string>
+    <string name="draw_block_calibration">Calibration이 완료되지 않았습니다.</string>
+    <string name="draw_block_route">Route가 생성되지 않았습니다.</string>
+    <string name="draw_block_zone">Zone이 생성되지 않았습니다.</string>
+    <string name="draw_block_validation">Validation이 완료되지 않았습니다.</string>
+    <string name="draw_block_lock">Route Lock이 완료되지 않았습니다.</string>
+    <string name="draw_card_recent_inspection">최근 Inspection: %1$s</string>
+    <string name="draw_card_route_locked">Route Lock: Locked</string>
+    <string name="draw_card_route_unlocked">Route Lock: Unlocked</string>
+    <string name="draw_overview_calibration_complete">Calibration Complete</string>
+    <string name="draw_overview_route_locked">Route Locked</string>
+    <string name="draw_overview_needs_lock">Route Lock Required</string>
+    <string name="draw_overview_go_commissioning">Commissioning 탭에서 다음 단계를 진행하세요.</string>
+
     <string name="ws_confirm_pick">Confirm Pick</string>
     <string name="ws_save">Save</string>
     <string name="ws_operation_blocked">Open Drawing is Commissioning only — Operation Mode cannot access it</string>

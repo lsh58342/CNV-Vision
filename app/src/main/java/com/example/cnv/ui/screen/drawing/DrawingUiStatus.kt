@@ -6,20 +6,19 @@ import com.example.cnv.factory.model.Drawing
 import com.example.cnv.ui.screen.commissioning.CommissioningWizardProgress
 
 /**
- * UI-only Drawing status labels for Floor cards / Workspace Overview.
+ * UI-only Drawing status helpers for Floor cards / Workspace Overview.
  * Does not change Repository / ViewModel / Core logic.
  */
 object DrawingUiStatus {
 
-    fun summaryLabel(context: Context, drawing: Drawing, zoneCount: Int = 0): String = when {
-        !drawing.dwgRegistered -> context.getString(R.string.draw_status_dwg_required)
-        !drawing.originSet -> context.getString(R.string.draw_status_origin_required)
-        !drawing.calibrationReady -> context.getString(R.string.draw_status_calibration_required)
-        drawing.routeId == null -> context.getString(R.string.draw_status_route_required)
-        zoneCount == 0 -> context.getString(R.string.draw_status_zone_required)
-        !drawing.routeLocked -> context.getString(R.string.draw_status_ready)
-        else -> context.getString(R.string.draw_status_inspection_available)
-    }
+    fun stateOf(drawing: Drawing?, zoneCount: Int = 0): DrawingState =
+        DrawingState.resolve(drawing, zoneCount = zoneCount)
+
+    fun stateOfSnapshot(snap: CommissioningWizardProgress.Snapshot = CommissioningWizardProgress.snapshot()): DrawingState =
+        DrawingState.resolveFromSnapshot(snap)
+
+    fun summaryLabel(context: Context, drawing: Drawing, zoneCount: Int = 0): String =
+        stateOf(drawing, zoneCount).label(context)
 
     fun dwgLabel(context: Context, ready: Boolean): String =
         if (ready) context.getString(R.string.draw_status_dwg_registered)
@@ -41,23 +40,32 @@ object DrawingUiStatus {
         if (inspectionReady) context.getString(R.string.draw_status_inspection_ready)
         else context.getString(R.string.draw_status_not_ready)
 
-    /**
-     * Phase 9: Inspection requires full Wizard completion including Route Lock.
-     */
+    fun routeLockLabel(context: Context, locked: Boolean): String =
+        if (locked) context.getString(R.string.draw_card_route_locked)
+        else context.getString(R.string.draw_card_route_unlocked)
+
+    /** Inspection only when READY_FOR_INSPECTION (Route Lock complete). */
     fun canStartInspection(): Boolean =
-        CommissioningWizardProgress.canStartInspection(CommissioningWizardProgress.snapshot())
+        stateOfSnapshot().canStartInspection()
 
-    @Deprecated("Use canStartInspection() Phase 9 gate")
-    fun canStartInspection(dwgReady: Boolean, calibrationReady: Boolean, routeReady: Boolean): Boolean =
-        canStartInspection()
+    fun inspectionBlockReason(context: Context): String? {
+        val res = stateOfSnapshot().inspectionBlockReasonRes() ?: return null
+        return context.getString(res)
+    }
 
-    fun commissioningComplete(
-        dwgReady: Boolean,
-        calibrationReady: Boolean,
-        routeReady: Boolean,
-        zoneCount: Int,
-        routeLocked: Boolean,
-    ): Boolean = dwgReady && calibrationReady && routeReady && zoneCount > 0 && routeLocked
+    fun overviewHighlights(context: Context, snap: CommissioningWizardProgress.Snapshot): List<String> {
+        val state = DrawingState.resolveFromSnapshot(snap)
+        val lines = mutableListOf(state.label(context))
+        if (snap.calibrationOk) {
+            lines.add(context.getString(R.string.draw_overview_calibration_complete))
+        }
+        if (snap.routeLocked) {
+            lines.add(context.getString(R.string.draw_overview_route_locked))
+        } else if (snap.validationOk) {
+            lines.add(context.getString(R.string.draw_overview_needs_lock))
+        }
+        return lines
+    }
 
     fun fileNameFromUri(uri: String?): String {
         if (uri.isNullOrBlank()) return "—"

@@ -19,6 +19,7 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
+import com.example.cnv.ui.screen.drawing.DrawingState
 import com.example.cnv.ui.screen.drawing.DrawingUiStatus
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
@@ -234,17 +235,17 @@ class FloorScreen : BaseScreen() {
         val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         items.forEach { item ->
             val zoneCount = catalog.zones.forDrawing(item.id).size
-            val last = catalog.inspections.latestForDrawing(item.id)?.sessionId ?: "—"
+            val state = DrawingState.resolve(item, zoneCount)
+            val lastResult = catalog.inspections.latestForDrawing(item.id)
+            val lastDate = lastResult?.let { dateFmt.format(Date(it.endTimeMs)) } ?: "—"
             drawingListContainer.addView(
                 UiComponents.inflateDrawingCard(
                     parent = drawingListContainer,
                     name = item.name,
-                    status = DrawingUiStatus.summaryLabel(requireContext(), item, zoneCount),
-                    recentInspection = getString(R.string.op_zone_last_inspection, last),
-                    updatedAt = getString(
-                        R.string.draw_card_updated,
-                        dateFmt.format(Date(item.updatedAtMs)),
-                    ),
+                    status = state.label(requireContext()),
+                    statusColor = state.color(requireContext()),
+                    recentInspection = getString(R.string.draw_card_recent_inspection, lastDate),
+                    routeLock = DrawingUiStatus.routeLockLabel(requireContext(), item.routeLocked),
                     selected = item.id == selectedId,
                     onClick = {
                         siteVm.selectDrawing(item.id)

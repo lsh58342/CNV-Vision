@@ -130,8 +130,13 @@ class DrawingWorkspaceScreen : BaseScreen() {
     }
 
     private fun openInspection() {
-        if (!DrawingUiStatus.canStartInspection()) {
-            Toast.makeText(requireContext(), R.string.draw_inspection_not_ready, Toast.LENGTH_SHORT).show()
+        val reason = DrawingUiStatus.inspectionBlockReason(requireContext())
+        if (reason != null || !DrawingUiStatus.canStartInspection()) {
+            Toast.makeText(
+                requireContext(),
+                reason ?: getString(R.string.draw_inspection_not_ready),
+                Toast.LENGTH_SHORT,
+            ).show()
             showOverviewTab()
             return
         }
@@ -146,8 +151,20 @@ class DrawingWorkspaceScreen : BaseScreen() {
     private fun bindOverview(content: View) {
         val snap = CommissioningWizardProgress.snapshot()
         val drawing = snap.drawing
+        val state = DrawingState.resolveFromSnapshot(snap)
+
         content.findViewById<TextView>(R.id.overview_drawing_name).text =
             drawing?.name ?: "—"
+
+        val headline = content.findViewById<TextView>(R.id.overview_state_headline)
+        headline.text = state.label(requireContext())
+        headline.setTextColor(state.color(requireContext()))
+
+        val highlights = DrawingUiStatus.overviewHighlights(requireContext(), snap)
+        content.findViewById<TextView>(R.id.overview_state_detail).text =
+            highlights.drop(1).joinToString("\n").ifBlank {
+                getString(R.string.draw_overview_go_commissioning)
+            }
 
         content.findViewById<TextView>(R.id.overview_wizard_progress).text =
             getString(
@@ -156,11 +173,12 @@ class DrawingWorkspaceScreen : BaseScreen() {
                 CommissioningWizardProgress.TOTAL_STEPS,
             )
 
-        val last = drawing?.let {
-            FactoryCatalog.get().inspections.latestForDrawing(it.id)?.sessionId
+        val lastResult = drawing?.let { FactoryCatalog.get().inspections.latestForDrawing(it.id) }
+        val lastDate = lastResult?.let {
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(it.endTimeMs))
         } ?: "—"
         content.findViewById<TextView>(R.id.overview_recent_inspection).text =
-            getString(R.string.op_zone_last_inspection, last)
+            getString(R.string.draw_card_recent_inspection, lastDate)
 
         val updated = drawing?.updatedAtMs?.let {
             SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(it))
@@ -170,7 +188,7 @@ class DrawingWorkspaceScreen : BaseScreen() {
 
         val statusContainer = content.findViewById<LinearLayout>(R.id.overview_status_container)
         statusContainer.removeAllViews()
-        val inspectionReady = DrawingUiStatus.canStartInspection()
+        val inspectionReady = state.canStartInspection()
         val rows = listOf(
             getString(R.string.op_status_dwg) to DrawingUiStatus.dwgLabel(requireContext(), snap.dwgOk),
             getString(R.string.setup_origin) to
@@ -183,11 +201,11 @@ class DrawingWorkspaceScreen : BaseScreen() {
             getString(R.string.op_zone_list_section) to
                 DrawingUiStatus.zoneLabel(requireContext(), snap.zoneCount),
             getString(R.string.setup_route_lock) to
-                if (snap.routeLocked) getString(R.string.status_ok_label)
-                else getString(R.string.draw_status_missing),
+                DrawingUiStatus.routeLockLabel(requireContext(), snap.routeLocked),
         )
         rows.forEach { (label, value) ->
-            val ok = !value.equals(getString(R.string.draw_status_missing), ignoreCase = true)
+            val ok = !value.equals(getString(R.string.draw_status_missing), ignoreCase = true) &&
+                !value.equals(getString(R.string.draw_card_route_unlocked), ignoreCase = true)
             statusContainer.addView(
                 UiComponents.inflateStatusCard(
                     statusContainer,
@@ -199,8 +217,16 @@ class DrawingWorkspaceScreen : BaseScreen() {
         }
 
         val inspectionBtn = content.findViewById<MaterialButton>(R.id.button_overview_inspection)
+        val reasonView = content.findViewById<TextView>(R.id.overview_inspection_reason)
         inspectionBtn.isEnabled = inspectionReady
         inspectionBtn.alpha = if (inspectionReady) 1f else 0.45f
+        val blockReason = DrawingUiStatus.inspectionBlockReason(requireContext())
+        if (blockReason != null) {
+            reasonView.visibility = View.VISIBLE
+            reasonView.text = blockReason
+        } else {
+            reasonView.visibility = View.GONE
+        }
         inspectionBtn.setOnClickListener { openInspection() }
 
         content.findViewById<MaterialButton>(R.id.button_overview_delete).setOnClickListener {

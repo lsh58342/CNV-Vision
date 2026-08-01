@@ -15,4 +15,12 @@
     <color name="cnv_status_ok">#FF66BB6A</color>
     <color name="cnv_status_warn">#FFFFA726</color>
     <color name="cnv_status_missing">#FFEF5350</color>
+
+    <!-- Drawing State colors (Phase 11) -->
+    <color name="cnv_state_gray">#FF9E9E9E</color>
+    <color name="cnv_state_blue">#FF42A5F5</color>
+    <color name="cnv_state_yellow">#FFFFEE58</color>
+    <color name="cnv_state_orange">#FFFF9800</color>
+    <color name="cnv_state_green">#FF66BB6A</color>
+    <color name="cnv_state_green_dark">#FF2E7D32</color>
 </resources>
