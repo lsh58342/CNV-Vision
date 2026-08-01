@@ -1,7 +1,5 @@
 # CNV Inspector Architecture
 
-STEP 10-2: RouteCandidate → Route + CoordinateMapper → RouteRepository.
+STEP 10-3: RouteValidator (read-only) + RouteDebugViewer (black canvas, no CAD).
 
-See [ROUTE_GENERATOR.md](./ROUTE_GENERATOR.md)
-
-Rules: RouteGenerator only writes RouteRepository; Optimizer = normalization only; no CAD drawing.
+See [ROUTE_VALIDATION.md](./ROUTE_VALIDATION.md)

@@ -139,3 +139,23 @@ CoordinateMapper는 CAD를 참조하지 않으며 향후 CAD Viewer가 재사용
 ### Status
 
 Accepted
+
+---
+
+## Decision 012
+
+Route Validation은 Read Only이며 Route를 자동 수정하지 않는다.
+
+### Reason
+
+Map Matching 전 품질을 사용자에게 보여 주되, Validation이 토폴로지를 임의로 바꾸지 않도록 하기 위함.
+
+Debug Viewer는 CAD 없이 선분으로만 표시한다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

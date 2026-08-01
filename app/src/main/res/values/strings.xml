@@ -2,6 +2,8 @@
     <string name="app_name">CNV</string>
     <string name="opencv_gray_preview">OpenCV grayscale preview</string>
     <string name="open_calibration">Calibration</string>
+    <string name="route_zoom_in">Zoom+</string>
+    <string name="route_zoom_out">Zoom-</string>
     <string name="calibration_title">Calibration</string>
     <string name="calibration_session_active">Session: ACTIVE — move device, then enter real distance</string>
     <string name="calibration_session_inactive">Session: inactive — tap Start Calibration</string>

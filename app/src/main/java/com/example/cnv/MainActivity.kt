@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
@@ -15,6 +16,8 @@ import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
 import com.example.cnv.debug.MapDebugHud
+import com.example.cnv.debug.RouteDebugController
+import com.example.cnv.debug.RouteDebugView
 import com.example.cnv.debug.RouteGenDebugHud
 import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.dwg.StubDWGReader
@@ -35,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mapMatchingEngine: MapMatchingEngine
     private lateinit var dwgImporter: DWGImporter
     private lateinit var routeGenerator: RouteGenerator
+    private lateinit var routeDebugController: RouteDebugController
     private lateinit var imuDebugHud: ImuDebugHud
     private lateinit var fusionDebugHud: FusionDebugHud
     private lateinit var mapDebugHud: MapDebugHud
@@ -95,6 +99,18 @@ class MainActivity : AppCompatActivity() {
             routeGenerator = routeGenerator,
         )
 
+        val routeDebugView = findViewById<RouteDebugView>(R.id.route_debug_view)
+        routeDebugController = RouteDebugController(
+            routeRepository = routeRepository,
+            routeDebugView = routeDebugView,
+            statsTextView = findViewById(R.id.route_validation_hud),
+            issuesTextView = findViewById(R.id.route_issues_hud),
+            mapMatchingEngine = mapMatchingEngine,
+            mapperProvider = { routeGenerator.latestResult()?.mapper },
+        )
+        findViewById<Button>(R.id.button_route_zoom_in).setOnClickListener { routeDebugView.zoomIn() }
+        findViewById<Button>(R.id.button_route_zoom_out).setOnClickListener { routeDebugView.zoomOut() }
+
         findViewById<Button>(R.id.button_open_calibration).setOnClickListener {
             startActivity(Intent(this, CalibrationActivity::class.java))
         }
@@ -110,9 +126,11 @@ class MainActivity : AppCompatActivity() {
         mapDebugHud.start()
         dwgDebugHud.start()
         routeGenDebugHud.start()
+        routeDebugController.start()
     }
 
     override fun onStop() {
+        routeDebugController.stop()
         routeGenDebugHud.stop()
         dwgDebugHud.stop()
         mapDebugHud.stop()
