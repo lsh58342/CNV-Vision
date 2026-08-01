@@ -1,44 +1,59 @@
 package com.example.cnv
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.cnv.factory.context.CurrentContext
-import com.example.cnv.ui.navigation.AppNavigator
+import com.example.cnv.ui.navigation.CnvDestination
+import com.example.cnv.ui.navigation.NavHost
+import com.example.cnv.ui.navigation.ScreenNavigator
 
 /**
- * Inspection UI shell only. Feature wiring lives in [MainCompositionRoot].
- * Launched from Zone Dashboard with optional zone id (no algorithm changes).
+ * Navigation Host only — no feature / algorithm wiring.
+ * Feature CompositionRoot is intentionally not started in UI-3 skeleton.
  */
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), NavHost {
 
-    private lateinit var compositionRoot: MainCompositionRoot
+    private lateinit var navigator: ScreenNavigator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        setContentView(R.layout.activity_nav_host)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.nav_host_container)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        intent.getStringExtra(AppNavigator.EXTRA_ZONE_ID)?.let { zoneId ->
-            CurrentContext.get().selectZone(zoneId)
+        navigator = ScreenNavigator(this)
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (!navigator.navigateBack()) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
+            },
+        )
+
+        if (savedInstanceState == null) {
+            navigator.navigate(CnvDestination.SPLASH, addToBackStack = false)
         }
-        compositionRoot = MainCompositionRoot(this)
-        compositionRoot.bind()
     }
 
-    override fun onStart() {
-        super.onStart()
-        compositionRoot.onStart()
+    override fun navigate(to: CnvDestination, addToBackStack: Boolean) {
+        navigator.navigate(to, addToBackStack)
     }
 
-    override fun onStop() {
-        compositionRoot.onStop()
-        super.onStop()
+    override fun navigateBack(): Boolean = navigator.navigateBack()
+
+    override fun navigateClearTo(to: CnvDestination) {
+        navigator.navigateClearTo(to)
     }
 }

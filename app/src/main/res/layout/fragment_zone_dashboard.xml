@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/zone_dash_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/zone_dash_body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="monospace"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/skeleton_hint"
+            android:textSize="11sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_start_inspection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/zone_dash_start" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_heatmap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/screen_heatmap" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_history"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/screen_history" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_csv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/zone_dash_csv" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_settings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_settings" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_zone_back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nav_back" />
+    </LinearLayout>
+</ScrollView>

@@ -94,4 +94,27 @@
     <string name="settings_role_admin">Role: Admin</string>
     <string name="settings_role_developer">Role: Developer</string>
     <string name="settings_open_commissioning">Open Commissioning</string>
+
+    <string name="splash_title">CNV</string>
+    <string name="splash_initializing">Initializing…</string>
+    <string name="splash_restoring">Restoring Current Factory…</string>
+    <string name="skeleton_hint">UI-3 Navigation Skeleton — feature wiring later</string>
+    <string name="skeleton_feature_later">Feature wiring comes in a later STEP</string>
+    <string name="screen_inspection">Inspection</string>
+    <string name="screen_result">Inspection Result</string>
+    <string name="screen_heatmap">HeatMap Viewer</string>
+    <string name="screen_history">Inspection History</string>
+    <string name="screen_developer">Developer</string>
+    <string name="inspection_preview_placeholder">Camera Preview (skeleton)</string>
+    <string name="inspection_status_skeleton">Tracking: —\nDistance: —\nShock: —\nElapsed: —</string>
+    <string name="inspection_to_result_skeleton">Go to Result (skeleton)</string>
+    <string name="result_summary_skeleton">Summary\nDistance: —\nDuration: —\nCoverage: —\nShock Count: —</string>
+    <string name="heatmap_cad_placeholder">CAD area ≥ 80% (skeleton)</string>
+    <string name="heatmap_overlay_skeleton">Overlay · Timeline · Statistics · Session · Filter</string>
+    <string name="history_skeleton">Inspection list skeleton\n(date / duration / shock / coverage)</string>
+    <string name="developer_skeleton">FPS\nTracking\nFusion\nRoute\nLogs\nDebug HUD placeholders</string>
+    <string name="settings_camera_skeleton">Camera</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_msg">CNV Inspection Management — UI-3 Navigation Skeleton</string>
+    <string name="comm_step_route_lock">5. Route Lock</string>
 </resources>
