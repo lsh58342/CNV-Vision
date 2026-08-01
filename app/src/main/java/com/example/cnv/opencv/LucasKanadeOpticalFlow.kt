@@ -24,6 +24,9 @@ class LucasKanadeOpticalFlow {
 
     /**
      * Tracks previous points into [gray], then updates previous state from [currentKeypoints].
+     *
+     * TODO: Apply display/sensor rotation so flow matches UI when mount orientation changes.
+     * Current design assumes a fixed phone mount orientation.
      */
     fun track(gray: Mat, currentKeypoints: Array<KeyPoint>): TrackResult {
         val pairs = mutableListOf<FlowPair>()

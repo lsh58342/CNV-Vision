@@ -1,0 +1,39 @@
+# DECISIONS
+
+## Decision 005
+
+Calibration은 Frame Pixel이 아니라 Session 누적 Pixel을 사용한다.
+
+### Reason
+
+Frame Pixel은 실제 이동거리와 대응되지 않는다.
+
+Session Pixel은 실제 이동거리와 정확히 대응된다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted
+
+---
+
+## Decision 006
+
+Camera와 IMU는 직접 통신하지 않는다.
+
+### Reason
+
+결합도를 낮추고 Sensor Fusion 확장성을 확보하기 위함.
+
+모든 모듈 간 통신은 EventBus를 통해서만 수행한다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

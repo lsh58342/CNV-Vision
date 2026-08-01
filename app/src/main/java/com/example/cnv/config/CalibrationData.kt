@@ -5,6 +5,8 @@ package com.example.cnv.config
  */
 data class CalibrationData(
     val mmPerPixel: Float,
+    val totalObservedPixel: Float,
+    val calibratedDistanceMm: Float,
     val calibratedAt: Long,
     val version: Int = CURRENT_VERSION,
 ) {

@@ -472,3 +472,36 @@ Median 기반으로 계산한다.
 Outlier 제거 후 거리 계산을 수행한다.
 
 거리 계산은 반드시 Camera + Calibration 기준으로 수행한다.
+
+
+# Calibration Policy
+
+Calibration은 Session 기반으로 수행한다.
+
+Frame Pixel은 사용하지 않는다.
+
+CalibrationManager가 Pixel 누적을 관리한다.
+
+DistanceEstimator는 Calibration 값을 계산하지 않는다.
+
+CalibrationManager에서 조회만 한다.
+
+흐름
+
+Calibration Start
+
+↓
+
+Pixel Distance 누적 (세션)
+
+↓
+
+사용자가 실제 이동거리(mm) 입력
+
+↓
+
+mmPerPixel = realDistanceMm / sessionPixel
+
+↓
+
+Calibration 저장

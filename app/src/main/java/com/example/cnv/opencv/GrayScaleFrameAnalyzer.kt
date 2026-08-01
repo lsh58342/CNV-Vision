@@ -9,6 +9,7 @@ import org.opencv.core.Mat
 
 /**
  * CameraX analyzer: ImageProxy → gray → DistanceEstimator pipeline → Bitmap.
+ * Uses a double-buffer Bitmap pool to avoid allocating every frame.
  */
 class GrayScaleFrameAnalyzer(
     private val distanceEstimator: DistanceEstimator,
@@ -17,39 +18,67 @@ class GrayScaleFrameAnalyzer(
 
     private val orbFeatureDetector = OrbFeatureDetector()
 
+    private var writeBitmap: Bitmap? = null
+    private var displayBitmap: Bitmap? = null
+
     override fun analyze(imageProxy: ImageProxy) {
+        var grayMat: Mat? = null
+        var overlayMat: Mat? = null
         try {
-            val grayMat: Mat = ImageProxyMatConverter.toGrayMat(imageProxy)
-            val keypoints = orbFeatureDetector.detect(grayMat)
-            val (overlayMat, distanceResult) = distanceEstimator.estimate(grayMat, keypoints)
-            grayMat.release()
+            grayMat = ImageProxyMatConverter.toGrayMat(imageProxy)
+            val keypoints = orbFeatureDetector.detect(grayMat!!)
+            val estimate = distanceEstimator.estimate(grayMat!!, keypoints)
+            overlayMat = estimate.first
+            val distanceResult = estimate.second
 
-            val bitmap = Bitmap.createBitmap(
-                overlayMat.cols(),
-                overlayMat.rows(),
-                Bitmap.Config.ARGB_8888,
-            )
-            Utils.matToBitmap(overlayMat, bitmap)
-            overlayMat.release()
+            val width = overlayMat!!.cols()
+            val height = overlayMat!!.rows()
+            val target = obtainWriteBitmap(width, height)
+            Utils.matToBitmap(overlayMat, target)
 
+            // TODO: Full rotation-aware processing for non-fixed mounts (STEP later).
+            // Assumes the device remains in a fixed mount orientation for production use.
             val rotationDegrees = imageProxy.imageInfo.rotationDegrees
             val output = if (rotationDegrees == 0) {
-                bitmap
+                swapBuffers(target)
             } else {
-                rotateBitmap(bitmap, rotationDegrees.toFloat()).also {
-                    if (it !== bitmap) {
-                        bitmap.recycle()
-                    }
-                }
+                rotateIntoDisplayBuffer(target, rotationDegrees.toFloat())
             }
             onProcessedFrame(output, distanceResult)
         } finally {
+            grayMat?.release()
+            overlayMat?.release()
             imageProxy.close()
         }
     }
 
-    private fun rotateBitmap(source: Bitmap, degrees: Float): Bitmap {
+    private fun obtainWriteBitmap(width: Int, height: Int): Bitmap {
+        val existing = writeBitmap
+        if (existing != null &&
+            !existing.isRecycled &&
+            existing.width == width &&
+            existing.height == height
+        ) {
+            return existing
+        }
+        existing?.recycle()
+        val created = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        writeBitmap = created
+        return created
+    }
+
+    private fun swapBuffers(written: Bitmap): Bitmap {
+        val previousDisplay = displayBitmap
+        displayBitmap = written
+        writeBitmap = previousDisplay
+        return written
+    }
+
+    private fun rotateIntoDisplayBuffer(source: Bitmap, degrees: Float): Bitmap {
         val matrix = Matrix().apply { postRotate(degrees) }
-        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+        val rotated = Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+        displayBitmap?.recycle()
+        displayBitmap = rotated
+        return rotated
     }
 }

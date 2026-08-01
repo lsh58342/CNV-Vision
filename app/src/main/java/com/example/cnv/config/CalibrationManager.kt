@@ -1,39 +1,30 @@
 package com.example.cnv.config
 
 import android.content.Context
+import com.example.cnv.event.CalibrationEvent
+import com.example.cnv.event.EventDispatcher
 
 /**
  * App-wide calibration authority for mmPerPixel.
- * DistanceEstimator must only read via this manager — never compute scale itself.
+ * DistanceEstimator must only read [getMmPerPixel] / [isCalibrated] — never compute scale.
+ * Session pixel accumulation is owned exclusively by this manager.
+ * Publishes [CalibrationEvent] on session lifecycle — never references IMU/Camera.
  */
 class CalibrationManager private constructor(
     private val repository: CalibrationRepository,
+    private val eventDispatcher: EventDispatcher = EventDispatcher(),
 ) {
 
     @Volatile
     private var cached: CalibrationData? = repository.loadCalibration()
 
     @Volatile
-    private var lastObservedPixelDistance: Float = 0f
+    private var sessionActive: Boolean = false
+
+    @Volatile
+    private var sessionAccumulatedPixel: Float = 0f
 
     fun getMmPerPixel(): Float = cached?.mmPerPixel ?: 0f
-
-    fun setMmPerPixel(mmPerPixel: Float) {
-        require(mmPerPixel > 0f) { "mmPerPixel must be positive" }
-        val data = CalibrationData(
-            mmPerPixel = mmPerPixel,
-            calibratedAt = System.currentTimeMillis(),
-            version = CalibrationData.CURRENT_VERSION,
-        )
-        repository.saveCalibration(data)
-        cached = data
-    }
-
-    fun calculateMmPerPixel(realDistanceMm: Float, pixelDistance: Float): Float {
-        require(realDistanceMm > 0f) { "realDistanceMm must be positive" }
-        require(pixelDistance > 0f) { "pixelDistance must be positive" }
-        return realDistanceMm / pixelDistance
-    }
 
     fun isCalibrated(): Boolean {
         val value = cached?.mmPerPixel ?: return false
@@ -42,25 +33,88 @@ class CalibrationManager private constructor(
 
     fun getCalibrationData(): CalibrationData? = cached
 
+    fun isCalibrationSessionActive(): Boolean = sessionActive
+
+    fun getSessionAccumulatedPixel(): Float = sessionAccumulatedPixel
+
+    fun startCalibration() {
+        sessionActive = true
+        sessionAccumulatedPixel = 0f
+        publish(CalibrationEvent.Type.STARTED)
+    }
+
+    /**
+     * Adds one frame's median pixel motion while a calibration session is active.
+     * No-op when session is inactive.
+     */
+    fun addObservedPixelDistance(pixel: Float) {
+        if (!sessionActive) {
+            return
+        }
+        if (pixel > 0f) {
+            sessionAccumulatedPixel += pixel
+        }
+    }
+
+    /**
+     * Ends the session and persists mmPerPixel = realDistanceMm / sessionAccumulatedPixel.
+     */
+    fun finishCalibration(realDistanceMm: Float): Boolean {
+        if (!sessionActive) {
+            return false
+        }
+        if (realDistanceMm <= 0f || sessionAccumulatedPixel <= 0f) {
+            return false
+        }
+        val mmPerPixel = realDistanceMm / sessionAccumulatedPixel
+        val data = CalibrationData(
+            mmPerPixel = mmPerPixel,
+            totalObservedPixel = sessionAccumulatedPixel,
+            calibratedDistanceMm = realDistanceMm,
+            calibratedAt = System.currentTimeMillis(),
+            version = CalibrationData.CURRENT_VERSION,
+        )
+        repository.saveCalibration(data)
+        cached = data
+        sessionActive = false
+        sessionAccumulatedPixel = 0f
+        publish(CalibrationEvent.Type.FINISHED, data)
+        return true
+    }
+
+    fun cancelCalibration() {
+        sessionActive = false
+        sessionAccumulatedPixel = 0f
+        publish(CalibrationEvent.Type.CANCELLED)
+    }
+
     fun resetCalibration() {
+        cancelCalibrationWithoutEvent()
         repository.resetCalibration()
         cached = null
+        publish(CalibrationEvent.Type.RESET)
     }
 
     fun reload() {
         cached = repository.loadCalibration()
     }
 
-    /**
-     * Latest median/consensus pixel motion observed by the distance pipeline.
-     */
-    fun updateObservedPixelDistance(pixelDistance: Float) {
-        if (pixelDistance >= 0f) {
-            lastObservedPixelDistance = pixelDistance
-        }
+    private fun cancelCalibrationWithoutEvent() {
+        sessionActive = false
+        sessionAccumulatedPixel = 0f
     }
 
-    fun getLastPixelDistance(): Float = lastObservedPixelDistance
+    private fun publish(type: CalibrationEvent.Type, data: CalibrationData? = cached) {
+        eventDispatcher.dispatch(
+            CalibrationEvent(
+                timestampNs = System.nanoTime(),
+                type = type,
+                mmPerPixel = data?.mmPerPixel ?: 0f,
+                totalObservedPixel = data?.totalObservedPixel ?: sessionAccumulatedPixel,
+                calibratedDistanceMm = data?.calibratedDistanceMm ?: 0f,
+            ),
+        )
+    }
 
     companion object {
         @Volatile

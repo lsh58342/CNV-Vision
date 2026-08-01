@@ -3,10 +3,14 @@
     <string name="opencv_gray_preview">OpenCV grayscale preview</string>
     <string name="open_calibration">Calibration</string>
     <string name="calibration_title">Calibration</string>
-    <string name="calibration_pixel_distance_value">Pixel Distance: %.2f px</string>
+    <string name="calibration_session_active">Session: ACTIVE — move device, then enter real distance</string>
+    <string name="calibration_session_inactive">Session: inactive — tap Start Calibration</string>
+    <string name="calibration_session_pixel_value">Session Pixel Distance: %.2f px</string>
     <string name="calibration_mm_per_pixel_value">Current mmPerPixel: %.4f</string>
     <string name="calibration_real_distance_label">Real Distance (mm)</string>
-    <string name="calibration_real_distance_hint">Enter measured travel distance in mm</string>
-    <string name="calibration_save">Save Calibration</string>
-    <string name="calibration_reset">Reset Calibration</string>
+    <string name="calibration_real_distance_hint">Enter measured travel distance for this session</string>
+    <string name="calibration_start">Start Calibration</string>
+    <string name="calibration_finish">Finish Calibration</string>
+    <string name="calibration_cancel">Cancel Calibration</string>
+    <string name="calibration_reset">Reset Saved Calibration</string>
 </resources>

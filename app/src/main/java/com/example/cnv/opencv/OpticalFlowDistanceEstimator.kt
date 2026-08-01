@@ -1,19 +1,22 @@
 package com.example.cnv.opencv
 
 import com.example.cnv.config.CalibrationManager
+import com.example.cnv.event.DistanceEvent
+import com.example.cnv.event.EventDispatcher
 import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
-import kotlin.math.sqrt
 
 /**
  * Camera + OpenCV distance pipeline:
- * ORB seed → LK → RANSAC → Median → CalibrationManager scale → Δd → Accumulated.
+ * ORB → LK → RANSAC → Median → CalibrationManager.getMmPerPixel() → Δd → Accumulated.
+ * Publishes [DistanceEvent] only — never references IMU.
  */
 class OpticalFlowDistanceEstimator(
     private val calibrationManager: CalibrationManager,
+    private val eventDispatcher: EventDispatcher = EventDispatcher(),
 ) : DistanceEstimator {
 
     private val opticalFlow = LucasKanadeOpticalFlow()
@@ -29,23 +32,23 @@ class OpticalFlowDistanceEstimator(
         val overlay = Mat()
         Imgproc.cvtColor(gray, overlay, Imgproc.COLOR_GRAY2RGBA)
 
+        // TODO: Align LK coordinates with display rotation when mount orientation is not fixed.
+        // Currently assumes the phone is always mounted in the same orientation (sensor frame).
         val trackResult = opticalFlow.track(gray, currentKeypoints)
         val trackedPairs = trackResult.pairs
 
         if (trackedPairs.isEmpty()) {
             drawKeypoints(overlay, currentKeypoints)
             val empty = DistanceEstimateResult(
-                pixelDistance = 0f,
                 medianPixel = 0f,
                 distanceMm = 0f,
                 accumulatedMm = accumulatedDistanceTracker.accumulatedMm(),
                 trackingFeatureCount = 0,
-                inlierCount = 0,
-                outlierCount = 0,
                 confidence = 0f,
                 appliedToAccumulation = false,
             )
             drawDebugHud(overlay, empty)
+            publishDistanceEvent(empty)
             return overlay to empty
         }
 
@@ -54,14 +57,7 @@ class OpticalFlowDistanceEstimator(
         drawFlow(overlay, filterResult.outliers, OUTLIER_COLOR)
 
         val medianPixel = pixelMovementEstimator.medianMagnitude(filterResult.inliers)
-        val meanPixel = pixelMovementEstimator.meanMagnitude(filterResult.inliers)
-        val consensusPixel = sqrt(
-            filterResult.consensusTx * filterResult.consensusTx +
-                filterResult.consensusTy * filterResult.consensusTy,
-        ).toFloat()
-        val displayPixelDistance = if (consensusPixel > 0f) consensusPixel else meanPixel
-
-        calibrationManager.updateObservedPixelDistance(medianPixel)
+        calibrationManager.addObservedPixelDistance(medianPixel)
 
         val distanceMm = frameDistanceEstimator.toMm(medianPixel)
         val applied = accumulatedDistanceTracker.tryAccumulate(
@@ -74,18 +70,29 @@ class OpticalFlowDistanceEstimator(
         )
 
         val result = DistanceEstimateResult(
-            pixelDistance = displayPixelDistance,
             medianPixel = medianPixel,
             distanceMm = distanceMm,
             accumulatedMm = accumulatedDistanceTracker.accumulatedMm(),
             trackingFeatureCount = trackedPairs.size,
-            inlierCount = filterResult.inliers.size,
-            outlierCount = filterResult.outliers.size,
             confidence = filterResult.confidence,
             appliedToAccumulation = applied,
         )
         drawDebugHud(overlay, result)
+        publishDistanceEvent(result)
         return overlay to result
+    }
+
+    private fun publishDistanceEvent(result: DistanceEstimateResult) {
+        eventDispatcher.dispatch(
+            DistanceEvent(
+                timestampNs = System.nanoTime(),
+                medianPixel = result.medianPixel,
+                distanceMm = result.distanceMm,
+                accumulatedMm = result.accumulatedMm,
+                confidence = result.confidence,
+                trackingFeatureCount = result.trackingFeatureCount,
+            ),
+        )
     }
 
     override fun reset() {
@@ -114,12 +121,10 @@ class OpticalFlowDistanceEstimator(
 
     private fun drawDebugHud(overlay: Mat, result: DistanceEstimateResult) {
         val lines = listOf(
-            "Pixel Distance: %.2f px".format(result.pixelDistance),
-            "Median Pixel: %.2f px".format(result.medianPixel),
-            "mm Distance: %.2f mm".format(result.distanceMm),
-            "Accumulated Distance: %.2f mm".format(result.accumulatedMm),
+            "Median Pixel Distance: %.2f px".format(result.medianPixel),
+            "Median Distance: %.2f mm".format(result.distanceMm),
             "Tracking Feature Count: %d".format(result.trackingFeatureCount),
-            "mm/px: %.4f".format(calibrationManager.getMmPerPixel()),
+            "Confidence: %.2f".format(result.confidence),
         )
         var y = TEXT_ORIGIN_Y
         for (line in lines) {

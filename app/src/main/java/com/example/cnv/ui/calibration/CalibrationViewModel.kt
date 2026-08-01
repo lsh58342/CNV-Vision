@@ -12,11 +12,14 @@ class CalibrationViewModel(
 
     private val calibrationManager = CalibrationManager.getInstance(application)
 
-    private val _pixelDistance = MutableLiveData(0f)
-    val pixelDistance: LiveData<Float> = _pixelDistance
+    private val _sessionPixel = MutableLiveData(0f)
+    val sessionPixel: LiveData<Float> = _sessionPixel
 
     private val _mmPerPixel = MutableLiveData(0f)
     val mmPerPixel: LiveData<Float> = _mmPerPixel
+
+    private val _sessionActive = MutableLiveData(false)
+    val sessionActive: LiveData<Boolean> = _sessionActive
 
     private val _isCalibrated = MutableLiveData(false)
     val isCalibrated: LiveData<Boolean> = _isCalibrated
@@ -26,31 +29,42 @@ class CalibrationViewModel(
 
     fun refresh() {
         calibrationManager.reload()
-        _pixelDistance.value = calibrationManager.getLastPixelDistance()
+        _sessionPixel.value = calibrationManager.getSessionAccumulatedPixel()
         _mmPerPixel.value = calibrationManager.getMmPerPixel()
+        _sessionActive.value = calibrationManager.isCalibrationSessionActive()
         _isCalibrated.value = calibrationManager.isCalibrated()
     }
 
-    fun saveCalibration(realDistanceMm: Float): Boolean {
-        val pixel = calibrationManager.getLastPixelDistance()
+    fun startCalibration() {
+        calibrationManager.startCalibration()
+        refresh()
+        _statusMessage.value = "Calibration session started. Move the device, then enter real distance."
+    }
+
+    fun finishCalibration(realDistanceMm: Float): Boolean {
         if (realDistanceMm <= 0f) {
             _statusMessage.value = "Enter a positive real distance (mm)."
             return false
         }
-        if (pixel <= 0f) {
-            _statusMessage.value = "No pixel distance yet. Move the camera on the main screen first."
-            return false
-        }
-        val scale = calibrationManager.calculateMmPerPixel(realDistanceMm, pixel)
-        calibrationManager.setMmPerPixel(scale)
+        val finished = calibrationManager.finishCalibration(realDistanceMm)
         refresh()
-        _statusMessage.value = "Calibration saved."
-        return true
+        _statusMessage.value = if (finished) {
+            "Calibration saved."
+        } else {
+            "Finish failed. Start a session and accumulate pixel distance first."
+        }
+        return finished
+    }
+
+    fun cancelCalibration() {
+        calibrationManager.cancelCalibration()
+        refresh()
+        _statusMessage.value = "Calibration session cancelled."
     }
 
     fun resetCalibration() {
         calibrationManager.resetCalibration()
         refresh()
-        _statusMessage.value = "Calibration reset."
+        _statusMessage.value = "Saved calibration cleared."
     }
 }

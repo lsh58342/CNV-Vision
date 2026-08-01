@@ -21,14 +21,24 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/text_pixel_distance"
+            android:id="@+id/text_session_status"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Pixel Distance: —"
+            android:layout_marginTop="16dp"
+            android:text="@string/calibration_session_inactive"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/text_calibration_title" />
+
+        <TextView
+            android:id="@+id/text_pixel_distance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Session Pixel Distance: —"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_session_status" />
 
         <TextView
             android:id="@+id/label_real_distance"
@@ -64,25 +74,46 @@
             app:layout_constraintTop_toBottomOf="@id/input_real_distance" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_save_calibration"
+            android:id="@+id/button_start_calibration"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="@string/calibration_save"
+            android:text="@string/calibration_start"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/text_mm_per_pixel" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_reset_calibration"
+            android:id="@+id/button_save_calibration"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/calibration_finish"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_start_calibration" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_cancel_calibration"
             style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/calibration_cancel"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/button_save_calibration" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_reset_calibration"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/calibration_reset"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/button_save_calibration" />
+            app:layout_constraintTop_toBottomOf="@id/button_cancel_calibration" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

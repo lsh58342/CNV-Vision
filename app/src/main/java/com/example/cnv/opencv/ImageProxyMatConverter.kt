@@ -25,9 +25,11 @@ object ImageProxyMatConverter {
         }
 
         val padded = Mat(height, rowStride, CvType.CV_8UC1)
-        padded.put(0, 0, data)
-        val gray = padded.colRange(0, width).clone()
-        padded.release()
-        return gray
+        try {
+            padded.put(0, 0, data)
+            return padded.colRange(0, width).clone()
+        } finally {
+            padded.release()
+        }
     }
 }
