@@ -47,10 +47,13 @@ class HeatMapOverlay @JvmOverloads constructor(
         invalidate()
     }
 
+    fun cachedCellCount(): Int = cells.size
+
     fun debugSnapshot(): HeatMapDebugSnapshot = HeatMapDebugSnapshot(
         fps = currentFps,
         renderTimeMs = renderer.lastStats.renderTimeMs,
         visibleCellCount = renderer.lastStats.visibleCellCount,
+        cachedCellCount = cells.size,
         heatPointCount = stats.heatPointCount,
         maximumShock = stats.maximumShock,
         averageShock = stats.averageShock,
@@ -88,6 +91,7 @@ data class HeatMapDebugSnapshot(
     val fps: Double,
     val renderTimeMs: Double,
     val visibleCellCount: Int,
+    val cachedCellCount: Int,
     val heatPointCount: Int,
     val maximumShock: Float,
     val averageShock: Float,

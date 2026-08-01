@@ -8,8 +8,8 @@ import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.route.CoordinateMapper
 
 /**
- * Orchestrates Mode → Provider → Timeline/Filter → Processor → Overlay.
- * Renderer never sees Timeline or Filter.
+ * Orchestrates Session → Provider → Timeline/Filter → Cache → Processor → Overlay.
+ * Renderer never sees Timeline or Filter. Cache owns render-prep reuse.
  */
 class HeatMapController(
     private val inspectionManager: InspectionManager,
@@ -23,6 +23,9 @@ class HeatMapController(
     private val refreshIntervalMs: Long = 250L,
 ) {
     private val processor = HeatMapProcessor()
+    private val cache = HeatMapCache()
+    private val analyzer = HeatMapAnalyzer()
+    private val sessionFilter = HeatMapSessionFilter()
     private val layers = HeatMapLayerState()
     private val handler = Handler(Looper.getMainLooper())
 
@@ -30,8 +33,9 @@ class HeatMapController(
     private var lastSessionId: String? = null
     private var lastEventCount: Int = -1
     private var lastMode: HeatMapMode = modeController.currentMode()
-    private var cachedSourcePoints: List<HeatPoint> = emptyList()
     private var latestStats: HeatStatistics = HeatStatistics.EMPTY
+    private var latestSessionStats: HeatSessionStatistics = HeatSessionStatistics.EMPTY
+    private var latestAnalysis: HeatMapAnalysis = HeatMapAnalysis.EMPTY
     private var latestFilterResult: HeatMapFilterResult = HeatMapFilterResult.EMPTY
     private var currentProviderName: String = "ShockHeatProvider"
     private var filterRevision: Int = 0
@@ -68,9 +72,17 @@ class HeatMapController(
 
     fun filterController(): HeatMapFilterController = filterController
 
+    fun sessionFilter(): HeatMapSessionFilter = sessionFilter
+
+    fun cache(): HeatMapCache = cache
+
     fun layers(): HeatMapLayerState = layers
 
     fun latestStatistics(): HeatStatistics = latestStats
+
+    fun latestSessionStatistics(): HeatSessionStatistics = latestSessionStats
+
+    fun latestAnalysis(): HeatMapAnalysis = latestAnalysis
 
     fun latestFilterResult(): HeatMapFilterResult = latestFilterResult
 
@@ -121,44 +133,93 @@ class HeatMapController(
             return
         }
 
-        if (sourceChanged) {
+        // Session is always the top-level HeatMap scope.
+        sessionFilter.bind(sessionId)
+
+        if (session == null || eventCount == 0) {
             lastSessionId = sessionId
             lastEventCount = eventCount
             lastMode = mode
-            if (session == null || eventCount == 0) {
-                cachedSourcePoints = emptyList()
-                timelineController.bindDataExtent(emptyList())
-                currentProviderName = HeatMapFactory.create(mode, mapperProvider).providerName
-                publishEmpty(filterRevision)
-                return
-            }
-            val provider = HeatMapFactory.create(mode, mapperProvider)
-            currentProviderName = provider.providerName
-            cachedSourcePoints = provider.generateHeatPoints(session)
-            timelineController.bindDataExtent(cachedSourcePoints)
-        }
-
-        if (cachedSourcePoints.isEmpty()) {
+            currentProviderName = HeatMapFactory.create(mode, mapperProvider).providerName
             publishEmpty(filterRevision)
             return
         }
 
+        val activeSessionId = session.sessionId
+        lastSessionId = activeSessionId
+        lastEventCount = eventCount
+        lastMode = mode
+
         val provider = HeatMapFactory.create(mode, mapperProvider)
         currentProviderName = provider.providerName
-        val filterResult = filterController.apply(
-            source = cachedSourcePoints,
-            timeline = timelineController.timeline(),
-        )
+
+        var sourcePoints = cache.getSource(activeSessionId, eventCount, mode)
+        if (sourcePoints == null) {
+            sourcePoints = provider.generateHeatPoints(session)
+            cache.putSource(activeSessionId, eventCount, mode, sourcePoints)
+        }
+        timelineController.bindDataExtent(sourcePoints)
+
+        // Session-first: enforce current session id on filter criteria.
+        val baseFilter = filterController.state().toFilter(timelineController.timeline())
+        val sessionScopedFilter = baseFilter.copy(sessionId = activeSessionId)
+        val filterKey = HeatMapFilterPipeline.cacheKey(sessionScopedFilter)
+
+        val cachedLayer = cache.getFilterLayer(activeSessionId, filterKey)
+        if (cachedLayer != null) {
+            latestFilterResult = HeatMapFilterResult(
+                points = cachedLayer.points,
+                filter = sessionScopedFilter,
+                sourcePointCount = sourcePoints.size,
+            )
+            latestStats = cachedLayer.statistics
+            latestSessionStats = cachedLayer.sessionStatistics
+            latestAnalysis = cachedLayer.analysis
+            appliedFilterRevision = filterRevision
+            overlay.setShockHeatData(cachedLayer.cells, cachedLayer.statistics)
+            return
+        }
+
+        val sessionPoints = sessionFilter.apply(sourcePoints)
+        val filterResult = HeatMapFilterPipeline.applyOrdered(sessionPoints, sessionScopedFilter)
         latestFilterResult = filterResult
         val pointsForRender = provider.fromFilterResult(filterResult)
-        val hint = inspectionManager.repository().latest()?.statistics?.totalDistanceMm ?: 0f
-        val coveredHint = if (filterResult.sourcePointCount <= 0) {
+
+        val routeTotalMm = session.routeSnapshot.segments.sumOf { it.lengthMm.toDouble() }.toFloat()
+        val coveredHint = if (sourcePoints.isEmpty()) {
             0f
         } else {
-            hint * (filterResult.visiblePointCount.toFloat() / filterResult.sourcePointCount)
+            routeTotalMm * (
+                filterResult.visiblePointCount.toFloat() / sourcePoints.size.coerceAtLeast(1)
+                )
         }
+
         val result = processor.process(pointsForRender, coveredDistanceMmHint = coveredHint)
+        val (sessionStats, analysis) = analyzer.analyze(
+            sessionId = activeSessionId,
+            points = result.points,
+            cells = result.cells,
+            coveredDistanceMm = result.statistics.coveredDistanceMm,
+            routeTotalDistanceMm = routeTotalMm,
+            inspectionDurationMs = session.elapsedMs(),
+            sourcePointCount = sourcePoints.size,
+        )
+
+        cache.putFilterLayer(
+            activeSessionId,
+            HeatMapCache.FilterLayer(
+                filterKey = filterKey,
+                points = result.points,
+                cells = result.cells,
+                statistics = result.statistics,
+                sessionStatistics = sessionStats,
+                analysis = analysis,
+            ),
+        )
+
         latestStats = result.statistics
+        latestSessionStats = sessionStats
+        latestAnalysis = analysis
         appliedFilterRevision = filterRevision
         overlay.setShockHeatData(result.cells, result.statistics)
     }
@@ -166,6 +227,8 @@ class HeatMapController(
     private fun publishEmpty(revision: Int) {
         latestFilterResult = HeatMapFilterResult.EMPTY
         latestStats = HeatStatistics.EMPTY
+        latestSessionStats = HeatSessionStatistics.EMPTY
+        latestAnalysis = HeatMapAnalysis.EMPTY
         appliedFilterRevision = revision
         overlay.setShockHeatData(emptyList(), latestStats)
     }
@@ -173,21 +236,25 @@ class HeatMapController(
     private fun updateDebugHud() {
         val hud = debugHud ?: return
         val snap = overlay.debugSnapshot()
-        val tl = timelineController.timeline()
-        val stats = latestStats
+        val metrics = cache.metrics()
+        val rt = Runtime.getRuntime()
+        val usedMb = (rt.totalMemory() - rt.freeMemory()) / (1024.0 * 1024.0)
         hud.text = buildString {
-            append("HeatMap Filter\n")
-            append("Timeline: %s\n".format(tl.summary()))
+            append("HeatMap Opt\n")
+            append("Session: %s\n".format(sessionFilter.summary()))
             append("Filter: %s\n".format(filterController.state().summary()))
-            append("Visible HP: %d (src %d)\n".format(
-                latestFilterResult.visiblePointCount,
-                latestFilterResult.sourcePointCount,
-            ))
             append("Visible Cells: %d\n".format(snap.visibleCellCount))
-            append("MaxShock: %.2f Avg: %.2f\n".format(stats.maximumShock, stats.averageShock))
-            append("Covered: %.0f mm\n".format(stats.coveredDistanceMm))
+            append("Cached Cells: %d\n".format(metrics.cachedCellCount))
+            append("Cache Hit: %.0f%% (%d/%d)\n".format(
+                metrics.hitRate * 100.0,
+                metrics.hits,
+                metrics.hits + metrics.misses,
+            ))
+            append("Analysis: %s\n".format(latestAnalysis.summary()))
+            append("Stats: %s\n".format(latestSessionStats.summary()))
             append("Render: %.2f ms\n".format(snap.renderTimeMs))
-            append("FPS: %.1f".format(snap.fps))
+            append("FPS: %.1f\n".format(snap.fps))
+            append("Mem: %.1f MB".format(usedMb))
         }
     }
 }
