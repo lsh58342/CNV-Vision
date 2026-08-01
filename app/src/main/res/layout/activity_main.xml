@@ -122,15 +122,28 @@
         app:layout_constraintTop_toBottomOf="@id/dwg_debug_hud"
         tools:text="Route Gen Debug" />
 
-    <com.example.cnv.cad.CADView
-        android:id="@+id/cad_view"
+    <FrameLayout
+        android:id="@+id/cad_container"
         android:layout_width="0dp"
         android:layout_height="200dp"
         android:layout_margin="12dp"
         app:layout_constraintBottom_toTopOf="@id/button_open_calibration"
         app:layout_constraintEnd_toStartOf="@id/cad_debug_hud"
         app:layout_constraintHorizontal_weight="2"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent">
+
+        <com.example.cnv.cad.CADView
+            android:id="@+id/cad_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.example.cnv.heatmap.HeatMapOverlay
+            android:id="@+id/heatmap_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/cad_debug_hud"
@@ -145,8 +158,8 @@
         app:layout_constraintBottom_toTopOf="@id/cad_selection_info"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@id/cad_view"
-        app:layout_constraintTop_toTopOf="@id/cad_view"
+        app:layout_constraintStart_toEndOf="@id/cad_container"
+        app:layout_constraintTop_toTopOf="@id/cad_container"
         tools:text="CAD Debug" />
 
     <TextView
@@ -159,10 +172,36 @@
         android:padding="6dp"
         android:textColor="@android:color/white"
         android:textSize="9sp"
-        app:layout_constraintBottom_toBottomOf="@id/cad_view"
+        app:layout_constraintBottom_toBottomOf="@id/cad_container"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/cad_view"
+        app:layout_constraintStart_toEndOf="@id/cad_container"
         tools:text="Selection" />
+
+    <TextView
+        android:id="@+id/heatmap_debug_hud"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="4dp"
+        android:background="#66000000"
+        android:fontFamily="monospace"
+        android:padding="6dp"
+        android:textColor="@android:color/white"
+        android:textSize="9sp"
+        app:layout_constraintBottom_toTopOf="@id/button_heat_toggle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Shock HeatMap" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_heat_toggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="4dp"
+        android:text="@string/heat_toggle_shock"
+        app:layout_constraintBottom_toTopOf="@id/cad_search_input"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/cad_search_input"
@@ -312,7 +351,7 @@
         android:padding="8dp"
         android:textColor="@android:color/white"
         android:textSize="10sp"
-        app:layout_constraintBottom_toTopOf="@id/cad_search_input"
+        app:layout_constraintBottom_toTopOf="@id/heatmap_debug_hud"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         tools:text="Inspection" />
@@ -324,7 +363,7 @@
         android:layout_marginStart="12dp"
         android:layout_marginBottom="8dp"
         android:text="@string/cad_zoom_in"
-        app:layout_constraintBottom_toTopOf="@id/cad_view"
+        app:layout_constraintBottom_toTopOf="@id/cad_container"
         app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.button.MaterialButton

@@ -23,6 +23,8 @@ import com.example.cnv.debug.RouteGenDebugHud
 import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.fusion.FusionEngine
+import com.example.cnv.heatmap.HeatMapController
+import com.example.cnv.heatmap.HeatMapOverlay
 import com.example.cnv.imu.IMUManager
 import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.inspection.InspectionState
@@ -58,6 +60,7 @@ class MainCompositionRoot(
     private lateinit var routeGenDebugHud: RouteGenDebugHud
     private lateinit var inspectionDebugHud: InspectionDebugHud
     private lateinit var pipelinePerfDebugHud: PipelinePerfDebugHud
+    private lateinit var heatMapController: HeatMapController
     private lateinit var routeRepository: RouteRepository
 
     fun bind() {
@@ -71,6 +74,7 @@ class MainCompositionRoot(
         bindRoutePipeline()
         bindInspectionAndUiActions()
         bindCadViewer()
+        bindHeatMap()
 
         pipelinePerfDebugHud = PipelinePerfDebugHud(
             textView = activity.findViewById(R.id.pipeline_perf_debug_hud),
@@ -93,12 +97,14 @@ class MainCompositionRoot(
         inspectionDebugHud.start()
         pipelinePerfDebugHud.start()
         cadController.start()
+        heatMapController.start()
     }
 
     fun onStop() {
         if (inspectionManager.state() == InspectionState.RUNNING) {
             inspectionManager.stop()
         }
+        heatMapController.stop()
         cadController.stop()
         pipelinePerfDebugHud.stop()
         inspectionDebugHud.stop()
@@ -221,6 +227,20 @@ class MainCompositionRoot(
             .setOnClickListener { cadController.toggleLayer(com.example.cnv.cad.CADLayer.NODE) }
         activity.findViewById<Button>(R.id.button_cad_layer_branch)
             .setOnClickListener { cadController.toggleLayer(com.example.cnv.cad.CADLayer.BRANCH) }
+    }
+
+    private fun bindHeatMap() {
+        val cadView = activity.findViewById<CADView>(R.id.cad_view)
+        val overlay = activity.findViewById<HeatMapOverlay>(R.id.heatmap_overlay)
+        heatMapController = HeatMapController(
+            inspectionManager = inspectionManager,
+            overlay = overlay,
+            cadView = cadView,
+            mapperProvider = { routeGenerator.latestResult()?.mapper },
+            debugHud = activity.findViewById(R.id.heatmap_debug_hud),
+        )
+        activity.findViewById<Button>(R.id.button_heat_toggle)
+            .setOnClickListener { heatMapController.toggleShockLayer() }
     }
 
     private fun bindInspectionAndUiActions() {

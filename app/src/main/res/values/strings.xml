@@ -18,6 +18,7 @@
     <string name="cad_layer_grid">Grid</string>
     <string name="cad_layer_node">Node</string>
     <string name="cad_layer_branch">Branch</string>
+    <string name="heat_toggle_shock">Shock Heat</string>
     <string name="inspection_start">Start Insp</string>
     <string name="inspection_stop">Stop Insp</string>
     <string name="calibration_title">Calibration</string>
