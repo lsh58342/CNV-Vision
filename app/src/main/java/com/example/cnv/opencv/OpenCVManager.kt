@@ -25,8 +25,9 @@ class OpenCVManager(
             grayImageView.setImageBitmap(bitmap)
         }
 
-        return GrayScaleFrameAnalyzer { bitmap ->
+        return GrayScaleFrameAnalyzer { bitmap, movementDistancePx ->
             viewModel.publishGrayFrame(bitmap)
+            viewModel.publishMovementDistance(movementDistancePx)
         }
     }
 }

@@ -8,20 +8,23 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 
 /**
- * CameraX analyzer: ImageProxy → gray Mat → ORB keypoints overlay → Bitmap.
+ * CameraX analyzer: ImageProxy → gray Mat → ORB → Lucas-Kanade flow → Bitmap.
  */
 class GrayScaleFrameAnalyzer(
-    private val onProcessedBitmap: (Bitmap) -> Unit,
+    private val onProcessedFrame: (bitmap: Bitmap, movementDistancePx: Float) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     private val orbFeatureDetector = OrbFeatureDetector()
+    private val opticalFlow = LucasKanadeOpticalFlow()
 
     override fun analyze(imageProxy: ImageProxy) {
         try {
             val grayMat: Mat = ImageProxyMatConverter.toGrayMat(imageProxy)
-            val overlayMat: Mat = orbFeatureDetector.detectAndDraw(grayMat)
+            val keypoints = orbFeatureDetector.detect(grayMat)
+            val flowResult = opticalFlow.process(grayMat, keypoints)
             grayMat.release()
 
+            val overlayMat = flowResult.overlay
             val bitmap = Bitmap.createBitmap(
                 overlayMat.cols(),
                 overlayMat.rows(),
@@ -40,7 +43,7 @@ class GrayScaleFrameAnalyzer(
                     }
                 }
             }
-            onProcessedBitmap(output)
+            onProcessedFrame(output, flowResult.movementDistancePx)
         } finally {
             imageProxy.close()
         }

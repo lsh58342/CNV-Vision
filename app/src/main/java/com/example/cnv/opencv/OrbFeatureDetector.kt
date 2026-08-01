@@ -1,5 +1,6 @@
 package com.example.cnv.opencv
 
+import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
 import org.opencv.core.MatOfKeyPoint
 import org.opencv.core.Point
@@ -9,7 +10,6 @@ import org.opencv.imgproc.Imgproc
 
 /**
  * Detects ORB keypoints on a grayscale frame and draws them as an overlay.
- * Does not compute optical flow or distance.
  */
 class OrbFeatureDetector(
     maxFeatures: Int = DEFAULT_MAX_FEATURES,
@@ -17,18 +17,22 @@ class OrbFeatureDetector(
 
     private val orb: ORB = ORB.create(maxFeatures)
 
+    fun detect(gray: Mat): Array<KeyPoint> {
+        val keypoints = MatOfKeyPoint()
+        orb.detect(gray, keypoints)
+        val detected = keypoints.toArray()
+        keypoints.release()
+        return detected
+    }
+
     /**
      * @return RGBA [Mat] with green keypoint overlay. Caller must [Mat.release].
      */
     fun detectAndDraw(gray: Mat): Mat {
-        val keypoints = MatOfKeyPoint()
-        orb.detect(gray, keypoints)
-
+        val keypoints = detect(gray)
         val overlay = Mat()
         Imgproc.cvtColor(gray, overlay, Imgproc.COLOR_GRAY2RGBA)
-
-        val keypointArray = keypoints.toArray()
-        for (keypoint in keypointArray) {
+        for (keypoint in keypoints) {
             Imgproc.circle(
                 overlay,
                 Point(keypoint.pt.x, keypoint.pt.y),
@@ -37,7 +41,6 @@ class OrbFeatureDetector(
                 KEYPOINT_THICKNESS,
             )
         }
-        keypoints.release()
         return overlay
     }
 

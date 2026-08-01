@@ -11,6 +11,9 @@ class OpenCVViewModel : ViewModel() {
     private val _grayFrame = MutableLiveData<Bitmap>()
     val grayFrame: LiveData<Bitmap> = _grayFrame
 
+    private val _movementDistancePx = MutableLiveData(0f)
+    val movementDistancePx: LiveData<Float> = _movementDistancePx
+
     private var initialized: Boolean = false
 
     fun initialize(): Boolean {
@@ -25,5 +28,9 @@ class OpenCVViewModel : ViewModel() {
 
     fun publishGrayFrame(bitmap: Bitmap) {
         _grayFrame.postValue(bitmap)
+    }
+
+    fun publishMovementDistance(distancePx: Float) {
+        _movementDistancePx.postValue(distancePx)
     }
 }
