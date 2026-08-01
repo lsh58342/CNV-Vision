@@ -112,9 +112,7 @@ class FeatureRuntime(
         routeRepository = catalog.routes.underlying()
         routeGenerator = RouteGenerator(routeRepository = routeRepository)
         dwgImporter = DWGImporter(reader = StubDWGReader())
-        val dwgResult = dwgImporter.importFrom("stub://demo-conveyor.dwg")
-        routeGenerator.generate(candidates = dwgResult.candidates)
-        routeRepository.current()?.let { catalog.routes.setRoute(it) }
+        // Route must come from Drawing Commissioning — never auto-generate sample routes.
 
         mapMatchingEngine = MapMatchingEngine(routeRepository = routeRepository)
         inspectionManager = InspectionManager(repository = catalog.inspections.underlying())
@@ -209,9 +207,9 @@ class FeatureRuntime(
 
     fun stopInspectionSession(): InspectionResult? {
         val result = inspectionManager.stop()
-        val zoneId = CurrentContext.get().zoneId
-        if (result != null && zoneId != null) {
-            catalog.inspections.index(zoneId, result.sessionId)
+        val drawingId = CurrentContext.get().drawingId
+        if (result != null && drawingId != null) {
+            catalog.inspections.index(drawingId, result.sessionId)
         }
         return result
     }

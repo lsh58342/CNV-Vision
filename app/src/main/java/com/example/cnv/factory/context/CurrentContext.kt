@@ -3,7 +3,7 @@ package com.example.cnv.factory.context
 /**
  * Global navigation context. All Factory repositories read this scope only.
  *
- * Factory → Building → Floor → Route → Zone
+ * LGES Poland → Building → Floor → Drawing → Route → Zone
  */
 class CurrentContext {
 
@@ -12,6 +12,8 @@ class CurrentContext {
     @Volatile var buildingId: String? = null
         private set
     @Volatile var floorId: String? = null
+        private set
+    @Volatile var drawingId: String? = null
         private set
     @Volatile var routeId: String? = null
         private set
@@ -42,6 +44,7 @@ class CurrentContext {
         factoryId = id
         buildingId = null
         floorId = null
+        drawingId = null
         routeId = null
         zoneId = null
     }
@@ -49,12 +52,20 @@ class CurrentContext {
     fun selectBuilding(id: String) {
         buildingId = id
         floorId = null
+        drawingId = null
         routeId = null
         zoneId = null
     }
 
     fun selectFloor(id: String) {
         floorId = id
+        drawingId = null
+        routeId = null
+        zoneId = null
+    }
+
+    fun selectDrawing(id: String) {
+        drawingId = id
         routeId = null
         zoneId = null
     }
@@ -72,10 +83,17 @@ class CurrentContext {
         zoneId = null
     }
 
+    fun clearDrawing() {
+        drawingId = null
+        routeId = null
+        zoneId = null
+    }
+
     fun clear() {
         factoryId = null
         buildingId = null
         floorId = null
+        drawingId = null
         routeId = null
         zoneId = null
     }
@@ -85,6 +103,7 @@ class CurrentContext {
         append("F=${factoryId ?: "—"} ")
         append("B=${buildingId ?: "—"} ")
         append("Fl=${floorId ?: "—"} ")
+        append("D=${drawingId ?: "—"} ")
         append("R=${routeId ?: "—"} ")
         append("Z=${zoneId ?: "—"}")
     }

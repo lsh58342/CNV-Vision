@@ -1,12 +1,12 @@
 package com.example.cnv.factory.model
 
 /**
- * Logical inspection segment on a Route. Zone is the top-level inspection unit.
+ * Logical inspection segment on a Drawing Route.
  * Bounds are stored as Route anchors (never CAD world coords).
  */
 data class Zone(
     val id: String,
-    val floorId: String,
+    val drawingId: String,
     val routeId: String,
     val name: String,
     val colorLabel: String,
@@ -14,7 +14,6 @@ data class Zone(
     val start: RouteAnchor,
     val end: RouteAnchor,
     val calibrationVersion: Int? = null,
-    val dwgRegistered: Boolean = false,
     val createdAtMs: Long = System.currentTimeMillis(),
     val updatedAtMs: Long = System.currentTimeMillis(),
 )

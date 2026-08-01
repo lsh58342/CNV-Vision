@@ -17,6 +17,8 @@ class BuildingRepository {
 
     fun get(id: String): Building? = synchronized(lock) { items[id] }
 
+    fun delete(id: String): Boolean = synchronized(lock) { items.remove(id) != null }
+
     fun forFactory(factoryId: String): List<Building> =
         synchronized(lock) { items.values.filter { it.factoryId == factoryId } }
 

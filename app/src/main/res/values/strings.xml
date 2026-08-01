@@ -82,7 +82,7 @@
     <string name="zone_editor_cad">Method 1: CAD pick (demo anchors)</string>
     <string name="zone_editor_drive">Method 2: Drive record (demo anchors)</string>
     <string name="zone_editor_save">Save Zone</string>
-    <string name="zone_editor_need_context">Need Floor + Route in Current Context</string>
+    <string name="zone_editor_need_context">Need Drawing + Route in Current Context</string>
     <string name="zone_editor_cad_demo">CAD start/end anchors set (Route-based)</string>
     <string name="zone_editor_drive_demo">Drive start/end anchors set (Route Position)</string>
     <string name="zone_editor_save_failed">Cannot save Zone — check name and anchors</string>
@@ -257,9 +257,39 @@
     <string name="setup_unlocked">UNLOCKED</string>
     <string name="setup_unlock_route">Route Unlock</string>
     <string name="setup_route_unlocked">Route unlocked</string>
-    <string name="setup_unlock_failed">Unlock failed — Developer role and Floor required</string>
+    <string name="setup_unlock_failed">Unlock failed — Developer role and Drawing required</string>
 
     <string name="comm_workflow_full">Building → Floor → DWG → Route → Calibration → Zone → Route Lock → Operation</string>
+    <string name="comm_workflow_drawing">Building → Floor → Drawing → DWG → Origin → Calibration → Route → Zone → Route Lock → Operation</string>
     <string name="comm_step_building">1. Building 생성</string>
     <string name="comm_step_floor">2. Floor 생성</string>
+
+    <string name="setup_drawing_list">Drawings</string>
+    <string name="setup_drawing_dashboard">Drawing Dashboard</string>
+    <string name="setup_add_drawing">Drawing 추가</string>
+    <string name="setup_open_drawing">Drawing 열기</string>
+    <string name="setup_open_drawings">Drawing 목록</string>
+    <string name="setup_drawing_name_hint">Drawing Name</string>
+    <string name="setup_drawing_desc_hint">Description (optional)</string>
+    <string name="setup_empty_drawings">DWG가 등록되지 않았습니다.</string>
+    <string name="setup_select_drawing_first">Drawing을 선택하세요</string>
+    <string name="setup_set_origin">시작 위치 지정</string>
+    <string name="setup_origin">Origin</string>
+    <string name="setup_origin_set">시작 위치가 지정되었습니다.</string>
+    <string name="setup_origin_failed">Origin 지정 실패 — DWG 등록 후 한 번만 가능합니다.</string>
+    <string name="setup_origin_status">Origin: %1$s</string>
+    <string name="setup_registered_at">등록일</string>
+    <string name="setup_zone_count">%1$d zones</string>
+    <string name="setup_delete_drawing">Drawing 삭제</string>
+    <string name="setup_delete_drawing_confirm">Drawing과 Route / Zone / Inspection / HeatMap / CSV / Replay 메타데이터가 함께 삭제됩니다.</string>
+    <string name="setup_rename_building">Building 이름 변경</string>
+    <string name="setup_delete_building">Building 삭제</string>
+    <string name="setup_delete_building_confirm">Building과 하위 Floor / Drawing 데이터가 모두 삭제됩니다.</string>
+    <string name="setup_rename_floor">Floor 이름 변경</string>
+    <string name="setup_delete_floor">Floor 삭제</string>
+    <string name="setup_delete_floor_confirm">Floor와 하위 Drawing 데이터가 모두 삭제됩니다.</string>
+    <string name="setup_replay">Replay</string>
+    <string name="setup_replay_count">%1$d refs</string>
+    <string name="setup_csv_drawing_scoped">CSV Export/Import — Drawing scoped (STEP 13)</string>
+    <string name="setup_replay_drawing_scoped">Replay — Drawing scoped (later STEP)</string>
 </resources>

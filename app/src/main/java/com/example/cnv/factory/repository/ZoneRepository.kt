@@ -4,8 +4,7 @@ import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Zone
 
 /**
- * Zone store. Zone is the top-level inspection unit.
- * Operation mode must not mutate zones (enforced by callers / editors).
+ * Zone store scoped to Drawing. Operation mode must not mutate zones (callers enforce).
  */
 class ZoneRepository {
 
@@ -20,8 +19,8 @@ class ZoneRepository {
 
     fun delete(id: String): Boolean = synchronized(lock) { items.remove(id) != null }
 
-    fun forFloor(floorId: String): List<Zone> =
-        synchronized(lock) { items.values.filter { it.floorId == floorId } }
+    fun forDrawing(drawingId: String): List<Zone> =
+        synchronized(lock) { items.values.filter { it.drawingId == drawingId } }
 
     fun forRoute(routeId: String): List<Zone> =
         synchronized(lock) { items.values.filter { it.routeId == routeId } }
@@ -31,9 +30,15 @@ class ZoneRepository {
         return get(id)
     }
 
-    fun listForCurrentFloor(context: CurrentContext = CurrentContext.get()): List<Zone> {
-        val floorId = context.floorId ?: return emptyList()
-        return forFloor(floorId)
+    fun listForCurrentDrawing(context: CurrentContext = CurrentContext.get()): List<Zone> {
+        val drawingId = context.drawingId ?: return emptyList()
+        return forDrawing(drawingId)
+    }
+
+    fun removeForDrawing(drawingId: String): Int = synchronized(lock) {
+        val ids = items.values.filter { it.drawingId == drawingId }.map { it.id }
+        ids.forEach { items.remove(it) }
+        ids.size
     }
 
     fun clear() {

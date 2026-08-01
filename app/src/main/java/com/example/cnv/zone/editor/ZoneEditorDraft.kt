@@ -8,7 +8,7 @@ import com.example.cnv.factory.model.RouteAnchor
  */
 data class ZoneEditorDraft(
     val zoneId: String? = null,
-    val floorId: String = "",
+    val drawingId: String = "",
     val routeId: String = "",
     val name: String = "",
     val colorLabel: String = "Orange",
@@ -19,7 +19,7 @@ data class ZoneEditorDraft(
 ) {
     fun canSave(): Boolean =
         name.isNotBlank() &&
-            floorId.isNotBlank() &&
+            drawingId.isNotBlank() &&
             routeId.isNotBlank() &&
             start.isDefined() &&
             end.isDefined()

@@ -14,8 +14,8 @@ import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
 /**
- * Commissioning workflow:
- * Building → Floor → DWG → Route → Calibration → Zone → Route Lock → Operation
+ * Commissioning workflow (Drawing-centric):
+ * Building → Floor → Drawing → DWG → Origin → Calibration → Route → Zone → Route Lock → Operation
  */
 class CommissioningScreen : BaseScreen() {
 
@@ -37,28 +37,17 @@ class CommissioningScreen : BaseScreen() {
         siteVm.contextSummary.observe(viewLifecycleOwner) {
             view.findViewById<TextView>(R.id.commissioning_context).text = it
         }
-        siteVm.floorDashboard.observe(viewLifecycleOwner) { dash ->
+        siteVm.drawingDashboard.observe(viewLifecycleOwner) { dash ->
             val hint = view.findViewById<TextView>(R.id.commissioning_hint)
             if (dash == null) {
-                hint.setText(R.string.comm_workflow_full)
+                hint.setText(R.string.comm_workflow_drawing)
                 return@observe
             }
             hint.text = buildString {
-                appendLine(getString(R.string.comm_workflow_full))
-                appendLine(
-                    getString(
-                        R.string.zone_dash_dwg,
-                        if (dash.dwgReady) getString(R.string.status_ok_label)
-                        else getString(R.string.status_missing_label),
-                    ),
-                )
-                appendLine(
-                    getString(
-                        R.string.zone_dash_calibration,
-                        if (dash.calibrationReady) getString(R.string.status_ok_label)
-                        else getString(R.string.status_missing_label),
-                    ),
-                )
+                appendLine(getString(R.string.comm_workflow_drawing))
+                appendLine(getString(R.string.zone_dash_dwg, label(dash.dwgReady)))
+                appendLine(getString(R.string.setup_origin_status, label(dash.originSet)))
+                appendLine(getString(R.string.zone_dash_calibration, label(dash.calibrationReady)))
                 append(
                     getString(
                         R.string.setup_route_lock_status,
@@ -69,8 +58,8 @@ class CommissioningScreen : BaseScreen() {
             }
         }
         siteVm.bootstrap()
-        if (CurrentContext.get().floorId != null) {
-            siteVm.loadFloorDashboard()
+        if (CurrentContext.get().drawingId != null) {
+            siteVm.loadDrawingDashboard()
         }
 
         view.findViewById<MaterialButton>(R.id.button_comm_building).setOnClickListener {
@@ -88,10 +77,10 @@ class CommissioningScreen : BaseScreen() {
                 Toast.makeText(requireContext(), R.string.op_select_floor_first, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            nav().navigate(CnvDestination.FLOOR_SELECT)
+            nav().navigate(CnvDestination.DRAWING_LIST)
         }
         view.findViewById<MaterialButton>(R.id.button_comm_route).setOnClickListener {
-            if (siteVm.generateRouteForCurrentFloor()) {
+            if (siteVm.generateRouteForCurrentDrawing()) {
                 Toast.makeText(requireContext(), R.string.setup_route_generated, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(requireContext(), R.string.setup_route_failed, Toast.LENGTH_SHORT).show()
@@ -99,6 +88,7 @@ class CommissioningScreen : BaseScreen() {
         }
         view.findViewById<MaterialButton>(R.id.button_comm_calibration).setOnClickListener {
             AppNavigator.openCalibration(requireActivity())
+            siteVm.markCalibrationReadyForCurrentDrawing()
         }
         view.findViewById<MaterialButton>(R.id.button_comm_zone_editor).setOnClickListener {
             if (!siteVm.canCreateZone()) {
@@ -110,7 +100,7 @@ class CommissioningScreen : BaseScreen() {
             }
         }
         view.findViewById<MaterialButton>(R.id.button_comm_route_lock).setOnClickListener {
-            if (siteVm.lockRouteForCurrentFloor()) {
+            if (siteVm.lockRouteForCurrentDrawing()) {
                 Toast.makeText(requireContext(), R.string.setup_route_locked, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(requireContext(), R.string.setup_route_lock_failed, Toast.LENGTH_SHORT).show()
@@ -121,4 +111,7 @@ class CommissioningScreen : BaseScreen() {
             nav().navigateClearTo(CnvDestination.BUILDING_SELECT)
         }
     }
+
+    private fun label(ok: Boolean): String =
+        if (ok) getString(R.string.status_ok_label) else getString(R.string.status_missing_label)
 }

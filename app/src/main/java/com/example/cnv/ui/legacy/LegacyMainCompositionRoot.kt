@@ -143,8 +143,7 @@ class LegacyMainCompositionRoot(
         routeGenerator = RouteGenerator(routeRepository = routeRepository)
 
         dwgImporter = DWGImporter(reader = StubDWGReader())
-        val dwgResult = dwgImporter.importFrom("stub://demo-conveyor.dwg")
-        routeGenerator.generate(candidates = dwgResult.candidates)
+        // Route comes from Drawing Commissioning — do not auto-generate here.
 
         mapMatchingEngine = MapMatchingEngine(routeRepository = routeRepository)
         mapDebugHud = MapDebugHud(

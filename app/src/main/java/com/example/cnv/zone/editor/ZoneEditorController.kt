@@ -9,12 +9,10 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import java.util.UUID
 
 /**
- * Commissioning-only Zone Editor controller.
+ * Commissioning-only Zone Editor controller (Drawing-scoped).
  *
  * Method 1 (CAD): pick start → pick end → name/color → save
  * Method 2 (Drive): record → mark start/end from Route Position → name/color → save
- *
- * CAD touch / PositionEvent wiring is structural — algorithms stay untouched.
  */
 class ZoneEditorController(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
@@ -32,11 +30,11 @@ class ZoneEditorController(
 
     fun beginCadCreation(): Boolean {
         if (!isAccessible()) return false
-        val floorId = context.floorId ?: return false
-        if (catalog.floorSetups.get(floorId).routeLocked) return false
-        val routeId = context.routeId ?: catalog.routes.currentRouteId() ?: return false
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        val routeId = drawing.routeId ?: context.routeId ?: catalog.routes.currentRouteId() ?: return false
         draft = ZoneEditorDraft(
-            floorId = floorId,
+            drawingId = drawing.id,
             routeId = routeId,
             mode = ZoneEditorMode.CAD_PICK_START,
         )
@@ -45,11 +43,11 @@ class ZoneEditorController(
 
     fun beginDriveRecording(): Boolean {
         if (!isAccessible()) return false
-        val floorId = context.floorId ?: return false
-        if (catalog.floorSetups.get(floorId).routeLocked) return false
-        val routeId = context.routeId ?: catalog.routes.currentRouteId() ?: return false
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        val routeId = drawing.routeId ?: context.routeId ?: catalog.routes.currentRouteId() ?: return false
         draft = ZoneEditorDraft(
-            floorId = floorId,
+            drawingId = drawing.id,
             routeId = routeId,
             mode = ZoneEditorMode.DRIVE_RECORDING,
         )
@@ -59,9 +57,11 @@ class ZoneEditorController(
     fun beginEdit(zoneId: String): Boolean {
         if (!isAccessible()) return false
         val zone = catalog.zones.get(zoneId) ?: return false
+        val drawing = catalog.drawings.get(zone.drawingId) ?: return false
+        if (drawing.routeLocked) return false
         draft = ZoneEditorDraft(
             zoneId = zone.id,
-            floorId = zone.floorId,
+            drawingId = zone.drawingId,
             routeId = zone.routeId,
             name = zone.name,
             colorLabel = zone.colorLabel,
@@ -73,14 +73,12 @@ class ZoneEditorController(
         return true
     }
 
-    /** CAD method step: start anchor from Route (not CAD world). */
     fun setCadStart(anchor: RouteAnchor): Boolean {
         if (draft.mode != ZoneEditorMode.CAD_PICK_START) return false
         draft = draft.copy(start = anchor, mode = ZoneEditorMode.CAD_PICK_END)
         return true
     }
 
-    /** CAD method step: end anchor + move to confirm/name. */
     fun setCadEnd(anchor: RouteAnchor): Boolean {
         if (draft.mode != ZoneEditorMode.CAD_PICK_END) return false
         draft = draft.copy(end = anchor, mode = ZoneEditorMode.NAME_COLOR)
@@ -115,19 +113,18 @@ class ZoneEditorController(
         if (!isAccessible()) return null
         val d = draft
         if (!d.canSave()) return null
-        if (catalog.floorSetups.get(d.floorId).routeLocked) return null
+        val drawing = catalog.drawings.get(d.drawingId) ?: return null
+        if (drawing.routeLocked) return null
         val now = System.currentTimeMillis()
-        val dwgReady = catalog.floorSetups.get(d.floorId).dwgRegistered
         val zone = Zone(
             id = d.zoneId ?: UUID.randomUUID().toString(),
-            floorId = d.floorId,
+            drawingId = d.drawingId,
             routeId = d.routeId,
             name = d.name,
             colorLabel = d.colorLabel,
             colorArgb = d.colorArgb,
             start = d.start,
             end = d.end,
-            dwgRegistered = dwgReady,
             updatedAtMs = now,
             createdAtMs = catalog.zones.get(d.zoneId ?: "")?.createdAtMs ?: now,
         )
@@ -138,6 +135,9 @@ class ZoneEditorController(
 
     fun delete(zoneId: String): Boolean {
         if (!isAccessible()) return false
+        val zone = catalog.zones.get(zoneId) ?: return false
+        val drawing = catalog.drawings.get(zone.drawingId) ?: return false
+        if (drawing.routeLocked) return false
         return catalog.zones.delete(zoneId)
     }
 

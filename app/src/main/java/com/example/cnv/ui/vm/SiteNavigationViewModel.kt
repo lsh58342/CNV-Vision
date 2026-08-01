@@ -3,17 +3,18 @@ package com.example.cnv.ui.vm
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.cnv.dwg.DWGImporter
+import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.factory.context.AccessRole
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.context.canAccessCommissioning
 import com.example.cnv.factory.model.Building
+import com.example.cnv.factory.model.Drawing
 import com.example.cnv.factory.model.Floor
 import com.example.cnv.factory.model.Zone
-import com.example.cnv.dwg.DWGImporter
-import com.example.cnv.dwg.StubDWGReader
+import com.example.cnv.factory.repository.CalibrationRepository
 import com.example.cnv.factory.repository.FactoryCatalog
-import com.example.cnv.factory.repository.FloorSetupRepository
 import com.example.cnv.factory.seed.LgesPolandSite
 import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.route.RouteGenerator
@@ -22,19 +23,28 @@ import com.example.cnv.zone.dashboard.ZoneDashboardState
 import java.util.UUID
 
 /**
- * Site hierarchy ViewModel — LGES Poland only; no sample Building/Floor/Zone.
+ * Site hierarchy ViewModel — Drawing-centric (LGES Poland only).
  */
 class SiteNavigationViewModel : ViewModel() {
 
-    data class FloorDashboardUi(
+    data class DrawingDashboardUi(
         val buildingName: String,
         val floorName: String,
+        val drawingName: String,
+        val description: String,
+        val registeredAtMs: Long,
         val dwgReady: Boolean,
+        val originSet: Boolean,
+        val calibrationReady: Boolean,
         val routeReady: Boolean,
         val routeLocked: Boolean,
-        val calibrationReady: Boolean,
+        val zoneCount: Int,
         val zones: List<Zone>,
+        val lastInspectionLabel: String,
         val historyCount: Int,
+        val heatMapCount: Int,
+        val csvCount: Int,
+        val replayCount: Int,
     )
 
     private val catalog: FactoryCatalog = FactoryCatalog.get()
@@ -46,14 +56,17 @@ class SiteNavigationViewModel : ViewModel() {
     private val _floors = MutableLiveData<List<Floor>>(emptyList())
     val floors: LiveData<List<Floor>> = _floors
 
+    private val _drawings = MutableLiveData<List<Drawing>>(emptyList())
+    val drawings: LiveData<List<Drawing>> = _drawings
+
     private val _zones = MutableLiveData<List<Zone>>(emptyList())
     val zones: LiveData<List<Zone>> = _zones
 
     private val _dashboard = MutableLiveData(ZoneDashboardState())
     val dashboard: LiveData<ZoneDashboardState> = _dashboard
 
-    private val _floorDashboard = MutableLiveData<FloorDashboardUi?>(null)
-    val floorDashboard: LiveData<FloorDashboardUi?> = _floorDashboard
+    private val _drawingDashboard = MutableLiveData<DrawingDashboardUi?>(null)
+    val drawingDashboard: LiveData<DrawingDashboardUi?> = _drawingDashboard
 
     private val _contextSummary = MutableLiveData("")
     val contextSummary: LiveData<String> = _contextSummary
@@ -80,6 +93,8 @@ class SiteNavigationViewModel : ViewModel() {
         refreshSummary()
     }
 
+    // --- Building ---
+
     fun loadBuildings() {
         bootstrap()
         _buildings.value = catalog.buildings.listForCurrentFactory(context)
@@ -91,7 +106,6 @@ class SiteNavigationViewModel : ViewModel() {
         refreshSummary()
     }
 
-    /** User-created Building under LGES Poland. Returns null if name blank or locked. */
     fun addBuilding(name: String): Building? {
         bootstrap()
         val trimmed = name.trim()
@@ -106,6 +120,23 @@ class SiteNavigationViewModel : ViewModel() {
         return building
     }
 
+    fun renameBuilding(id: String, name: String): Boolean {
+        val updated = catalog.renameBuilding(id, name) ?: return false
+        if (context.buildingId == id) {
+            context.selectBuilding(updated.id)
+        }
+        loadBuildings()
+        return true
+    }
+
+    fun deleteBuilding(id: String): Boolean {
+        val ok = catalog.deleteBuildingCascade(id)
+        loadBuildings()
+        return ok
+    }
+
+    // --- Floor ---
+
     fun loadFloors() {
         bootstrap()
         _floors.value = catalog.floors.listForCurrentBuilding(context)
@@ -114,7 +145,6 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun selectFloor(id: String) {
         context.selectFloor(id)
-        // Do not auto-create or auto-select Route.
         refreshSummary()
     }
 
@@ -133,98 +163,205 @@ class SiteNavigationViewModel : ViewModel() {
         return floor
     }
 
-    fun loadFloorDashboard() {
+    fun renameFloor(id: String, name: String): Boolean {
+        val updated = catalog.renameFloor(id, name) ?: return false
+        if (context.floorId == id) {
+            context.selectFloor(updated.id)
+        }
+        loadFloors()
+        return true
+    }
+
+    fun deleteFloor(id: String): Boolean {
+        val ok = catalog.deleteFloorCascade(id)
+        loadFloors()
+        return ok
+    }
+
+    // --- Drawing ---
+
+    fun loadDrawings() {
+        bootstrap()
+        _drawings.value = catalog.drawings.listForCurrentFloor(context)
+        refreshSummary()
+    }
+
+    fun selectDrawing(id: String) {
+        context.selectDrawing(id)
+        catalog.drawings.get(id)?.routeId?.let { context.selectRoute(it) }
+        refreshSummary()
+    }
+
+    fun addDrawing(name: String, description: String, dwgUri: String?): Drawing? {
+        bootstrap()
+        val floorId = context.floorId ?: return null
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return null
+        val now = System.currentTimeMillis()
+        val drawing = Drawing(
+            id = "drawing-${UUID.randomUUID()}",
+            floorId = floorId,
+            name = trimmed,
+            description = description.trim(),
+            dwgUri = dwgUri,
+            registeredAtMs = now,
+            dwgRegistered = !dwgUri.isNullOrBlank(),
+            createdAtMs = now,
+            updatedAtMs = now,
+        )
+        catalog.drawings.upsert(drawing)
+        loadDrawings()
+        return drawing
+    }
+
+    fun registerDwgForCurrentDrawing(dwgUri: String): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        catalog.drawings.upsert(
+            drawing.copy(
+                dwgUri = dwgUri,
+                dwgRegistered = true,
+                registeredAtMs = System.currentTimeMillis(),
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun setOriginForCurrentDrawing(x: Float, y: Float): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        if (!drawing.dwgRegistered) return false
+        if (drawing.originSet) return false // once only
+        catalog.drawings.upsert(
+            drawing.copy(
+                originSet = true,
+                originX = x,
+                originY = y,
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun markCalibrationReadyForCurrentDrawing(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        if (!drawing.originSet) return false
+        catalog.calibrations.put(
+            CalibrationRepository.CalibrationRef(
+                drawingId = drawing.id,
+                calibrationVersion = 1,
+                mmPerPixel = null,
+                ready = true,
+            ),
+        )
+        catalog.drawings.upsert(
+            drawing.copy(calibrationReady = true, updatedAtMs = System.currentTimeMillis()),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun generateRouteForCurrentDrawing(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        if (!drawing.dwgRegistered || !drawing.originSet) return false
+        val routeRepo = catalog.routes.underlying()
+        val importer = DWGImporter(reader = StubDWGReader())
+        val generator = RouteGenerator(routeRepository = routeRepo)
+        val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
+        val dwgResult = importer.importFrom(source)
+        generator.generate(candidates = dwgResult.candidates)
+        val route = routeRepo.current() ?: return false
+        catalog.routes.setRoute(route)
+        catalog.drawings.upsert(
+            drawing.copy(
+                routeId = route.id,
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun lockRouteForCurrentDrawing(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeId == null || !catalog.routes.hasRoute()) return false
+        if (catalog.zones.forDrawing(drawing.id).isEmpty()) return false
+        catalog.drawings.upsert(
+            drawing.copy(routeLocked = true, updatedAtMs = System.currentTimeMillis()),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun unlockRouteForCurrentDrawing(): Boolean {
+        if (context.accessRole != AccessRole.DEVELOPER) return false
+        val drawing = catalog.drawings.current(context) ?: return false
+        catalog.drawings.upsert(
+            drawing.copy(routeLocked = false, updatedAtMs = System.currentTimeMillis()),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun deleteDrawing(id: String): Boolean {
+        val ok = catalog.deleteDrawingCascade(id)
+        loadDrawings()
+        _drawingDashboard.value = null
+        return ok
+    }
+
+    fun canCreateZone(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        return drawing.routeId != null && catalog.routes.hasRoute()
+    }
+
+    fun loadDrawingDashboard() {
         bootstrap()
         val building = catalog.buildings.current(context)
         val floor = catalog.floors.current(context)
-        if (building == null || floor == null) {
-            _floorDashboard.value = null
+        val drawing = catalog.drawings.current(context)
+        if (building == null || floor == null || drawing == null) {
+            _drawingDashboard.value = null
             return
         }
-        val setup = catalog.floorSetups.get(floor.id)
-        val zones = catalog.zones.forFloor(floor.id)
-        val calReady = zones.any { z ->
-            catalog.calibrations.get(z.id)?.ready == true || z.calibrationVersion != null
-        }
-        val historyCount = zones.sumOf { catalog.inspections.historyForZone(it.id).size }
-        _floorDashboard.value = FloorDashboardUi(
+        val zones = catalog.zones.forDrawing(drawing.id)
+        val history = catalog.inspections.historyForDrawing(drawing.id)
+        val heatMaps = catalog.heatMaps.forDrawing(drawing.id)
+        val cal = catalog.calibrations.get(drawing.id)
+        _drawingDashboard.value = DrawingDashboardUi(
             buildingName = building.name,
             floorName = floor.name,
-            dwgReady = setup.dwgRegistered || zones.any { it.dwgRegistered },
-            routeReady = catalog.routes.hasRoute() && context.routeId != null,
-            routeLocked = setup.routeLocked,
-            calibrationReady = calReady,
+            drawingName = drawing.name,
+            description = drawing.description,
+            registeredAtMs = drawing.registeredAtMs,
+            dwgReady = drawing.dwgRegistered,
+            originSet = drawing.originSet,
+            calibrationReady = drawing.calibrationReady || cal?.ready == true,
+            routeReady = drawing.routeId != null && catalog.routes.hasRoute(),
+            routeLocked = drawing.routeLocked,
+            zoneCount = zones.size,
             zones = zones,
-            historyCount = historyCount,
+            lastInspectionLabel = history.lastOrNull()?.sessionId ?: "—",
+            historyCount = history.size,
+            heatMapCount = heatMaps.size,
+            csvCount = catalog.csvMetadata.forDrawing(drawing.id).size,
+            replayCount = catalog.replayMetadata.forDrawing(drawing.id).size,
         )
         _zones.value = zones
         refreshSummary()
     }
 
-    fun registerDwgForCurrentFloor(): Boolean {
-        val floorId = context.floorId ?: return false
-        if (isFloorLocked(floorId)) return false
-        catalog.floorSetups.setDwgRegistered(floorId, true)
-        loadFloorDashboard()
-        return true
-    }
-
-    /**
-     * User-triggered Route generation after DWG registration.
-     * Uses existing DWGImporter / RouteGenerator — never auto-runs at app start.
-     */
-    fun generateRouteForCurrentFloor(): Boolean {
-        val floorId = context.floorId ?: return false
-        if (isFloorLocked(floorId)) return false
-        val setup = catalog.floorSetups.get(floorId)
-        if (!setup.dwgRegistered) return false
-        val routeRepo = catalog.routes.underlying()
-        val importer = DWGImporter(reader = StubDWGReader())
-        val generator = RouteGenerator(routeRepository = routeRepo)
-        val dwgResult = importer.importFrom("stub://floor-$floorId.dwg")
-        generator.generate(candidates = dwgResult.candidates)
-        val route = routeRepo.current() ?: return false
-        catalog.routes.setRoute(route)
-        loadFloorDashboard()
-        return true
-    }
-
-    /** Marks route id in context after user-triggered generation elsewhere. */
-    fun markRouteReady(routeId: String): Boolean {
-        val floorId = context.floorId ?: return false
-        if (isFloorLocked(floorId)) return false
-        val setup = catalog.floorSetups.get(floorId)
-        if (!setup.dwgRegistered) return false
-        context.selectRoute(routeId)
-        loadFloorDashboard()
-        return true
-    }
-
-    fun lockRouteForCurrentFloor(): Boolean {
-        val floorId = context.floorId ?: return false
-        if (!catalog.routes.hasRoute()) return false
-        catalog.floorSetups.setRouteLocked(floorId, true)
-        loadFloorDashboard()
-        return true
-    }
-
-    fun unlockRouteForCurrentFloor(): Boolean {
-        if (context.accessRole != AccessRole.DEVELOPER) return false
-        val floorId = context.floorId ?: return false
-        catalog.floorSetups.setRouteLocked(floorId, false)
-        loadFloorDashboard()
-        return true
-    }
-
-    fun canCreateZone(): Boolean {
-        val floorId = context.floorId ?: return false
-        if (isFloorLocked(floorId)) return false
-        return catalog.routes.hasRoute() && context.routeId != null
-    }
+    // --- Zone / Operation ---
 
     fun loadZones() {
         bootstrap()
-        _zones.value = catalog.zones.listForCurrentFloor(context)
+        _zones.value = catalog.zones.listForCurrentDrawing(context)
         refreshSummary()
     }
 
@@ -234,29 +371,27 @@ class SiteNavigationViewModel : ViewModel() {
     }
 
     fun renameZone(id: String, name: String): Boolean {
-        if (isCurrentFloorLocked()) return false
+        if (isCurrentDrawingLocked()) return false
         val zone = catalog.zones.get(id) ?: return false
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return false
         catalog.zones.upsert(zone.copy(name = trimmed, updatedAtMs = System.currentTimeMillis()))
         loadZones()
-        loadFloorDashboard()
+        loadDrawingDashboard()
         return true
     }
 
     fun deleteZone(id: String): Boolean {
-        if (isCurrentFloorLocked()) return false
+        if (isCurrentDrawingLocked()) return false
         val ok = catalog.zones.delete(id)
-        if (context.zoneId == id) {
-            context.clearZone()
-        }
+        if (context.zoneId == id) context.clearZone()
         loadZones()
-        loadFloorDashboard()
+        loadDrawingDashboard()
         return ok
     }
 
     fun setZoneColor(id: String, colorLabel: String, colorArgb: Int): Boolean {
-        if (isCurrentFloorLocked()) return false
+        if (isCurrentDrawingLocked()) return false
         val zone = catalog.zones.get(id) ?: return false
         catalog.zones.upsert(
             zone.copy(
@@ -277,14 +412,14 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun loadHistory() {
         bootstrap()
-        _historyLines.value = catalog.inspections.historyForCurrentZone(context)
+        _historyLines.value = catalog.inspections.historyForCurrentDrawing(context)
         refreshSummary()
     }
 
     fun loadLatestResult() {
         bootstrap()
-        val zoneLatest = catalog.inspections.historyForCurrentZone(context).lastOrNull()
-        _latestResult.value = zoneLatest ?: catalog.inspections.underlying().latest()
+        val drawingLatest = catalog.inspections.historyForCurrentDrawing(context).lastOrNull()
+        _latestResult.value = drawingLatest ?: catalog.inspections.underlying().latest()
         refreshSummary()
     }
 
@@ -294,13 +429,11 @@ class SiteNavigationViewModel : ViewModel() {
     fun currentFloorName(): String =
         catalog.floors.current(context)?.name ?: "—"
 
+    fun currentDrawingName(): String =
+        catalog.drawings.current(context)?.name ?: "—"
+
     fun currentZoneName(): String =
         catalog.zones.current(context)?.name ?: "—"
-
-    fun floorSetup(): FloorSetupRepository.FloorSetup? {
-        val floorId = context.floorId ?: return null
-        return catalog.floorSetups.get(floorId)
-    }
 
     fun setRole(role: AccessRole) {
         context.setAccessRole(role)
@@ -326,13 +459,30 @@ class SiteNavigationViewModel : ViewModel() {
         _canOpenCommissioning.value = role.canAccessCommissioning()
     }
 
-    private fun isCurrentFloorLocked(): Boolean {
-        val floorId = context.floorId ?: return false
-        return isFloorLocked(floorId)
+    /** Compatibility: Floor dashboard observers — maps to Drawing dashboard when a Drawing is selected. */
+    @Deprecated("Use drawingDashboard")
+    val floorDashboard: LiveData<DrawingDashboardUi?> = _drawingDashboard
+
+    @Deprecated("Use loadDrawingDashboard")
+    fun loadFloorDashboard() = loadDrawingDashboard()
+
+    @Deprecated("Use unlockRouteForCurrentDrawing")
+    fun unlockRouteForCurrentFloor(): Boolean = unlockRouteForCurrentDrawing()
+
+    @Deprecated("Use generateRouteForCurrentDrawing")
+    fun generateRouteForCurrentFloor(): Boolean = generateRouteForCurrentDrawing()
+
+    @Deprecated("Use lockRouteForCurrentDrawing")
+    fun lockRouteForCurrentFloor(): Boolean = lockRouteForCurrentDrawing()
+
+    @Deprecated("Use registerDwgForCurrentDrawing")
+    fun registerDwgForCurrentFloor(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        return registerDwgForCurrentDrawing(drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg")
     }
 
-    private fun isFloorLocked(floorId: String): Boolean =
-        catalog.floorSetups.get(floorId).routeLocked
+    private fun isCurrentDrawingLocked(): Boolean =
+        catalog.drawings.current(context)?.routeLocked == true
 
     private fun refreshSummary() {
         _contextSummary.value = context.summary()

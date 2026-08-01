@@ -5,28 +5,28 @@ import com.example.cnv.inspection.InspectionRepository
 import com.example.cnv.inspection.InspectionResult
 
 /**
- * Zone-scoped inspection history index.
- * Does not alter InspectionSession algorithms — only associates results to Zone.
+ * Drawing-scoped inspection history index.
+ * Does not alter InspectionSession algorithms — only associates results to Drawing.
  */
 class ZoneInspectionRepository(
     private val inspectionRepository: InspectionRepository = InspectionRepository(),
 ) {
 
     private val lock = Any()
-    private val zoneToSessionIds = LinkedHashMap<String, ArrayDeque<String>>()
+    private val drawingToSessionIds = LinkedHashMap<String, ArrayDeque<String>>()
 
-    fun save(zoneId: String, result: InspectionResult) {
+    fun save(drawingId: String, result: InspectionResult) {
         val exists = inspectionRepository.all().any { it.sessionId == result.sessionId }
         if (!exists) {
             inspectionRepository.save(result)
         }
-        index(zoneId, result.sessionId)
+        index(drawingId, result.sessionId)
     }
 
-    /** Link an already-saved inspection result to a Zone (no algorithm change). */
-    fun index(zoneId: String, sessionId: String) {
+    /** Link an already-saved inspection result to a Drawing (no algorithm change). */
+    fun index(drawingId: String, sessionId: String) {
         synchronized(lock) {
-            val q = zoneToSessionIds.getOrPut(zoneId) { ArrayDeque() }
+            val q = drawingToSessionIds.getOrPut(drawingId) { ArrayDeque() }
             if (!q.contains(sessionId)) {
                 q.addLast(sessionId)
             }
@@ -34,19 +34,37 @@ class ZoneInspectionRepository(
         }
     }
 
-    fun historyForZone(zoneId: String): List<InspectionResult> {
-        val ids = synchronized(lock) { zoneToSessionIds[zoneId]?.toList().orEmpty() }
+    fun historyForDrawing(drawingId: String): List<InspectionResult> {
+        val ids = synchronized(lock) { drawingToSessionIds[drawingId]?.toList().orEmpty() }
         if (ids.isEmpty()) return emptyList()
         val all = inspectionRepository.all().associateBy { it.sessionId }
         return ids.mapNotNull { all[it] }
     }
 
-    fun latestForZone(zoneId: String): InspectionResult? =
-        historyForZone(zoneId).lastOrNull()
+    fun latestForDrawing(drawingId: String): InspectionResult? =
+        historyForDrawing(drawingId).lastOrNull()
 
-    fun historyForCurrentZone(context: CurrentContext = CurrentContext.get()): List<InspectionResult> {
-        val zoneId = context.zoneId ?: return emptyList()
-        return historyForZone(zoneId)
+    fun historyForCurrentDrawing(context: CurrentContext = CurrentContext.get()): List<InspectionResult> {
+        val drawingId = context.drawingId ?: return emptyList()
+        return historyForDrawing(drawingId)
+    }
+
+    /** @deprecated Prefer [historyForDrawing]. Kept for gradual call-site migration. */
+    fun historyForZone(zoneId: String): List<InspectionResult> {
+        // Zone-scoped lookups are no longer primary; return empty unless indexed under same key (legacy).
+        return historyForDrawing(zoneId)
+    }
+
+    fun historyForCurrentZone(context: CurrentContext = CurrentContext.get()): List<InspectionResult> =
+        historyForCurrentDrawing(context)
+
+    fun removeForDrawing(drawingId: String) {
+        synchronized(lock) {
+            val ids = drawingToSessionIds.remove(drawingId)?.toList().orEmpty()
+            ids.forEach { sessionId ->
+                // Leave underlying results; index only is Drawing-scoped for this phase.
+            }
+        }
     }
 
     fun underlying(): InspectionRepository = inspectionRepository

@@ -116,9 +116,9 @@ class InspectionPipeline(
 
     fun stopSession(): InspectionResult? {
         val result = inspectionManager.stop()
-        val zoneId = CurrentContext.get().zoneId
-        if (result != null && zoneId != null) {
-            catalog.inspections.index(zoneId, result.sessionId)
+        val drawingId = CurrentContext.get().drawingId
+        if (result != null && drawingId != null) {
+            catalog.inspections.index(drawingId, result.sessionId)
         }
         return result
     }

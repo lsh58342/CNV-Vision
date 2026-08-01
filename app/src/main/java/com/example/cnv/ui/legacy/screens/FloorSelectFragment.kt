@@ -31,7 +31,7 @@ class FloorSelectFragment : BaseScreenFragment() {
             lv.adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, labels)
             lv.setOnItemClickListener { _, _, position, _ ->
                 siteVm.selectFloor(list[position].id)
-                nav().navigate(CnvDestination.ZONE_LIST)
+                nav().navigate(CnvDestination.DRAWING_LIST)
             }
         }
         siteVm.loadFloors()

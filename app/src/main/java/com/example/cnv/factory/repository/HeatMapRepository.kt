@@ -3,41 +3,45 @@ package com.example.cnv.factory.repository
 import com.example.cnv.factory.context.CurrentContext
 
 /**
- * Zone-scoped HeatMap artifact index (references only).
+ * Drawing-scoped HeatMap artifact index (references only).
  * Does not change HeatMap generation / render algorithms.
  */
 class HeatMapRepository {
 
     data class HeatMapRef(
-        val zoneId: String,
+        val drawingId: String,
         val sessionId: String,
         val label: String,
         val updatedAtMs: Long = System.currentTimeMillis(),
     )
 
     private val lock = Any()
-    private val byZone = LinkedHashMap<String, ArrayDeque<HeatMapRef>>()
+    private val byDrawing = LinkedHashMap<String, ArrayDeque<HeatMapRef>>()
 
     fun put(ref: HeatMapRef) {
         synchronized(lock) {
-            val q = byZone.getOrPut(ref.zoneId) { ArrayDeque() }
+            val q = byDrawing.getOrPut(ref.drawingId) { ArrayDeque() }
             q.addLast(ref)
             while (q.size > 20) q.removeFirst()
         }
     }
 
-    fun forZone(zoneId: String): List<HeatMapRef> =
-        synchronized(lock) { byZone[zoneId]?.toList().orEmpty() }
+    fun forDrawing(drawingId: String): List<HeatMapRef> =
+        synchronized(lock) { byDrawing[drawingId]?.toList().orEmpty() }
 
-    fun latestForZone(zoneId: String): HeatMapRef? =
-        forZone(zoneId).lastOrNull()
+    fun latestForDrawing(drawingId: String): HeatMapRef? =
+        forDrawing(drawingId).lastOrNull()
 
-    fun forCurrentZone(context: CurrentContext = CurrentContext.get()): List<HeatMapRef> {
-        val zoneId = context.zoneId ?: return emptyList()
-        return forZone(zoneId)
+    fun forCurrentDrawing(context: CurrentContext = CurrentContext.get()): List<HeatMapRef> {
+        val drawingId = context.drawingId ?: return emptyList()
+        return forDrawing(drawingId)
+    }
+
+    fun removeForDrawing(drawingId: String) {
+        synchronized(lock) { byDrawing.remove(drawingId) }
     }
 
     fun clear() {
-        synchronized(lock) { byZone.clear() }
+        synchronized(lock) { byDrawing.clear() }
     }
 }

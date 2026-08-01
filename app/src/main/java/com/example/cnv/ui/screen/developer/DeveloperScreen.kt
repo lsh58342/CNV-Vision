@@ -24,7 +24,7 @@ class DeveloperScreen : BaseScreen() {
         super.onViewCreated(view, savedInstanceState)
         siteVm.setRole(AccessRole.DEVELOPER)
         view.findViewById<Button>(R.id.button_unlock_route).setOnClickListener {
-            if (siteVm.unlockRouteForCurrentFloor()) {
+            if (siteVm.unlockRouteForCurrentDrawing()) {
                 Toast.makeText(requireContext(), R.string.setup_route_unlocked, Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(requireContext(), R.string.setup_unlock_failed, Toast.LENGTH_SHORT).show()

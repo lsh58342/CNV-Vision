@@ -1,5 +1,9 @@
 package com.example.cnv.factory.repository
 
+import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.Building
+import com.example.cnv.factory.model.Floor
+
 /**
  * Composition-facing catalog of context-scoped repositories.
  */
@@ -7,13 +11,76 @@ class FactoryCatalog(
     val factories: FactoryRepository = FactoryRepository(),
     val buildings: BuildingRepository = BuildingRepository(),
     val floors: FloorRepository = FloorRepository(),
+    val drawings: DrawingRepository = DrawingRepository(),
     val zones: ZoneRepository = ZoneRepository(),
     val routes: ContextRouteRepository = ContextRouteRepository(),
     val inspections: ZoneInspectionRepository = ZoneInspectionRepository(),
     val heatMaps: HeatMapRepository = HeatMapRepository(),
     val calibrations: CalibrationRepository = CalibrationRepository(),
-    val floorSetups: FloorSetupRepository = FloorSetupRepository(),
+    val csvMetadata: CsvMetadataRepository = CsvMetadataRepository(),
+    val replayMetadata: ReplayMetadataRepository = ReplayMetadataRepository(),
 ) {
+    /**
+     * Cascade-delete Drawing and all Drawing-owned artifacts.
+     */
+    fun deleteDrawingCascade(drawingId: String): Boolean {
+        val drawing = drawings.get(drawingId) ?: return false
+        zones.removeForDrawing(drawingId)
+        calibrations.removeForDrawing(drawingId)
+        heatMaps.removeForDrawing(drawingId)
+        inspections.removeForDrawing(drawingId)
+        csvMetadata.removeForDrawing(drawingId)
+        replayMetadata.removeForDrawing(drawingId)
+        val ctx = CurrentContext.get()
+        if (drawing.routeId != null && (ctx.routeId == drawing.routeId || routes.currentRoute()?.id == drawing.routeId)) {
+            routes.underlying().clear()
+        }
+        if (ctx.drawingId == drawingId) {
+            ctx.clearDrawing()
+        }
+        return drawings.delete(drawingId)
+    }
+
+    fun deleteFloorCascade(floorId: String): Boolean {
+        drawings.forFloor(floorId).map { it.id }.forEach { deleteDrawingCascade(it) }
+        val ctx = CurrentContext.get()
+        val buildingId = ctx.buildingId
+        val removed = floors.delete(floorId)
+        if (removed && ctx.floorId == floorId && buildingId != null) {
+            ctx.selectBuilding(buildingId)
+        }
+        return removed
+    }
+
+    fun deleteBuildingCascade(buildingId: String): Boolean {
+        floors.forBuilding(buildingId).map { it.id }.forEach { deleteFloorCascade(it) }
+        val ctx = CurrentContext.get()
+        val factoryId = ctx.factoryId
+        val removed = buildings.delete(buildingId)
+        if (removed && ctx.buildingId == buildingId && factoryId != null) {
+            ctx.selectFactory(factoryId)
+        }
+        return removed
+    }
+
+    fun renameBuilding(id: String, name: String): Building? {
+        val building = buildings.get(id) ?: return null
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return null
+        val updated = building.copy(name = trimmed)
+        buildings.upsert(updated)
+        return updated
+    }
+
+    fun renameFloor(id: String, name: String): Floor? {
+        val floor = floors.get(id) ?: return null
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return null
+        val updated = floor.copy(name = trimmed)
+        floors.upsert(updated)
+        return updated
+    }
+
     companion object {
         @Volatile
         private var instance: FactoryCatalog? = null

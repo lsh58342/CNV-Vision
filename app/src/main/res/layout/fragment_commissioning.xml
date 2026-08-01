@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/comm_workflow_full"
+            android:text="@string/comm_workflow_drawing"
             android:textAppearance="@style/TextAppearance.CNV.Body" />
 
         <com.google.android.material.button.MaterialButton

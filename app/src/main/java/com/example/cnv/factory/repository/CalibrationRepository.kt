@@ -3,13 +3,13 @@ package com.example.cnv.factory.repository
 import com.example.cnv.factory.context.CurrentContext
 
 /**
- * Zone-scoped calibration reference store.
+ * Drawing-scoped calibration reference store.
  * Does not change CalibrationManager algorithms — stores version linkage only.
  */
 class CalibrationRepository {
 
     data class CalibrationRef(
-        val zoneId: String,
+        val drawingId: String,
         val calibrationVersion: Int,
         val mmPerPixel: Float?,
         val ready: Boolean,
@@ -17,20 +17,24 @@ class CalibrationRepository {
     )
 
     private val lock = Any()
-    private val byZone = LinkedHashMap<String, CalibrationRef>()
+    private val byDrawing = LinkedHashMap<String, CalibrationRef>()
 
     fun put(ref: CalibrationRef) {
-        synchronized(lock) { byZone[ref.zoneId] = ref }
+        synchronized(lock) { byDrawing[ref.drawingId] = ref }
     }
 
-    fun get(zoneId: String): CalibrationRef? = synchronized(lock) { byZone[zoneId] }
+    fun get(drawingId: String): CalibrationRef? = synchronized(lock) { byDrawing[drawingId] }
 
     fun current(context: CurrentContext = CurrentContext.get()): CalibrationRef? {
-        val zoneId = context.zoneId ?: return null
-        return get(zoneId)
+        val drawingId = context.drawingId ?: return null
+        return get(drawingId)
+    }
+
+    fun removeForDrawing(drawingId: String) {
+        synchronized(lock) { byDrawing.remove(drawingId) }
     }
 
     fun clear() {
-        synchronized(lock) { byZone.clear() }
+        synchronized(lock) { byDrawing.clear() }
     }
 }

@@ -51,7 +51,15 @@ class BuildingScreen : BaseScreen() {
         emptySlot.addView(emptyView)
 
         view.findViewById<MaterialButton>(R.id.button_add_building).setOnClickListener {
-            promptAddBuilding()
+            promptName(R.string.setup_add_building, R.string.setup_building_name_hint) { name ->
+                val created = siteVm.addBuilding(name)
+                if (created == null) {
+                    Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
+                } else {
+                    selectedBuildingId = created.id
+                    siteVm.selectBuilding(created.id)
+                }
+            }
         }
         view.findViewById<MaterialButton>(R.id.button_open_building).setOnClickListener {
             val id = selectedBuildingId
@@ -70,27 +78,56 @@ class BuildingScreen : BaseScreen() {
             nav().navigate(CnvDestination.COMMISSIONING)
         }
 
+        // Long-press rename/delete via secondary actions on open button long-click
+        view.findViewById<MaterialButton>(R.id.button_open_building).setOnLongClickListener {
+            showBuildingEditMenu()
+            true
+        }
+
         siteVm.buildings.observe(viewLifecycleOwner) { renderList(it) }
         siteVm.loadBuildings()
     }
 
-    private fun promptAddBuilding() {
+    private fun showBuildingEditMenu() {
+        val id = selectedBuildingId ?: run {
+            Toast.makeText(requireContext(), R.string.op_select_building_first, Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.setup_building_dashboard)
+            .setItems(
+                arrayOf(
+                    getString(R.string.setup_rename_building),
+                    getString(R.string.setup_delete_building),
+                ),
+            ) { _, which ->
+                when (which) {
+                    0 -> promptName(R.string.setup_rename_building, R.string.setup_building_name_hint) { name ->
+                        if (!siteVm.renameBuilding(id, name)) {
+                            Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    1 -> AlertDialog.Builder(requireContext())
+                        .setMessage(R.string.setup_delete_building_confirm)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            if (siteVm.deleteBuilding(id)) selectedBuildingId = null
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
+            }
+            .show()
+    }
+
+    private fun promptName(titleRes: Int, hintRes: Int, onOk: (String) -> Unit) {
         val input = EditText(requireContext()).apply {
-            hint = getString(R.string.setup_building_name_hint)
+            hint = getString(hintRes)
             setSingleLine()
         }
         AlertDialog.Builder(requireContext())
-            .setTitle(R.string.setup_add_building)
+            .setTitle(titleRes)
             .setView(input)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val created = siteVm.addBuilding(input.text?.toString().orEmpty())
-                if (created == null) {
-                    Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
-                } else {
-                    selectedBuildingId = created.id
-                    siteVm.selectBuilding(created.id)
-                }
-            }
+            .setPositiveButton(android.R.string.ok) { _, _ -> onOk(input.text?.toString().orEmpty()) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }

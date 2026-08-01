@@ -6,6 +6,7 @@ import com.example.cnv.factory.repository.FactoryCatalog
 
 /**
  * Builds [ZoneDashboardState] from Current Context repositories (read-only).
+ * Zone readiness is derived from its parent Drawing.
  */
 class ZoneDashboardController(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
@@ -14,21 +15,23 @@ class ZoneDashboardController(
 
     fun load(): ZoneDashboardState {
         val zone = catalog.zones.current(context) ?: return ZoneDashboardState()
-        val calibration = catalog.calibrations.get(zone.id)
+        val drawing = catalog.drawings.get(zone.drawingId)
+        val calibration = drawing?.let { catalog.calibrations.get(it.id) }
             ?: zone.calibrationVersion?.let { version ->
                 CalibrationRepository.CalibrationRef(
-                    zoneId = zone.id,
+                    drawingId = zone.drawingId,
                     calibrationVersion = version,
                     mmPerPixel = null,
                     ready = true,
                 )
             }
-        val history = catalog.inspections.historyForZone(zone.id)
-        val heatMaps = catalog.heatMaps.forZone(zone.id)
-        val calReady = calibration?.ready == true || zone.calibrationVersion != null
-        val floorSetup = catalog.floorSetups.get(zone.floorId)
-        val dwgReady = zone.dwgRegistered || floorSetup.dwgRegistered
-        val routeReady = catalog.routes.hasRoute()
+        val history = catalog.inspections.historyForDrawing(zone.drawingId)
+        val heatMaps = catalog.heatMaps.forDrawing(zone.drawingId)
+        val calReady = calibration?.ready == true ||
+            drawing?.calibrationReady == true ||
+            zone.calibrationVersion != null
+        val dwgReady = drawing?.dwgRegistered == true
+        val routeReady = drawing?.routeId != null && catalog.routes.hasRoute()
         return ZoneDashboardState(
             zone = zone,
             dwgReady = dwgReady,
@@ -40,6 +43,7 @@ class ZoneDashboardController(
             latestHeatMap = heatMaps.lastOrNull(),
             canStartInspection = dwgReady &&
                 routeReady &&
+                drawing?.routeLocked == true &&
                 zone.start.isDefined() &&
                 zone.end.isDefined(),
         )

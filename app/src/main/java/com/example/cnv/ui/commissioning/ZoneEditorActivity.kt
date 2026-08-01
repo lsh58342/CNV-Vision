@@ -15,8 +15,7 @@ import com.example.cnv.zone.editor.ZoneEditorController
 import com.google.android.material.button.MaterialButton
 
 /**
- * Zone Editor UI (Commissioning only).
- * Requires Floor + Route in Current Context — no demo Building/Floor/Route seeding.
+ * Zone Editor UI (Commissioning only) — requires Drawing + Route in Current Context.
  */
 class ZoneEditorActivity : AppCompatActivity() {
 
@@ -33,7 +32,7 @@ class ZoneEditorActivity : AppCompatActivity() {
             return
         }
 
-        if (!hasFloorAndRoute()) {
+        if (!hasDrawingAndRoute()) {
             Toast.makeText(this, R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
             finish()
             return
@@ -84,11 +83,11 @@ class ZoneEditorActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.button_zone_editor_back).setOnClickListener { finish() }
     }
 
-    private fun hasFloorAndRoute(): Boolean {
+    private fun hasDrawingAndRoute(): Boolean {
         val ctx = CurrentContext.get()
         val catalog = FactoryCatalog.get()
-        if (ctx.floorId == null) return false
-        val routeId = ctx.routeId ?: catalog.routes.currentRouteId()
+        val drawing = catalog.drawings.current(ctx) ?: return false
+        val routeId = drawing.routeId ?: ctx.routeId ?: catalog.routes.currentRouteId()
         if (routeId == null || !catalog.routes.hasRoute()) return false
         if (ctx.routeId == null) ctx.selectRoute(routeId)
         return true
@@ -98,7 +97,7 @@ class ZoneEditorActivity : AppCompatActivity() {
         val d = editor.draft()
         findViewById<TextView>(R.id.zone_editor_status).text = buildString {
             appendLine("Mode: ${d.mode}")
-            appendLine("Floor: ${d.floorId.ifBlank { "—" }}")
+            appendLine("Drawing: ${d.drawingId.ifBlank { "—" }}")
             appendLine("Route: ${d.routeId.ifBlank { "—" }}")
             appendLine("Start: ${d.start}")
             appendLine("End: ${d.end}")

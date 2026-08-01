@@ -18,7 +18,7 @@ import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
-/** Zone List — real catalog zones for current Floor. */
+/** Zone List — Drawing-scoped zones. */
 class ZoneListScreen : BaseScreen() {
 
     private var query: String = ""
@@ -40,9 +40,9 @@ class ZoneListScreen : BaseScreen() {
 
         view.findViewById<TextView>(R.id.zone_list_context).text = getString(
             R.string.op_context_full,
-            siteVm.factoryName.value ?: "LGES Poland",
             siteVm.currentBuildingName(),
             siteVm.currentFloorName(),
+            siteVm.currentDrawingName(),
         )
 
         val searchSlot = view.findViewById<FrameLayout>(R.id.zone_search_slot)
@@ -101,19 +101,14 @@ class ZoneListScreen : BaseScreen() {
         if (query.isNotBlank()) {
             items = items.filter { it.name.contains(query, ignoreCase = true) }
         }
-        items = if (sortByNameAsc) {
-            items.sortedBy { it.name }
-        } else {
-            items.sortedByDescending { it.name }
-        }
+        items = if (sortByNameAsc) items.sortedBy { it.name } else items.sortedByDescending { it.name }
         UiComponents.setEmptyVisible(emptyView, items.isEmpty())
         items.forEach { item ->
-            val last = "—"
             listContainer.addView(
                 UiComponents.inflateZoneCard(
                     parent = listContainer,
                     name = item.name,
-                    lastInspection = last,
+                    lastInspection = "—",
                     colorHex = String.format("#%06X", 0xFFFFFF and item.colorArgb),
                     selected = item.id == selectedZoneId,
                     onClick = {

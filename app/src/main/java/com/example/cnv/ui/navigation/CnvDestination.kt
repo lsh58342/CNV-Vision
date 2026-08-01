@@ -5,6 +5,8 @@ import com.example.cnv.ui.screen.building.BuildingScreen
 import com.example.cnv.ui.screen.commissioning.CommissioningScreen
 import com.example.cnv.ui.screen.dashboard.ZoneDashboardScreen
 import com.example.cnv.ui.screen.developer.DeveloperScreen
+import com.example.cnv.ui.screen.drawing.DrawingDashboardScreen
+import com.example.cnv.ui.screen.drawing.DrawingListScreen
 import com.example.cnv.ui.screen.floor.FloorScreen
 import com.example.cnv.ui.screen.heatmap.HeatMapScreen
 import com.example.cnv.ui.screen.history.HistoryScreen
@@ -15,7 +17,7 @@ import com.example.cnv.ui.screen.splash.SplashScreen
 import com.example.cnv.ui.screen.zone.ZoneListScreen
 
 /**
- * App destinations for UI Rebuild Navigation Host.
+ * App destinations for UI Rebuild Navigation Host (Drawing-centric).
  */
 enum class CnvDestination {
     SPLASH,
@@ -23,6 +25,8 @@ enum class CnvDestination {
     FACTORY_SELECT,
     BUILDING_SELECT,
     FLOOR_SELECT,
+    DRAWING_LIST,
+    DRAWING_DASHBOARD,
     ZONE_LIST,
     ZONE_DASHBOARD,
     INSPECTION,
@@ -39,6 +43,8 @@ enum class CnvDestination {
         FACTORY_SELECT -> BuildingScreen()
         BUILDING_SELECT -> BuildingScreen()
         FLOOR_SELECT -> FloorScreen()
+        DRAWING_LIST -> DrawingListScreen()
+        DRAWING_DASHBOARD -> DrawingDashboardScreen()
         ZONE_LIST -> ZoneListScreen()
         ZONE_DASHBOARD -> ZoneDashboardScreen()
         INSPECTION -> InspectionScreen()
