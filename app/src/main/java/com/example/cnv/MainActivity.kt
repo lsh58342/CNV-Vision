@@ -5,9 +5,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.ui.navigation.AppNavigator
 
 /**
- * UI shell only. Feature wiring lives in [MainCompositionRoot].
+ * Inspection UI shell only. Feature wiring lives in [MainCompositionRoot].
+ * Launched from Zone Dashboard with optional zone id (no algorithm changes).
  */
 class MainActivity : AppCompatActivity() {
 
@@ -21,6 +24,9 @@ class MainActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+        intent.getStringExtra(AppNavigator.EXTRA_ZONE_ID)?.let { zoneId ->
+            CurrentContext.get().selectZone(zoneId)
         }
         compositionRoot = MainCompositionRoot(this)
         compositionRoot.bind()

@@ -43,4 +43,55 @@
     <string name="calibration_finish">Finish Calibration</string>
     <string name="calibration_cancel">Cancel Calibration</string>
     <string name="calibration_reset">Reset Saved Calibration</string>
+
+    <string name="nav_back">Back</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_exit_hint">Exit</string>
+    <string name="nav_factory_title">Select Factory</string>
+    <string name="nav_building_title">Select Building</string>
+    <string name="nav_floor_title">Select Floor</string>
+    <string name="nav_zone_list_title">Select Zone</string>
+
+    <string name="zone_dash_missing">No Zone selected</string>
+    <string name="zone_dash_dwg">DWG: %1$s</string>
+    <string name="zone_dash_calibration">Calibration: %1$s</string>
+    <string name="zone_dash_last_inspection">Last Inspection: %1$s</string>
+    <string name="zone_dash_history_count">Inspection History: %1$d</string>
+    <string name="zone_dash_heatmap_count">HeatMap refs: %1$d</string>
+    <string name="zone_dash_start">Start Inspection</string>
+    <string name="zone_dash_heatmap">Open HeatMap / Inspection UI</string>
+    <string name="zone_dash_csv">CSV Export (STEP 13)</string>
+    <string name="zone_dash_not_ready">Zone not ready for inspection</string>
+    <string name="zone_dash_heatmap_hint">Opening inspection UI with HeatMap overlay</string>
+    <string name="zone_dash_csv_future">CSV Export comes in STEP 13</string>
+
+    <string name="comm_home_title">Commissioning</string>
+    <string name="comm_workflow_hint">1 DWG → 2 Route → 3 Calibration → 4 Zone → 5 Save</string>
+    <string name="comm_step_dwg">1. Register DWG</string>
+    <string name="comm_step_route">2. Generate Route</string>
+    <string name="comm_step_calibration">3. Calibration</string>
+    <string name="comm_step_zone">4. Zone Editor</string>
+    <string name="comm_leave">Leave Commissioning</string>
+    <string name="comm_denied">Commissioning requires Admin or Developer</string>
+    <string name="comm_dwg_structure">DWG registration structure ready (use existing DWG pipeline)</string>
+    <string name="comm_route_structure">Route generation structure ready (use existing Route Generator)</string>
+    <string name="comm_calibration_structure">Calibration structure ready (use existing Calibration)</string>
+
+    <string name="zone_editor_title">Zone Editor</string>
+    <string name="zone_editor_name_hint">Zone name</string>
+    <string name="zone_editor_cad">Method 1: CAD pick (demo anchors)</string>
+    <string name="zone_editor_drive">Method 2: Drive record (demo anchors)</string>
+    <string name="zone_editor_save">Save Zone</string>
+    <string name="zone_editor_need_context">Need Floor + Route in Current Context</string>
+    <string name="zone_editor_cad_demo">CAD start/end anchors set (Route-based)</string>
+    <string name="zone_editor_drive_demo">Drive start/end anchors set (Route Position)</string>
+    <string name="zone_editor_save_failed">Cannot save Zone — check name and anchors</string>
+    <string name="zone_editor_saved">Zone saved</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_role_hint">Developer tools are available only for Admin / Developer.</string>
+    <string name="settings_role_operator">Role: Operator</string>
+    <string name="settings_role_admin">Role: Admin</string>
+    <string name="settings_role_developer">Role: Developer</string>
+    <string name="settings_open_commissioning">Open Commissioning</string>
 </resources>
