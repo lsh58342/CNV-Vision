@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.cnv.R
+import com.example.cnv.core.config.CalibrationConfig
 
 class CalibrationFragment : Fragment() {
 
@@ -97,6 +98,7 @@ class CalibrationFragment : Fragment() {
     }
 
     companion object {
-        private const val SESSION_REFRESH_INTERVAL_MS = 500L
+        private val SESSION_REFRESH_INTERVAL_MS =
+            CalibrationConfig.DEFAULT_SESSION_UI_REFRESH_MS
     }
 }

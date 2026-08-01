@@ -1,7 +1,7 @@
-package com.example.cnv.event
+package com.example.cnv.core.event
 
 /**
- * Published by DistanceEstimator implementations after each valid frame estimate.
+ * Published by DistanceEstimator after each frame estimate.
  */
 data class DistanceEvent(
     override val timestampNs: Long,

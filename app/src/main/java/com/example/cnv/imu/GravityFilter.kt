@@ -1,6 +1,6 @@
 package com.example.cnv.imu
 
-import com.example.cnv.config.IMUConfig
+import com.example.cnv.core.config.IMUConfig
 import kotlin.math.sqrt
 
 /**

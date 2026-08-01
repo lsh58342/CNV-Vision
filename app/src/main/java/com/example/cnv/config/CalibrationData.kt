@@ -1,5 +1,7 @@
 package com.example.cnv.config
 
+import com.example.cnv.core.config.CalibrationConfig
+
 /**
  * Persisted calibration scale for pixel → mm conversion.
  */
@@ -11,6 +13,6 @@ data class CalibrationData(
     val version: Int = CURRENT_VERSION,
 ) {
     companion object {
-        const val CURRENT_VERSION = 1
+        val CURRENT_VERSION = CalibrationConfig.DEFAULT_SCHEMA_VERSION
     }
 }

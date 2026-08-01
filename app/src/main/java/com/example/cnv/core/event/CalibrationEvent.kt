@@ -1,4 +1,4 @@
-package com.example.cnv.event
+package com.example.cnv.core.event
 
 /**
  * Published by CalibrationManager on session lifecycle changes.

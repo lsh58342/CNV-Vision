@@ -1,8 +1,9 @@
 package com.example.cnv.opencv
 
 import com.example.cnv.config.CalibrationManager
-import com.example.cnv.event.DistanceEvent
-import com.example.cnv.event.EventDispatcher
+import com.example.cnv.core.event.CoreEventModule
+import com.example.cnv.core.event.DistanceEvent
+import com.example.cnv.core.event.EventDispatcher
 import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
 import org.opencv.core.Point
@@ -16,7 +17,7 @@ import org.opencv.imgproc.Imgproc
  */
 class OpticalFlowDistanceEstimator(
     private val calibrationManager: CalibrationManager,
-    private val eventDispatcher: EventDispatcher = EventDispatcher(),
+    private val eventDispatcher: EventDispatcher = CoreEventModule.eventDispatcher(),
 ) : DistanceEstimator {
 
     private val opticalFlow = LucasKanadeOpticalFlow()

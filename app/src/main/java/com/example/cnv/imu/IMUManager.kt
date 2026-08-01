@@ -5,7 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import com.example.cnv.config.IMUConfig
+import com.example.cnv.core.config.IMUConfig
 
 /**
  * Registers accelerometer / gyroscope and forwards samples to [IMUProcessor].

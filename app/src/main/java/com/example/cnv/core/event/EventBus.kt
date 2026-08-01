@@ -1,16 +1,16 @@
-package com.example.cnv.event
+package com.example.cnv.core.event
 
 /**
- * Thread-safe publish/subscribe bus. Camera and IMU never call each other —
- * they only publish/subscribe [BaseEvent] subtypes.
+ * In-memory publish/subscribe bus.
+ * Constructed via DI / [CoreEventModule] — not a Kotlin `object` singleton.
  */
-object EventBus {
+class EventBus : EventPublisher, EventSubscriber {
 
     private val lock = Any()
     private val subscribers =
         mutableMapOf<Class<out BaseEvent>, MutableList<(BaseEvent) -> Unit>>()
 
-    fun <T : BaseEvent> subscribe(eventType: Class<T>, listener: (T) -> Unit) {
+    override fun <T : BaseEvent> subscribe(eventType: Class<T>, listener: (T) -> Unit) {
         synchronized(lock) {
             val list = subscribers.getOrPut(eventType) { mutableListOf() }
             @Suppress("UNCHECKED_CAST")
@@ -18,7 +18,7 @@ object EventBus {
         }
     }
 
-    fun <T : BaseEvent> unsubscribe(eventType: Class<T>, listener: (T) -> Unit) {
+    override fun <T : BaseEvent> unsubscribe(eventType: Class<T>, listener: (T) -> Unit) {
         synchronized(lock) {
             val list = subscribers[eventType] ?: return
             @Suppress("UNCHECKED_CAST")
@@ -29,7 +29,7 @@ object EventBus {
         }
     }
 
-    fun publish(event: BaseEvent) {
+    override fun publish(event: BaseEvent) {
         val listeners = synchronized(lock) {
             subscribers[event.javaClass]?.toList().orEmpty()
         }

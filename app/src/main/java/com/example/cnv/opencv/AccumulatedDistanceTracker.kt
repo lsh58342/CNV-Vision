@@ -1,5 +1,7 @@
 package com.example.cnv.opencv
 
+import com.example.cnv.core.config.OpenCVConfig
+
 /**
  * Session accumulated distance with quality gates.
  */
@@ -59,9 +61,9 @@ class AccumulatedDistanceTracker {
     }
 
     companion object {
-        const val MIN_INLIERS = 8
-        const val MIN_INLIER_RATIO = 0.35f
-        const val NOISE_FLOOR_PX = 0.5f
-        const val MIN_CONFIDENCE = 0.15f
+        val MIN_INLIERS = OpenCVConfig.DEFAULT_MIN_INLIERS
+        val MIN_INLIER_RATIO = OpenCVConfig.DEFAULT_MIN_INLIER_RATIO
+        val NOISE_FLOOR_PX = OpenCVConfig.DEFAULT_NOISE_FLOOR_PX
+        val MIN_CONFIDENCE = OpenCVConfig.DEFAULT_MIN_CONFIDENCE
     }
 }

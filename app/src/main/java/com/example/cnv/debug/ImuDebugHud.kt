@@ -3,6 +3,7 @@ package com.example.cnv.debug
 import android.os.Handler
 import android.os.Looper
 import android.widget.TextView
+import com.example.cnv.core.config.DebugConfig
 import com.example.cnv.imu.IMUData
 import com.example.cnv.imu.IMURepository
 
@@ -13,7 +14,7 @@ import com.example.cnv.imu.IMURepository
 class ImuDebugHud(
     private val textView: TextView,
     private val repository: IMURepository,
-    private val refreshIntervalMs: Long = DEFAULT_REFRESH_INTERVAL_MS,
+    private val refreshIntervalMs: Long = DebugConfig.DEFAULT_IMU_HUD_REFRESH_MS,
 ) {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -68,9 +69,5 @@ class ImuDebugHud(
             append("Confidence: %.2f\n".format(data.confidence))
             append("Sampling Rate: %.1f Hz".format(data.samplingRateHz))
         }
-    }
-
-    companion object {
-        const val DEFAULT_REFRESH_INTERVAL_MS = 200L
     }
 }

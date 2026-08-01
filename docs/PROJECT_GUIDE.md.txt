@@ -505,3 +505,20 @@ mmPerPixel = realDistanceMm / sessionPixel
 ↓
 
 Calibration 저장
+
+
+
+# AI Working Rules
+
+AI는 항상 아래 순서를 따른다.
+
+1. PROJECT_GUIDE.md 읽기
+2. ARCHITECTURE.md 읽기
+3. DECISIONS.md 읽기
+4. 관련 기능 문서(OpenCV, IMU 등) 읽기
+5. 변경 영향 분석
+6. 구현 계획 출력
+7. 사용자 승인 후 구현
+8. Build Success 확인
+9. 변경 파일 목록 출력
+10. 자체 코드 리뷰 수행

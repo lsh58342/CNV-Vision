@@ -1,5 +1,6 @@
 package com.example.cnv.opencv
 
+import com.example.cnv.core.config.OpenCVConfig
 import kotlin.math.sqrt
 import kotlin.random.Random
 
@@ -7,8 +8,8 @@ import kotlin.random.Random
  * Translation-model RANSAC over optical-flow pairs.
  */
 class RansacFlowFilter(
-    private val maxIterations: Int = MAX_ITERS,
-    private val residualThresholdPx: Double = REPROJ_THRESHOLD_PX,
+    private val maxIterations: Int = OpenCVConfig.DEFAULT_RANSAC_MAX_ITERS,
+    private val residualThresholdPx: Double = OpenCVConfig.DEFAULT_RANSAC_REPROJ_THRESHOLD_PX,
     private val random: Random = Random.Default,
 ) {
 
@@ -78,8 +79,7 @@ class RansacFlowFilter(
     }
 
     companion object {
-        const val MAX_ITERS = 100
-        const val REPROJ_THRESHOLD_PX = 3.0
-        const val MIN_INLIERS_FOR_FULL_CONF = 40
+        val MIN_INLIERS_FOR_FULL_CONF =
+            OpenCVConfig.DEFAULT_RANSAC_MIN_INLIERS_FOR_FULL_CONF
     }
 }

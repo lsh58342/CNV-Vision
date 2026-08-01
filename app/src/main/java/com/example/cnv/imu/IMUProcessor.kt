@@ -2,9 +2,10 @@ package com.example.cnv.imu
 
 import android.os.Handler
 import android.os.HandlerThread
-import com.example.cnv.config.IMUConfig
-import com.example.cnv.event.EventDispatcher
-import com.example.cnv.event.ShockEvent
+import com.example.cnv.core.config.IMUConfig
+import com.example.cnv.core.event.CoreEventModule
+import com.example.cnv.core.event.EventDispatcher
+import com.example.cnv.core.event.ShockEvent
 import kotlin.math.sqrt
 
 /**
@@ -13,7 +14,7 @@ import kotlin.math.sqrt
 class IMUProcessor(
     private val config: IMUConfig,
     private val repository: IMURepository,
-    private val eventDispatcher: EventDispatcher = EventDispatcher(),
+    private val eventDispatcher: EventDispatcher = CoreEventModule.eventDispatcher(),
 ) {
 
     private val gravityFilter = GravityFilter(config)

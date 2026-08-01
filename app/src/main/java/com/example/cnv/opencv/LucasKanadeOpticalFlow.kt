@@ -1,5 +1,6 @@
 package com.example.cnv.opencv
 
+import com.example.cnv.core.config.OpenCVConfig
 import org.opencv.core.KeyPoint
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
@@ -108,11 +109,11 @@ class LucasKanadeOpticalFlow {
     }
 
     companion object {
-        const val WINDOW_SIZE = 21
-        const val MAX_PYRAMID_LEVEL = 3
-        const val TERM_CRITERIA_COUNT = 30
-        const val TERM_CRITERIA_EPS = 0.01
-        const val MAX_TRACK_POINTS = 200
+        val WINDOW_SIZE = OpenCVConfig.DEFAULT_LK_WINDOW_SIZE
+        val MAX_PYRAMID_LEVEL = OpenCVConfig.DEFAULT_LK_MAX_PYRAMID_LEVEL
+        val TERM_CRITERIA_COUNT = OpenCVConfig.DEFAULT_LK_TERM_CRITERIA_COUNT
+        val TERM_CRITERIA_EPS = OpenCVConfig.DEFAULT_LK_TERM_CRITERIA_EPS
+        val MAX_TRACK_POINTS = OpenCVConfig.DEFAULT_LK_MAX_TRACK_POINTS
         const val TRACK_STATUS_OK = 1
     }
 }

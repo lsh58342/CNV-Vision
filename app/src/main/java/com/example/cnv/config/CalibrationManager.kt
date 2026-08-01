@@ -1,8 +1,9 @@
 package com.example.cnv.config
 
 import android.content.Context
-import com.example.cnv.event.CalibrationEvent
-import com.example.cnv.event.EventDispatcher
+import com.example.cnv.core.event.CalibrationEvent
+import com.example.cnv.core.event.CoreEventModule
+import com.example.cnv.core.event.EventDispatcher
 
 /**
  * App-wide calibration authority for mmPerPixel.
@@ -12,7 +13,7 @@ import com.example.cnv.event.EventDispatcher
  */
 class CalibrationManager private constructor(
     private val repository: CalibrationRepository,
-    private val eventDispatcher: EventDispatcher = EventDispatcher(),
+    private val eventDispatcher: EventDispatcher = CoreEventModule.eventDispatcher(),
 ) {
 
     @Volatile
