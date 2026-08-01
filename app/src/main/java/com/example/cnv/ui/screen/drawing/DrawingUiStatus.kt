@@ -6,7 +6,7 @@ import com.example.cnv.factory.model.Drawing
 import com.example.cnv.ui.screen.commissioning.CommissioningWizardProgress
 
 /**
- * UI-only Drawing status labels for List / Dashboard.
+ * UI-only Drawing status labels for Floor cards / Workspace Overview.
  * Does not change Repository / ViewModel / Core logic.
  */
 object DrawingUiStatus {

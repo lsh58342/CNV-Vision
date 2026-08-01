@@ -59,14 +59,5 @@
             android:layout_marginTop="8dp"
             android:minHeight="48dp"
             android:text="@string/setup_open_building" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_building_commissioning"
-            style="@style/Widget.CNV.Button.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="48dp"
-            android:text="@string/comm_home_title" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

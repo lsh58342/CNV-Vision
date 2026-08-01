@@ -104,7 +104,7 @@ class InspectionResultScreen : BaseScreen() {
         val finishBtn = UiComponents.inflateSecondaryButton(finishSlot, getString(R.string.result_finish))
         finishSlot.addView(finishBtn)
         finishBtn.setOnClickListener {
-            nav().navigateClearTo(CnvDestination.DRAWING_DASHBOARD)
+            nav().navigateClearTo(CnvDestination.DRAWING_WORKSPACE)
         }
     }
 }

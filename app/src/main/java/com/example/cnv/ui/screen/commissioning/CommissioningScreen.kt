@@ -7,11 +7,9 @@ import android.view.ViewGroup
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 
-/**
- * Legacy commissioning menu removed — redirects to Commissioning Wizard.
- */
+/** Removed — Commissioning is the Drawing Workspace Commissioning tab. */
+@Deprecated("Merged into DrawingWorkspaceScreen")
 class CommissioningScreen : BaseScreen() {
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -20,6 +18,6 @@ class CommissioningScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        nav().navigateClearTo(CnvDestination.COMMISSIONING)
+        nav().navigateClearTo(CnvDestination.DRAWING_WORKSPACE)
     }
 }

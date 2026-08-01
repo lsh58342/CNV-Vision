@@ -2,7 +2,6 @@
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cnv_bg"
     android:fillViewport="true">
 
     <LinearLayout
@@ -12,94 +11,72 @@
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/floor_title"
+            android:id="@+id/overview_drawing_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/setup_floor_dashboard"
             android:textAppearance="@style/TextAppearance.CNV.Title" />
 
         <TextView
-            android:id="@+id/floor_context"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/draw_section_status"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/overview_status_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/overview_recent_inspection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <TextView
+            android:id="@+id/overview_updated"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
         <TextView
+            android:id="@+id/overview_wizard_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/op_floor_list"
             android:textAppearance="@style/TextAppearance.CNV.Body"
             android:textStyle="bold" />
 
-        <LinearLayout
-            android:id="@+id/floor_list_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical" />
-
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_add_floor"
-            style="@style/Widget.CNV.Button.Primary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="48dp"
-            android:text="@string/setup_add_floor" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_rename_floor"
-            style="@style/Widget.CNV.Button.Action"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/setup_rename_floor" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_delete_floor"
-            style="@style/Widget.CNV.Button.Secondary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:text="@string/setup_delete_floor" />
-
-        <TextView
+            android:id="@+id/button_overview_inspection"
+            style="@style/Widget.CNV.Button.Start"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/floor_drawings_section"
-            android:textAppearance="@style/TextAppearance.CNV.Body"
-            android:textStyle="bold" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_add_drawing"
-            style="@style/Widget.CNV.Button.Primary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             android:minHeight="56dp"
-            android:text="@string/floor_add_drawing" />
-
-        <FrameLayout
-            android:id="@+id/drawing_empty_slot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
-
-        <LinearLayout
-            android:id="@+id/drawing_list_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:text="@string/op_start_inspection" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_floor_back"
+            android:id="@+id/button_overview_delete"
             style="@style/Widget.CNV.Button.Secondary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/setup_delete_drawing" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_overview_back"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:minHeight="48dp"
             android:text="@string/nav_back" />
     </LinearLayout>

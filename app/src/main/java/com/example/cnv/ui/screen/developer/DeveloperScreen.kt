@@ -35,7 +35,7 @@ class DeveloperScreen : BaseScreen() {
                 Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            nav().navigate(CnvDestination.COMMISSIONING)
+            nav().navigate(CnvDestination.DRAWING_WORKSPACE)
         }
         view.findViewById<Button>(R.id.button_screen_back).setOnClickListener { nav().navigateBack() }
     }

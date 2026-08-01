@@ -9,20 +9,42 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import com.example.cnv.R
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.Drawing
+import com.example.cnv.factory.model.Floor
+import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
+import com.example.cnv.ui.screen.drawing.DrawingUiStatus
 import com.google.android.material.button.MaterialButton
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/** Floor list under Building — open Drawing list for selected Floor. */
+/**
+ * Floor screen — manages Floors and Drawings for the selected Building.
+ * Drawing List is removed; Drawing cards open Drawing Workspace.
+ */
 class FloorScreen : BaseScreen() {
 
-    private lateinit var listContainer: LinearLayout
-    private lateinit var emptyView: View
+    private lateinit var floorListContainer: LinearLayout
+    private lateinit var drawingListContainer: LinearLayout
+    private lateinit var drawingEmptyView: View
     private var selectedFloorId: String? = null
+    private var pendingDwgUri: String? = null
+
+    private val pickDwg = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) {
+            Toast.makeText(requireContext(), R.string.setup_dwg_cancelled, Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        pendingDwgUri = uri.toString()
+        promptDrawingNameAndSave()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,7 +54,8 @@ class FloorScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        listContainer = view.findViewById(R.id.floor_list_container)
+        floorListContainer = view.findViewById(R.id.floor_list_container)
+        drawingListContainer = view.findViewById(R.id.drawing_list_container)
         selectedFloorId = CurrentContext.get().floorId
 
         view.findViewById<TextView>(R.id.floor_context).text = getString(
@@ -41,32 +64,81 @@ class FloorScreen : BaseScreen() {
             siteVm.currentBuildingName(),
         )
 
-        val listHeader = view.findViewById<FrameLayout>(R.id.floor_list_header_slot)
-        listHeader.addView(
-            UiComponents.inflateSectionHeader(listHeader, getString(R.string.op_floor_list)),
-        )
-        val emptySlot = view.findViewById<FrameLayout>(R.id.floor_empty_slot)
-        emptyView = UiComponents.inflateEmptyView(emptySlot, getString(R.string.setup_empty_floors))
-        emptySlot.addView(emptyView)
+        val emptySlot = view.findViewById<FrameLayout>(R.id.drawing_empty_slot)
+        drawingEmptyView = UiComponents.inflateEmptyView(emptySlot, getString(R.string.floor_empty_drawings))
+        emptySlot.addView(drawingEmptyView)
 
         view.findViewById<MaterialButton>(R.id.button_add_floor).setOnClickListener { promptAddFloor() }
         view.findViewById<MaterialButton>(R.id.button_rename_floor).setOnClickListener { promptRenameFloor() }
         view.findViewById<MaterialButton>(R.id.button_delete_floor).setOnClickListener { confirmDeleteFloor() }
-        view.findViewById<MaterialButton>(R.id.button_open_drawings).setOnClickListener {
-            val id = selectedFloorId
-            if (id == null) {
-                Toast.makeText(requireContext(), R.string.op_select_floor_first, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            siteVm.selectFloor(id)
-            nav().navigate(CnvDestination.DRAWING_LIST)
-        }
+        view.findViewById<MaterialButton>(R.id.button_add_drawing).setOnClickListener { startAddDrawing() }
         view.findViewById<MaterialButton>(R.id.button_floor_back).setOnClickListener {
             nav().navigateBack()
         }
 
-        siteVm.floors.observe(viewLifecycleOwner) { renderFloorList(it) }
+        siteVm.floors.observe(viewLifecycleOwner) { floors ->
+            renderFloorList(floors)
+            siteVm.loadDrawings()
+        }
+        siteVm.drawings.observe(viewLifecycleOwner) { renderDrawings(it) }
         siteVm.loadFloors()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        siteVm.loadFloors()
+        siteVm.loadDrawings()
+        view?.findViewById<TextView>(R.id.floor_context)?.text = getString(
+            R.string.op_context_factory_building,
+            siteVm.factoryName.value ?: "LGES Poland",
+            siteVm.currentBuildingName(),
+        )
+    }
+
+    private fun startAddDrawing() {
+        if (selectedFloorId == null) {
+            Toast.makeText(requireContext(), R.string.op_select_floor_first, Toast.LENGTH_SHORT).show()
+            return
+        }
+        siteVm.selectFloor(selectedFloorId!!)
+        pickDwg.launch("*/*")
+    }
+
+    private fun promptDrawingNameAndSave() {
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 16, 48, 0)
+        }
+        val nameInput = EditText(requireContext()).apply {
+            hint = getString(R.string.setup_drawing_name_hint)
+            setSingleLine()
+        }
+        val descInput = EditText(requireContext()).apply {
+            hint = getString(R.string.setup_drawing_desc_hint)
+        }
+        container.addView(nameInput)
+        container.addView(descInput)
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.floor_add_drawing)
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val uri = pendingDwgUri
+                pendingDwgUri = null
+                val created = siteVm.addDrawing(
+                    nameInput.text?.toString().orEmpty(),
+                    descInput.text?.toString().orEmpty(),
+                    uri,
+                )
+                if (created == null) {
+                    Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
+                } else {
+                    siteVm.selectDrawing(created.id)
+                    Toast.makeText(requireContext(), R.string.setup_dwg_registered, Toast.LENGTH_SHORT).show()
+                    nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+                }
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> pendingDwgUri = null }
+            .show()
     }
 
     private fun promptAddFloor() {
@@ -129,13 +201,12 @@ class FloorScreen : BaseScreen() {
             .show()
     }
 
-    private fun renderFloorList(items: List<com.example.cnv.factory.model.Floor>) {
-        UiComponents.clearChildren(listContainer)
-        UiComponents.setEmptyVisible(emptyView, items.isEmpty())
+    private fun renderFloorList(items: List<Floor>) {
+        UiComponents.clearChildren(floorListContainer)
         items.forEach { item ->
-            listContainer.addView(
+            floorListContainer.addView(
                 UiComponents.inflateSelectCard(
-                    parent = listContainer,
+                    parent = floorListContainer,
                     title = item.name,
                     subtitle = getString(R.string.op_floor_subtitle),
                     selected = item.id == selectedFloorId,
@@ -143,6 +214,41 @@ class FloorScreen : BaseScreen() {
                         selectedFloorId = item.id
                         siteVm.selectFloor(item.id)
                         renderFloorList(items)
+                        siteVm.loadDrawings()
+                    },
+                ),
+            )
+        }
+    }
+
+    private fun renderDrawings(items: List<Drawing>) {
+        UiComponents.clearChildren(drawingListContainer)
+        val showEmpty = selectedFloorId != null && items.isEmpty()
+        UiComponents.setEmptyVisible(drawingEmptyView, showEmpty)
+        if (selectedFloorId == null) {
+            UiComponents.setEmptyVisible(drawingEmptyView, false)
+            return
+        }
+        val catalog = FactoryCatalog.get()
+        val selectedId = CurrentContext.get().drawingId
+        val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        items.forEach { item ->
+            val zoneCount = catalog.zones.forDrawing(item.id).size
+            val last = catalog.inspections.latestForDrawing(item.id)?.sessionId ?: "—"
+            drawingListContainer.addView(
+                UiComponents.inflateDrawingCard(
+                    parent = drawingListContainer,
+                    name = item.name,
+                    status = DrawingUiStatus.summaryLabel(requireContext(), item, zoneCount),
+                    recentInspection = getString(R.string.op_zone_last_inspection, last),
+                    updatedAt = getString(
+                        R.string.draw_card_updated,
+                        dateFmt.format(Date(item.updatedAtMs)),
+                    ),
+                    selected = item.id == selectedId,
+                    onClick = {
+                        siteVm.selectDrawing(item.id)
+                        nav().navigate(CnvDestination.DRAWING_WORKSPACE)
                     },
                 ),
             )

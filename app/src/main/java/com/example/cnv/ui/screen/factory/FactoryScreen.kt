@@ -7,12 +7,9 @@ import android.view.ViewGroup
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 
-/**
- * Factory select removed — LGES Poland only.
- * Redirects immediately to Building Dashboard.
- */
+/** Removed — LGES Poland only; no Factory select. */
+@Deprecated("Factory select removed")
 class FactoryScreen : BaseScreen() {
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -21,7 +18,6 @@ class FactoryScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        siteVm.bootstrap()
         nav().navigateClearTo(CnvDestination.BUILDING_SELECT)
     }
 }

@@ -70,13 +70,6 @@ class BuildingScreen : BaseScreen() {
             siteVm.selectBuilding(id)
             nav().navigate(CnvDestination.FLOOR_SELECT)
         }
-        view.findViewById<MaterialButton>(R.id.button_building_commissioning).setOnClickListener {
-            if (!siteVm.enterCommissioningMode()) {
-                Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            nav().navigate(CnvDestination.COMMISSIONING)
-        }
 
         // Long-press rename/delete via secondary actions on open button long-click
         view.findViewById<MaterialButton>(R.id.button_open_building).setOnLongClickListener {

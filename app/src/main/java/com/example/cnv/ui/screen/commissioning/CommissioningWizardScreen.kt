@@ -11,14 +11,12 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import com.example.cnv.R
 import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADLayer
 import com.example.cnv.cad.CADView
-import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.RouteAnchor
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
@@ -31,30 +29,17 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
 /**
- * Commissioning Wizard — one step per screen, sequential validation.
+ * Drawing Workspace Commissioning tab — 6 gated steps (Origin → Route Lock).
  * No Inspection / HeatMap / History / Camera / Developer HUD.
  */
 class CommissioningWizardScreen : BaseScreen() {
 
-    private var currentStep = CommissioningWizardProgress.Step.BUILDING
+    private var currentStep = CommissioningWizardProgress.Step.ORIGIN
     private var workspace: View? = null
     private var cadController: CADController? = null
     private val zoneEditor = ZoneEditorController()
     private val highlightSegments = linkedSetOf<String>()
-    private var zonePickPhase: Int = 0 // 0 idle, 1 start, 2 end
-
-    private val pickDwg = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri == null) {
-            Toast.makeText(requireContext(), R.string.setup_dwg_cancelled, Toast.LENGTH_SHORT).show()
-            return@registerForActivityResult
-        }
-        if (siteVm.registerDwgForCurrentDrawing(uri.toString())) {
-            Toast.makeText(requireContext(), R.string.setup_dwg_registered, Toast.LENGTH_SHORT).show()
-            refresh()
-        } else {
-            Toast.makeText(requireContext(), R.string.setup_dwg_failed, Toast.LENGTH_SHORT).show()
-        }
-    }
+    private var zonePickPhase: Int = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,11 +51,8 @@ class CommissioningWizardScreen : BaseScreen() {
         super.onViewCreated(view, savedInstanceState)
         if (!siteVm.enterCommissioningMode()) {
             Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
-            nav().navigateBack()
             return
         }
-        siteVm.bootstrap()
-
         val snap = CommissioningWizardProgress.snapshot()
         currentStep = CommissioningWizardProgress.firstIncompleteStep(snap)
 
@@ -114,11 +96,16 @@ class CommissioningWizardScreen : BaseScreen() {
                 currentStep.index,
                 CommissioningWizardProgress.TOTAL_STEPS,
             )
-        root.findViewById<ProgressBar>(R.id.wiz_progress_bar).progress = currentStep.index
+        root.findViewById<ProgressBar>(R.id.wiz_progress_bar).apply {
+            max = CommissioningWizardProgress.TOTAL_STEPS
+            progress = currentStep.index
+        }
         updateNavButtons(root, snap)
-        updateWorkspaceStatus(snap)
-        if (currentStep == CommissioningWizardProgress.Step.VALIDATION) {
+        if (currentStep == CommissioningWizardProgress.Step.VALIDATION ||
+            currentStep == CommissioningWizardProgress.Step.ROUTE_LOCK
+        ) {
             bindValidationList(snap)
+            updateWorkspaceStatus(snap)
         }
     }
 
@@ -129,17 +116,18 @@ class CommissioningWizardScreen : BaseScreen() {
         highlightSegments.clear()
 
         val snap = CommissioningWizardProgress.snapshot()
-        root.findViewById<TextView>(R.id.wiz_step_title).text =
-            getString(currentStep.titleRes)
-        root.findViewById<TextView>(R.id.wiz_step_hint).text =
-            getString(hintRes(currentStep))
+        root.findViewById<TextView>(R.id.wiz_step_title).text = getString(currentStep.titleRes)
+        root.findViewById<TextView>(R.id.wiz_step_hint).text = getString(hintRes(currentStep))
         root.findViewById<TextView>(R.id.wiz_progress).text =
             getString(
                 R.string.wiz_progress_format,
                 currentStep.index,
                 CommissioningWizardProgress.TOTAL_STEPS,
             )
-        root.findViewById<ProgressBar>(R.id.wiz_progress_bar).progress = currentStep.index
+        root.findViewById<ProgressBar>(R.id.wiz_progress_bar).apply {
+            max = CommissioningWizardProgress.TOTAL_STEPS
+            progress = currentStep.index
+        }
 
         val slot = root.findViewById<FrameLayout>(R.id.wiz_workspace)
         slot.removeAllViews()
@@ -153,7 +141,6 @@ class CommissioningWizardScreen : BaseScreen() {
     private fun bindStepWorkspace(content: View, snap: CommissioningWizardProgress.Snapshot) {
         val input = content.findViewById<TextInputEditText>(R.id.wiz_input)
         val secondaryLayout = content.findViewById<View>(R.id.wiz_input_secondary_layout)
-        val secondary = content.findViewById<TextInputEditText>(R.id.wiz_input_secondary)
         val action = content.findViewById<MaterialButton>(R.id.button_wiz_action)
         val action2 = content.findViewById<MaterialButton>(R.id.button_wiz_action_secondary)
         val status = content.findViewById<TextView>(R.id.wiz_workspace_status)
@@ -164,99 +151,11 @@ class CommissioningWizardScreen : BaseScreen() {
         action2.isVisible = false
         cadSlot.isVisible = false
         validationList.isVisible = false
-        input.isVisible = true
+        input.isVisible = false
         action.isVisible = true
 
         when (currentStep) {
-            CommissioningWizardProgress.Step.BUILDING -> {
-                input.hint = getString(R.string.setup_building_name_hint)
-                action.setText(R.string.setup_add_building)
-                status.text = if (snap.buildingOk) {
-                    getString(R.string.wiz_status_done, siteVm.currentBuildingName())
-                } else {
-                    getString(R.string.wiz_status_need_building)
-                }
-                action.setOnClickListener {
-                    val created = siteVm.addBuilding(input.text?.toString().orEmpty())
-                    if (created == null) {
-                        Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
-                    } else {
-                        siteVm.selectBuilding(created.id)
-                        refresh()
-                        status.text = getString(R.string.wiz_status_done, created.name)
-                    }
-                }
-            }
-            CommissioningWizardProgress.Step.FLOOR -> {
-                input.hint = getString(R.string.setup_floor_name_hint)
-                action.setText(R.string.setup_add_floor)
-                status.text = if (snap.floorOk) {
-                    getString(R.string.wiz_status_done, siteVm.currentFloorName())
-                } else {
-                    getString(R.string.wiz_status_need_floor)
-                }
-                action.setOnClickListener {
-                    if (CurrentContext.get().buildingId == null) {
-                        Toast.makeText(requireContext(), R.string.op_select_building_first, Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                    val created = siteVm.addFloor(input.text?.toString().orEmpty())
-                    if (created == null) {
-                        Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
-                    } else {
-                        siteVm.selectFloor(created.id)
-                        refresh()
-                        status.text = getString(R.string.wiz_status_done, created.name)
-                    }
-                }
-            }
-            CommissioningWizardProgress.Step.DRAWING -> {
-                input.hint = getString(R.string.setup_drawing_name_hint)
-                secondaryLayout.isVisible = true
-                secondary.hint = getString(R.string.setup_drawing_desc_hint)
-                action.setText(R.string.setup_add_drawing)
-                status.text = if (snap.drawingOk) {
-                    getString(R.string.wiz_status_done, siteVm.currentDrawingName())
-                } else {
-                    getString(R.string.wiz_status_need_drawing)
-                }
-                action.setOnClickListener {
-                    if (CurrentContext.get().floorId == null) {
-                        Toast.makeText(requireContext(), R.string.op_select_floor_first, Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                    val created = siteVm.addDrawing(
-                        input.text?.toString().orEmpty(),
-                        secondary.text?.toString().orEmpty(),
-                        null,
-                    )
-                    if (created == null) {
-                        Toast.makeText(requireContext(), R.string.setup_name_required, Toast.LENGTH_SHORT).show()
-                    } else {
-                        siteVm.selectDrawing(created.id)
-                        refresh()
-                        status.text = getString(R.string.wiz_status_done, created.name)
-                    }
-                }
-            }
-            CommissioningWizardProgress.Step.DWG -> {
-                input.isVisible = false
-                action.setText(R.string.setup_register_dwg)
-                status.text = if (snap.dwgOk) {
-                    getString(R.string.wiz_status_dwg_ok)
-                } else {
-                    getString(R.string.wiz_status_need_dwg)
-                }
-                action.setOnClickListener {
-                    if (CurrentContext.get().drawingId == null) {
-                        Toast.makeText(requireContext(), R.string.setup_select_drawing_first, Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
-                    }
-                    pickDwg.launch("*/*")
-                }
-            }
             CommissioningWizardProgress.Step.ORIGIN -> {
-                input.isVisible = false
                 cadSlot.isVisible = true
                 action.setText(R.string.ws_confirm_pick)
                 status.text = if (snap.originOk) {
@@ -270,18 +169,22 @@ class CommissioningWizardScreen : BaseScreen() {
                         Toast.makeText(requireContext(), R.string.ws_locked_blocked, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
+                    if (!snap.dwgOk) {
+                        Toast.makeText(requireContext(), R.string.wiz_fail_dwg, Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
                     val info = cadController?.latestSelectionInfo()
                     val x = info?.progress ?: 0.5f
                     if (siteVm.setOriginForCurrentDrawing(x, 0.5f)) {
                         Toast.makeText(requireContext(), R.string.setup_origin_set, Toast.LENGTH_SHORT).show()
                         refresh()
+                        showStep(requireView())
                     } else {
                         Toast.makeText(requireContext(), R.string.setup_origin_failed, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
             CommissioningWizardProgress.Step.CALIBRATION -> {
-                input.isVisible = false
                 action.setText(R.string.comm_step_calibration)
                 status.text = if (snap.calibrationOk) {
                     getString(R.string.wiz_status_cal_ok)
@@ -297,10 +200,10 @@ class CommissioningWizardScreen : BaseScreen() {
                     siteVm.markCalibrationReadyForCurrentDrawing()
                     Toast.makeText(requireContext(), R.string.ws_calibration_done, Toast.LENGTH_SHORT).show()
                     refresh()
+                    showStep(requireView())
                 }
             }
             CommissioningWizardProgress.Step.ROUTE -> {
-                input.isVisible = false
                 action.setText(R.string.setup_generate_route)
                 status.text = if (snap.routeOk) {
                     getString(R.string.wiz_status_route_ok)
@@ -311,13 +214,13 @@ class CommissioningWizardScreen : BaseScreen() {
                     if (siteVm.generateRouteForCurrentDrawing()) {
                         Toast.makeText(requireContext(), R.string.setup_route_generated, Toast.LENGTH_SHORT).show()
                         refresh()
+                        showStep(requireView())
                     } else {
                         Toast.makeText(requireContext(), R.string.setup_route_failed, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
             CommissioningWizardProgress.Step.ZONE -> {
-                input.isVisible = false
                 cadSlot.isVisible = true
                 action.setText(R.string.ws_zone_method_cad)
                 action2.isVisible = true
@@ -332,14 +235,25 @@ class CommissioningWizardScreen : BaseScreen() {
                 action2.setOnClickListener { beginZoneDrive(content) }
             }
             CommissioningWizardProgress.Step.VALIDATION -> {
-                input.isVisible = false
-                action.setText(R.string.setup_route_lock)
+                action.isVisible = false
                 validationList.isVisible = true
                 bindValidationList(snap)
                 status.text = if (snap.validationOk) {
                     getString(R.string.wiz_validation_pass)
                 } else {
                     getString(R.string.wiz_validation_fail)
+                }
+            }
+            CommissioningWizardProgress.Step.ROUTE_LOCK -> {
+                action.setText(R.string.setup_route_lock)
+                validationList.isVisible = true
+                bindValidationList(snap)
+                status.text = if (snap.routeLocked) {
+                    getString(R.string.setup_route_locked)
+                } else if (snap.validationOk) {
+                    getString(R.string.wiz_lock_ready)
+                } else {
+                    getString(R.string.wiz_lock_blocked)
                 }
                 action.isEnabled = CommissioningWizardProgress.canLockRoute(snap)
                 action.alpha = if (action.isEnabled) 1f else 0.45f
@@ -352,6 +266,7 @@ class CommissioningWizardScreen : BaseScreen() {
                     if (siteVm.lockRouteForCurrentDrawing()) {
                         Toast.makeText(requireContext(), R.string.setup_route_locked, Toast.LENGTH_SHORT).show()
                         refresh()
+                        showStep(requireView())
                     } else {
                         Toast.makeText(requireContext(), R.string.setup_route_lock_failed, Toast.LENGTH_SHORT).show()
                     }
@@ -474,8 +389,7 @@ class CommissioningWizardScreen : BaseScreen() {
                     zonePickPhase = 0
                     siteVm.loadZones()
                     refresh()
-                    content.findViewById<TextView>(R.id.wiz_workspace_status).text =
-                        getString(R.string.wiz_status_zone_ok, CommissioningWizardProgress.snapshot().zoneCount)
+                    showStep(requireView())
                 }
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -518,6 +432,15 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_validation_fail)
                 }
+            }
+            CommissioningWizardProgress.Step.ROUTE_LOCK -> {
+                status.text = if (snap.routeLocked) {
+                    getString(R.string.setup_route_locked)
+                } else if (snap.validationOk) {
+                    getString(R.string.wiz_lock_ready)
+                } else {
+                    getString(R.string.wiz_lock_blocked)
+                }
                 workspace?.findViewById<MaterialButton>(R.id.button_wiz_action)?.let { btn ->
                     btn.isEnabled = CommissioningWizardProgress.canLockRoute(snap)
                     btn.alpha = if (btn.isEnabled) 1f else 0.45f
@@ -533,11 +456,10 @@ class CommissioningWizardScreen : BaseScreen() {
         val finish = root.findViewById<MaterialButton>(R.id.button_wiz_finish)
         prev.isEnabled = currentStep.index > 1
         val canNext = CommissioningWizardProgress.canAdvance(currentStep, snap) &&
-            currentStep != CommissioningWizardProgress.Step.VALIDATION
+            currentStep != CommissioningWizardProgress.Step.ROUTE_LOCK
         next.isEnabled = canNext
         next.alpha = if (canNext) 1f else 0.45f
-        val showFinish = currentStep == CommissioningWizardProgress.Step.VALIDATION &&
-            snap.validationOk && snap.routeLocked
+        val showFinish = currentStep == CommissioningWizardProgress.Step.ROUTE_LOCK && snap.routeLocked
         finish.isVisible = showFinish
         next.isVisible = !showFinish
     }
@@ -566,19 +488,19 @@ class CommissioningWizardScreen : BaseScreen() {
             return
         }
         siteVm.leaveCommissioningMode()
-        siteVm.loadDrawingDashboard()
-        nav().navigateClearTo(CnvDestination.DRAWING_DASHBOARD)
+        // Stay in Drawing Workspace (parent tab host); just toast.
+        Toast.makeText(requireContext(), R.string.wiz_commissioning_complete, Toast.LENGTH_SHORT).show()
+        (parentFragment as? com.example.cnv.ui.screen.drawing.DrawingWorkspaceScreen)
+            ?.showOverviewTab()
+            ?: nav().navigateClearTo(CnvDestination.DRAWING_WORKSPACE)
     }
 
     private fun hintRes(step: CommissioningWizardProgress.Step): Int = when (step) {
-        CommissioningWizardProgress.Step.BUILDING -> R.string.wiz_hint_building
-        CommissioningWizardProgress.Step.FLOOR -> R.string.wiz_hint_floor
-        CommissioningWizardProgress.Step.DRAWING -> R.string.wiz_hint_drawing
-        CommissioningWizardProgress.Step.DWG -> R.string.wiz_hint_dwg
         CommissioningWizardProgress.Step.ORIGIN -> R.string.wiz_hint_origin
         CommissioningWizardProgress.Step.CALIBRATION -> R.string.wiz_hint_calibration
         CommissioningWizardProgress.Step.ROUTE -> R.string.wiz_hint_route
         CommissioningWizardProgress.Step.ZONE -> R.string.wiz_hint_zone
         CommissioningWizardProgress.Step.VALIDATION -> R.string.wiz_hint_validation
+        CommissioningWizardProgress.Step.ROUTE_LOCK -> R.string.wiz_hint_route_lock
     }
 }
