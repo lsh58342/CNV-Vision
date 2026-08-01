@@ -6,7 +6,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.lifecycle.ViewModelProvider
 
 /**
- * OpenCV entry point: library init, frame analyzer, grayscale UI binding.
+ * OpenCV entry point: library init, distance estimator, UI binding.
  */
 class OpenCVManager(
     private val activity: AppCompatActivity,
@@ -15,6 +15,8 @@ class OpenCVManager(
 
     private val viewModel: OpenCVViewModel =
         ViewModelProvider(activity)[OpenCVViewModel::class.java]
+
+    private val distanceEstimator: DistanceEstimator = OpticalFlowDistanceEstimator()
 
     fun start(): ImageAnalysis.Analyzer? {
         if (!viewModel.initialize()) {
@@ -25,9 +27,9 @@ class OpenCVManager(
             grayImageView.setImageBitmap(bitmap)
         }
 
-        return GrayScaleFrameAnalyzer { bitmap, movementDistancePx ->
+        return GrayScaleFrameAnalyzer(distanceEstimator) { bitmap, result ->
             viewModel.publishGrayFrame(bitmap)
-            viewModel.publishMovementDistance(movementDistancePx)
+            viewModel.publishDistanceResult(result)
         }
     }
 }

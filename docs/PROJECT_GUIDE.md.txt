@@ -431,3 +431,44 @@ TensorFlow Lite는
 초기에는
 
 Rule Base + OpenCV만 사용한다.
+
+
+# Distance Estimation Policy
+
+거리 계산은 아래 순서를 따른다.
+
+Camera Frame
+
+↓
+
+ORB Feature Detection
+
+↓
+
+Lucas-Kanade Optical Flow
+
+↓
+
+Outlier 제거(RANSAC)
+
+↓
+
+Median Pixel Movement 계산
+
+↓
+
+Pixel → mm 변환
+
+↓
+
+누적 이동거리 계산
+
+주의
+
+평균(mean)은 사용하지 않는다.
+
+Median 기반으로 계산한다.
+
+Outlier 제거 후 거리 계산을 수행한다.
+
+거리 계산은 반드시 Camera + Calibration 기준으로 수행한다.
