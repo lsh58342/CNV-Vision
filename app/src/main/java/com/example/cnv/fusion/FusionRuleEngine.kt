@@ -28,7 +28,7 @@ class FusionRuleEngine(
         val shock = input.shock
 
         val eventType = when {
-            distance != null && shock != null -> FusionEventType.FUSED
+            distance != null && shock != null -> FusionEventType.DISTANCE_AND_SHOCK
             distance != null -> FusionEventType.DISTANCE_ONLY
             shock != null -> FusionEventType.SHOCK_ONLY
             else -> return null
@@ -43,10 +43,11 @@ class FusionRuleEngine(
             return null
         }
 
-        val timestampNs = when (eventType) {
-            FusionEventType.FUSED -> min(distance!!.timestampNs, shock!!.timestampNs)
-            FusionEventType.DISTANCE_ONLY -> distance!!.timestampNs
-            FusionEventType.SHOCK_ONLY -> shock!!.timestampNs
+        val timestampNs = when {
+            distance != null && shock != null -> min(distance.timestampNs, shock.timestampNs)
+            distance != null -> distance.timestampNs
+            shock != null -> shock.timestampNs
+            else -> return null
         }
 
         val delayNs = if (distance != null && shock != null) {
@@ -55,7 +56,7 @@ class FusionRuleEngine(
             0L
         }
 
-        if (eventType == FusionEventType.FUSED && delayNs > config.timeWindowNs) {
+        if (eventType == FusionEventType.DISTANCE_AND_SHOCK && delayNs > config.timeWindowNs) {
             return null
         }
 

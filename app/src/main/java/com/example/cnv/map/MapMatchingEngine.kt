@@ -3,6 +3,7 @@ package com.example.cnv.map
 import com.example.cnv.core.event.CoreEventModule
 import com.example.cnv.core.event.EventDispatcher
 import com.example.cnv.core.event.FusionEvent
+import com.example.cnv.core.event.PositionEvent
 
 /**
  * Subscribes to [FusionEvent] only, updates route progress, publishes [PositionEvent].
@@ -58,6 +59,7 @@ class MapMatchingEngine(
         ) ?: return
         latest = position
         eventDispatcher.dispatch(position.toPositionEvent())
+        com.example.cnv.core.debug.PipelinePerfMonitor.markPositionPublished()
     }
 }
 

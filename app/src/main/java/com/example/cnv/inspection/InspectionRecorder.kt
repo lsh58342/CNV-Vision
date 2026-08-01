@@ -3,8 +3,8 @@ package com.example.cnv.inspection
 import com.example.cnv.core.event.BaseEvent
 import com.example.cnv.core.event.CalibrationEvent
 import com.example.cnv.core.event.FusionEvent
+import com.example.cnv.core.event.PositionEvent
 import com.example.cnv.core.event.SystemEvent
-import com.example.cnv.map.PositionEvent
 import kotlin.math.min
 
 /**

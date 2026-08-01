@@ -1,5 +1,6 @@
 package com.example.cnv.map
 
+import com.example.cnv.core.model.RouteDirection
 import kotlin.math.abs
 
 /**
@@ -42,10 +43,7 @@ class PositionEstimator(
         if (confidence < config.minimumConfidence) {
             return null
         }
-        val current = state ?: run {
-            reset(route)
-            state!!
-        }
+        val current = ensureState(route)
 
         val direction = when {
             deltaDistanceMm < 0f -> RouteDirection.BACKWARD
@@ -64,6 +62,17 @@ class PositionEstimator(
 
         state = advanced
         return buildPosition(route, advanced, timestampNs, confidence)
+    }
+
+    private fun ensureState(route: Route): State {
+        val existing = state
+        if (existing != null) return existing
+        reset(route)
+        return state ?: State(
+            segmentId = route.startSegmentId,
+            distanceFromSegmentStart = 0f,
+            direction = RouteDirection.FORWARD,
+        )
     }
 
     private fun advanceForward(route: Route, current: State, travelMm: Float): State? {

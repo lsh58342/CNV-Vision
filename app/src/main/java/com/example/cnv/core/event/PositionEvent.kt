@@ -1,10 +1,10 @@
-package com.example.cnv.map
+package com.example.cnv.core.event
 
-import com.example.cnv.core.event.BaseEvent
+import com.example.cnv.core.model.RouteDirection
 
 /**
- * Published by [MapMatchingEngine] after a [RoutePosition] update.
- * Consumers: CAD Viewer (STEP 11), HeatMap (STEP 12).
+ * Published by MapMatchingEngine after a RoutePosition update.
+ * Consumers: Inspection, CAD Viewer (future), HeatMap (future).
  * Does not carry CAD coordinates.
  */
 data class PositionEvent(

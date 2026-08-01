@@ -1,5 +1,6 @@
 package com.example.cnv.fusion
 
+import com.example.cnv.core.debug.PipelinePerfMonitor
 import com.example.cnv.core.event.CalibrationEvent
 import com.example.cnv.core.event.DistanceEvent
 import com.example.cnv.core.event.FusionEvent
@@ -7,8 +8,11 @@ import com.example.cnv.core.event.ShockEvent
 import java.util.ArrayDeque
 
 /**
- * Buffers Distance/Shock events, runs [FusionRuleEngine], persists via [FusionRepository].
+ * Buffers Shock events, runs [FusionRuleEngine], persists via [FusionRepository].
+ * Distance events emit immediately as DISTANCE_ONLY or DISTANCE_AND_SHOCK when a shock
+ * is already buffered in the time window (avoids double-counting distance in Map Matching).
  * Does not reference Camera or IMU modules.
+ * Event callbacks ([onFused]) are always invoked outside the internal lock.
  */
 class FusionProcessor(
     private val ruleEngine: FusionRuleEngine,
@@ -19,20 +23,17 @@ class FusionProcessor(
 ) {
 
     private val lock = Any()
-    private val distanceBuffer = ArrayDeque<DistanceEvent>()
     private val shockBuffer = ArrayDeque<ShockEvent>()
     @Volatile
     private var calibrated: Boolean = initialCalibrated
 
     fun onDistance(event: DistanceEvent) {
-        synchronized(lock) {
+        val pending = synchronized(lock) {
             pruneLocked(event.timestampNs)
-            distanceBuffer.addLast(event)
             val match = findBestShockLocked(event.timestampNs)
             if (match != null) {
                 shockBuffer.remove(match)
-                distanceBuffer.remove(event)
-                emitLocked(
+                listOf(
                     FusionRuleEngine.MatchInput(
                         distance = event,
                         shock = match,
@@ -40,11 +41,17 @@ class FusionProcessor(
                     ),
                 )
             } else {
-                // Keep latest distance for a future shock within the window.
-                while (distanceBuffer.size > BUFFER_CAP) {
-                    distanceBuffer.removeFirst()
-                }
+                listOf(
+                    FusionRuleEngine.MatchInput(
+                        distance = event,
+                        shock = null,
+                        calibrated = calibrated,
+                    ),
+                )
             }
+        }
+        for (input in pending) {
+            emitOutsideLock(input)
         }
     }
 
@@ -52,23 +59,12 @@ class FusionProcessor(
         synchronized(lock) {
             pruneLocked(event.timestampNs)
             shockBuffer.addLast(event)
-            val match = findBestDistanceLocked(event.timestampNs)
-            if (match != null) {
-                distanceBuffer.remove(match)
-                shockBuffer.remove(event)
-                emitLocked(
-                    FusionRuleEngine.MatchInput(
-                        distance = match,
-                        shock = event,
-                        calibrated = calibrated,
-                    ),
-                )
-            } else {
-                while (shockBuffer.size > BUFFER_CAP) {
-                    shockBuffer.removeFirst()
-                }
+            while (shockBuffer.size > BUFFER_CAP) {
+                shockBuffer.removeFirst()
             }
         }
+        // Shock-only is not emitted here: Map Matching advances on distance-bearing events.
+        // DISTANCE_AND_SHOCK is produced when a later Distance finds this buffered shock.
     }
 
     fun onCalibration(event: CalibrationEvent) {
@@ -83,18 +79,18 @@ class FusionProcessor(
 
     fun clear() {
         synchronized(lock) {
-            distanceBuffer.clear()
             shockBuffer.clear()
         }
     }
 
-    private fun emitLocked(input: FusionRuleEngine.MatchInput) {
+    private fun emitOutsideLock(input: FusionRuleEngine.MatchInput) {
         val result = ruleEngine.evaluate(input)
         if (result == null) {
             repository.recordRejected()
             return
         }
         repository.record(result)
+        PipelinePerfMonitor.markFusionPublished(result.timestampNs)
         onFused(result)
     }
 
@@ -112,26 +108,7 @@ class FusionProcessor(
         return best
     }
 
-    private fun findBestDistanceLocked(shockTs: Long): DistanceEvent? {
-        var best: DistanceEvent? = null
-        var bestDelta = Long.MAX_VALUE
-        for (distance in distanceBuffer) {
-            if (!ruleEngine.isWithinTimeWindow(shockTs, distance.timestampNs)) continue
-            val delta = kotlin.math.abs(shockTs - distance.timestampNs)
-            if (delta < bestDelta) {
-                bestDelta = delta
-                best = distance
-            }
-        }
-        return best
-    }
-
     private fun pruneLocked(nowNs: Long) {
-        while (distanceBuffer.isNotEmpty() &&
-            nowNs - distanceBuffer.first().timestampNs > config.maximumDelayNs
-        ) {
-            distanceBuffer.removeFirst()
-        }
         while (shockBuffer.isNotEmpty() &&
             nowNs - shockBuffer.first().timestampNs > config.maximumDelayNs
         ) {

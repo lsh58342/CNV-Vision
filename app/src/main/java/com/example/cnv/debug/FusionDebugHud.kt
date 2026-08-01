@@ -35,7 +35,7 @@ class FusionDebugHud(
 
     private fun render(result: FusionResult?) {
         if (result == null) {
-            textView.text = "Fusion Debug\n(waiting for Distance+Shock match)"
+            textView.text = "Fusion Debug\n(waiting for Distance / Fusion events)"
             return
         }
         val delayMs = result.timestampDelayNs / 1_000_000.0

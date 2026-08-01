@@ -1,6 +1,7 @@
 package com.example.cnv.opencv
 
 import com.example.cnv.config.CalibrationManager
+import com.example.cnv.core.debug.PipelinePerfMonitor
 import com.example.cnv.core.event.CoreEventModule
 import com.example.cnv.core.event.DistanceEvent
 import com.example.cnv.core.event.EventDispatcher
@@ -14,6 +15,7 @@ import org.opencv.imgproc.Imgproc
  * Camera + OpenCV distance pipeline:
  * ORB → LK → RANSAC → Median → CalibrationManager.getMmPerPixel() → Δd → Accumulated.
  * Publishes [DistanceEvent] only — never references IMU.
+ * Timestamps use Camera ImageInfo time base (elapsed-realtime ns).
  */
 class OpticalFlowDistanceEstimator(
     private val calibrationManager: CalibrationManager,
@@ -29,6 +31,7 @@ class OpticalFlowDistanceEstimator(
     override fun estimate(
         gray: Mat,
         currentKeypoints: Array<KeyPoint>,
+        frameTimestampNs: Long,
     ): Pair<Mat, DistanceEstimateResult> {
         val overlay = Mat()
         Imgproc.cvtColor(gray, overlay, Imgproc.COLOR_GRAY2RGBA)
@@ -49,7 +52,7 @@ class OpticalFlowDistanceEstimator(
                 appliedToAccumulation = false,
             )
             drawDebugHud(overlay, empty)
-            publishDistanceEvent(empty)
+            publishDistanceEvent(empty, frameTimestampNs)
             return overlay to empty
         }
 
@@ -79,14 +82,14 @@ class OpticalFlowDistanceEstimator(
             appliedToAccumulation = applied,
         )
         drawDebugHud(overlay, result)
-        publishDistanceEvent(result)
+        publishDistanceEvent(result, frameTimestampNs)
         return overlay to result
     }
 
-    private fun publishDistanceEvent(result: DistanceEstimateResult) {
+    private fun publishDistanceEvent(result: DistanceEstimateResult, frameTimestampNs: Long) {
         eventDispatcher.dispatch(
             DistanceEvent(
-                timestampNs = System.nanoTime(),
+                timestampNs = frameTimestampNs,
                 medianPixel = result.medianPixel,
                 distanceMm = result.distanceMm,
                 accumulatedMm = result.accumulatedMm,
@@ -94,6 +97,8 @@ class OpticalFlowDistanceEstimator(
                 trackingFeatureCount = result.trackingFeatureCount,
             ),
         )
+        // Capture publish instant for latency (still TimeBase domain).
+        PipelinePerfMonitor.markDistancePublished(frameTimestampNs)
     }
 
     override fun reset() {

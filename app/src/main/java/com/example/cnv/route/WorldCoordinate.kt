@@ -6,4 +6,10 @@ package com.example.cnv.route
 data class WorldCoordinate(
     val x: Double,
     val y: Double,
-)
+) {
+    fun distanceTo(other: WorldCoordinate): Double {
+        val dx = x - other.x
+        val dy = y - other.y
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+}

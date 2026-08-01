@@ -4,12 +4,15 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.example.cnv.core.common.TimeBase
+import com.example.cnv.core.debug.PipelinePerfMonitor
 import org.opencv.android.Utils
 import org.opencv.core.Mat
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * CameraX analyzer: ImageProxy → gray → DistanceEstimator pipeline → Bitmap.
- * Uses a double-buffer Bitmap pool to avoid allocating every frame.
+ * Uses a double-buffer Bitmap pool for conversion; UI receives an owned copy.
  */
 class GrayScaleFrameAnalyzer(
     private val distanceEstimator: DistanceEstimator,
@@ -21,30 +24,61 @@ class GrayScaleFrameAnalyzer(
     private var writeBitmap: Bitmap? = null
     private var displayBitmap: Bitmap? = null
 
+    private val released = AtomicBoolean(false)
+    private val active = AtomicBoolean(true)
+
+    fun setActive(enabled: Boolean) {
+        active.set(enabled)
+    }
+
     override fun analyze(imageProxy: ImageProxy) {
+        if (released.get() || !active.get()) {
+            PipelinePerfMonitor.recordDropped(1)
+            imageProxy.close()
+            return
+        }
+
         var grayMat: Mat? = null
         var overlayMat: Mat? = null
+        val frameTimestampNs = imageProxy.imageInfo.timestamp
+        val startNs = TimeBase.nowNs()
         try {
-            grayMat = ImageProxyMatConverter.toGrayMat(imageProxy)
-            val keypoints = orbFeatureDetector.detect(grayMat!!)
-            val estimate = distanceEstimator.estimate(grayMat!!, keypoints)
-            overlayMat = estimate.first
+            if (released.get() || !active.get()) {
+                PipelinePerfMonitor.recordDropped(1)
+                return
+            }
+            val gray = ImageProxyMatConverter.toGrayMat(imageProxy)
+            grayMat = gray
+            val keypoints = orbFeatureDetector.detect(gray)
+            val estimate = distanceEstimator.estimate(gray, keypoints, frameTimestampNs)
+            val overlay = estimate.first
+            overlayMat = overlay
             val distanceResult = estimate.second
 
-            val width = overlayMat!!.cols()
-            val height = overlayMat!!.rows()
+            if (released.get() || !active.get()) {
+                PipelinePerfMonitor.recordDropped(1)
+                return
+            }
+
+            val width = overlay.cols()
+            val height = overlay.rows()
             val target = obtainWriteBitmap(width, height)
-            Utils.matToBitmap(overlayMat, target)
+            Utils.matToBitmap(overlay, target)
 
             // TODO: Full rotation-aware processing for non-fixed mounts (STEP later).
             // Assumes the device remains in a fixed mount orientation for production use.
             val rotationDegrees = imageProxy.imageInfo.rotationDegrees
-            val output = if (rotationDegrees == 0) {
+            val pooled = if (rotationDegrees == 0) {
                 swapBuffers(target)
             } else {
                 rotateIntoDisplayBuffer(target, rotationDegrees.toFloat())
             }
-            onProcessedFrame(output, distanceResult)
+            // UI owns a copy — analyzer must not share pooled buffers with LiveData/ImageView.
+            val uiBitmap = pooled.copy(pooled.config ?: Bitmap.Config.ARGB_8888, false)
+            onProcessedFrame(uiBitmap, distanceResult)
+
+            val durationMs = (TimeBase.nowNs() - startNs) / 1_000_000.0
+            PipelinePerfMonitor.recordFrameProcessed(durationMs, frameTimestampNs)
         } finally {
             grayMat?.release()
             overlayMat?.release()
@@ -80,5 +114,15 @@ class GrayScaleFrameAnalyzer(
         displayBitmap?.recycle()
         displayBitmap = rotated
         return rotated
+    }
+
+    /** Releases pooled Bitmaps. Call when the analyzer is no longer used. */
+    fun release() {
+        released.set(true)
+        active.set(false)
+        writeBitmap?.recycle()
+        displayBitmap?.recycle()
+        writeBitmap = null
+        displayBitmap = null
     }
 }

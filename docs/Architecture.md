@@ -2,46 +2,47 @@
 
 ## 목적
 
-현재 단계는 **STEP 10-4 Route Cache + Inspection Session** 까지 반영한다.
+현재 단계는 **Architecture Refactoring** 반영 (기능 변경 없음). STEP 10-4 Inspection까지 유지.
 
 ---
 
-## Inspection (STEP 10-4)
+## Composition Root
 
-```
-Route → RouteCache snapshot → InspectionSession freeze
-EventBus → InspectionRecorder → InspectionResult
-```
-
-- RouteQualityScore = STEP 10-3 ValidationResult 매핑 (재검증 없음)
-- 상세: [INSPECTION.md](./INSPECTION.md)
+`MainActivity` = UI shell  
+`MainCompositionRoot` = Feature wiring only (no algorithms)
 
 ---
 
-## Prior
+## Core Events
 
-Validation [ROUTE_VALIDATION.md](./ROUTE_VALIDATION.md) · Generator [ROUTE_GENERATOR.md](./ROUTE_GENERATOR.md) · Map [MAP.md](./MAP.md) · Fusion [FUSION.md](./FUSION.md)
+`DistanceEvent`, `ShockEvent`, `CalibrationEvent`, `FusionEvent`, **`PositionEvent`**, `SystemEvent`  
+→ Feature 간 직접 참조 대신 Core EventBus
+
+`RouteDirection` → `core.model` (Event/Map 공유)
+
+---
+
+## Inspection / Route / Map / Fusion / DWG
+
+기존 문서 유지: [INSPECTION.md](./INSPECTION.md) · [ROUTE_VALIDATION.md](./ROUTE_VALIDATION.md) · [ROUTE_GENERATOR.md](./ROUTE_GENERATOR.md) · [MAP.md](./MAP.md) · [FUSION.md](./FUSION.md) · [DWG.md](./DWG.md)
+
+---
+
+## Dependency Rule
+
+허용: UI → CompositionRoot → Feature / Core  
+금지: Feature → Feature 직접 호출 (Event / Repository API만)
+
+---
+
+## Memory
+
+- GrayScaleFrameAnalyzer Bitmap pool + `release()`
+- OpenCVManager.release() on activity stop
+- Mat release in analyzer finally
 
 ---
 
 ## Future
 
-| STEP | 내용 |
-|------|------|
-| 11 | CAD Viewer |
-| 12 | HeatMap |
-
----
-
-## Forbidden
-
-- Inspection이 Event/Route를 수정·재계산
-- 새 Route Validation 수행
-- CSV / Replay / HeatMap / CAD / AI (본 STEP)
-- 기존 Camera / IMU / Fusion / DWG / Generator / Validation / Map Matching 코드 수정
-
----
-
-## 관련 문서
-
-[INSPECTION.md](./INSPECTION.md) · [DECISIONS.md.txt](./DECISIONS.md.txt)
+STEP 11 CAD Viewer · STEP 12 HeatMap

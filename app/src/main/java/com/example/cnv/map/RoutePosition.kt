@@ -1,5 +1,7 @@
 package com.example.cnv.map
 
+import com.example.cnv.core.model.RouteDirection
+
 /**
  * Position on the route topology (no CAD coordinates).
  */

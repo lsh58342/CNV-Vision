@@ -48,7 +48,7 @@ class FusionRepository(
 
     private fun updateStats(prev: FusionStatistics, result: FusionResult): FusionStatistics {
         val typeCountIncrement = when (result.eventType) {
-            FusionEventType.FUSED -> prev.copy(fusedCount = prev.fusedCount + 1)
+            FusionEventType.DISTANCE_AND_SHOCK -> prev.copy(fusedCount = prev.fusedCount + 1)
             FusionEventType.DISTANCE_ONLY -> prev.copy(distanceOnlyCount = prev.distanceOnlyCount + 1)
             FusionEventType.SHOCK_ONLY -> prev.copy(shockOnlyCount = prev.shockOnlyCount + 1)
         }

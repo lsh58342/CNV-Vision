@@ -1,5 +1,5 @@
 # CNV Inspector Architecture
 
-STEP 10-4: RouteCache + InspectionSession (freeze + append-only event recording).
+Composition root + Core PositionEvent. Features unchanged.
 
-See [INSPECTION.md](./INSPECTION.md)
+See [Architecture.md](./Architecture.md) · [EVENT_SYSTEM.md](./EVENT_SYSTEM.md)

@@ -36,6 +36,11 @@ class CameraManager(
         }
     }
 
+    /** Unbinds CameraX use-cases (stops analysis in background). */
+    fun stop() {
+        viewModel.unbind()
+    }
+
     private fun hasCameraPermission(): Boolean =
         ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED

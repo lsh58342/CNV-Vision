@@ -21,10 +21,11 @@ core/event/
   ShockEvent
   CalibrationEvent
   FusionEvent
+  PositionEvent
   SystemEvent
 ```
 
-`PositionEvent` 는 `map` 패키지에 두며 `BaseEvent` 를 구현한다 (Route 토폴로지 전용).
+`PositionEvent` 는 Core Event로 두어 Inspection / CAD / HeatMap이 map Feature에 직접 의존하지 않도록 한다.
 
 모든 Event는 **immutable data class / interface** 이다.
 
@@ -39,6 +40,7 @@ core/event/
 | CalibrationManager | CalibrationEvent |
 | FusionEngine | FusionEvent |
 | MapMatchingEngine | PositionEvent |
+| InspectionManager (records) | PositionEvent, FusionEvent, … |
 | App / Features (optional) | SystemEvent |
 
 발행은 `EventDispatcher.dispatch` / `EventPublisher.publish` 만 사용한다.

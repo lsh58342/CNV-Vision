@@ -1,11 +1,12 @@
 package com.example.cnv.inspection
 
+import com.example.cnv.core.common.TimeBase
 import com.example.cnv.core.event.CalibrationEvent
 import com.example.cnv.core.event.CoreEventModule
 import com.example.cnv.core.event.EventDispatcher
 import com.example.cnv.core.event.FusionEvent
+import com.example.cnv.core.event.PositionEvent
 import com.example.cnv.core.event.SystemEvent
-import com.example.cnv.map.PositionEvent
 import com.example.cnv.map.Route
 import java.util.UUID
 
@@ -75,7 +76,7 @@ class InspectionManager(
         subscribe()
         eventDispatcher.dispatch(
             SystemEvent(
-                timestampNs = System.nanoTime(),
+                timestampNs = TimeBase.nowNs(),
                 type = SystemEvent.Type.FEATURE_STARTED,
                 message = "inspection:${created.sessionId}",
             ),
@@ -97,7 +98,7 @@ class InspectionManager(
         }
         eventDispatcher.dispatch(
             SystemEvent(
-                timestampNs = System.nanoTime(),
+                timestampNs = TimeBase.nowNs(),
                 type = SystemEvent.Type.FEATURE_STOPPED,
                 message = "inspection:${active.sessionId}",
             ),

@@ -179,7 +179,7 @@ class RouteDebugRenderer(
                     nodeId = segment.fromNodeId,
                     distanceFromSegmentStart = 0f,
                     progress = 0f,
-                    direction = com.example.cnv.map.RouteDirection.FORWARD,
+                    direction = com.example.cnv.core.model.RouteDirection.FORWARD,
                     timestampNs = 0L,
                     confidence = 1f,
                 )

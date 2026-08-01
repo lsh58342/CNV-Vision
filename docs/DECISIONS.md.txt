@@ -179,3 +179,21 @@ RouteQualityScore는 STEP 10-3 Validation 결과를 재사용하며 재검증하
 ### Status
 
 Accepted
+
+---
+
+## Decision 014
+
+MainActivity는 Composition Root로 배선만 하고, PositionEvent는 Core Layer에 둔다.
+
+### Reason
+
+Presentation에 비즈니스 로직을 두지 않고, Feature 간 Position 구독이 map 패키지에 의존하지 않도록 하기 위함. 기능·알고리즘은 변경하지 않는다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

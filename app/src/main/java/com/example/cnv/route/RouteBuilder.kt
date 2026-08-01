@@ -60,7 +60,7 @@ class RouteBuilder(
         fun snapOrCreate(point: Point2d, preferredType: RouteNodeType): String {
             val world = transformer.pointToWorld(point)
             val existing = nodes.firstOrNull { node ->
-                distance(node.world, world) <= routeConfig.snapTolerance
+                node.world.distanceTo(world) <= routeConfig.snapTolerance
             }
             if (existing != null) {
                 return existing.id
@@ -87,7 +87,7 @@ class RouteBuilder(
                 val to = points[i + 1]
                 val fromWorld = transformer.pointToWorld(from)
                 val toWorld = transformer.pointToWorld(to)
-                val length = distance(fromWorld, toWorld)
+                val length = fromWorld.distanceTo(toWorld)
                 if (length < routeConfig.minimumSegmentLength) continue
                 if (length > routeConfig.maximumSegmentLength) continue
 
@@ -146,11 +146,5 @@ class RouteBuilder(
             segments = segments,
             edges = edges,
         )
-    }
-
-    private fun distance(a: WorldCoordinate, b: WorldCoordinate): Double {
-        val dx = a.x - b.x
-        val dy = a.y - b.y
-        return kotlin.math.sqrt(dx * dx + dy * dy)
     }
 }

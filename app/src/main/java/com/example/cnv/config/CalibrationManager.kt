@@ -1,6 +1,7 @@
 package com.example.cnv.config
 
 import android.content.Context
+import com.example.cnv.core.common.TimeBase
 import com.example.cnv.core.event.CalibrationEvent
 import com.example.cnv.core.event.CoreEventModule
 import com.example.cnv.core.event.EventDispatcher
@@ -108,7 +109,7 @@ class CalibrationManager private constructor(
     private fun publish(type: CalibrationEvent.Type, data: CalibrationData? = cached) {
         eventDispatcher.dispatch(
             CalibrationEvent(
-                timestampNs = System.nanoTime(),
+                timestampNs = TimeBase.nowNs(),
                 type = type,
                 mmPerPixel = data?.mmPerPixel ?: 0f,
                 totalObservedPixel = data?.totalObservedPixel ?: sessionAccumulatedPixel,

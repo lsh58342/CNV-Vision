@@ -3,6 +3,9 @@ package com.example.cnv.core.event
 /**
  * In-memory publish/subscribe bus.
  * Constructed via DI / [CoreEventModule] — not a Kotlin `object` singleton.
+ *
+ * Listeners are snapshotted under the lock; [publish] invokes them outside the lock
+ * so subscribers cannot deadlock the bus by re-entering subscribe/publish.
  */
 class EventBus : EventPublisher, EventSubscriber {
 

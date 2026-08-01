@@ -5,7 +5,6 @@ import com.example.cnv.map.RouteEdge
 import com.example.cnv.map.RouteNode
 import com.example.cnv.map.RouteNodeType
 import com.example.cnv.map.RouteSegment
-import kotlin.math.sqrt
 
 /**
  * Normalization only — does not invent topology or recompute paths.
@@ -58,7 +57,7 @@ class RouteOptimizer(
 
         // 3) Direction normalize: ensure length matches endpoints; flip if inverted within tolerance.
         segments = segments.map { segment ->
-            val measured = distance(segment.start, segment.end).toFloat()
+            val measured = segment.start.distanceTo(segment.end).toFloat()
             val oriented = if (
                 measured > 0f &&
                 kotlin.math.abs(measured - segment.lengthMm) <= config.directionTolerance
@@ -152,7 +151,7 @@ class RouteOptimizer(
         val survivors = mutableListOf<RouteDraft.DraftNode>()
         for (node in nodes) {
             val match = survivors.firstOrNull {
-                distance(it.world, node.world) <= config.snapTolerance
+                it.world.distanceTo(node.world) <= config.snapTolerance
             }
             if (match != null) {
                 map[node.id] = match.id
@@ -162,11 +161,5 @@ class RouteOptimizer(
             }
         }
         return map
-    }
-
-    private fun distance(a: WorldCoordinate, b: WorldCoordinate): Double {
-        val dx = a.x - b.x
-        val dy = a.y - b.y
-        return sqrt(dx * dx + dy * dy)
     }
 }
