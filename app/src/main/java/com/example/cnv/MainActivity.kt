@@ -11,9 +11,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.cnv.camera.CameraManager
 import com.example.cnv.config.CalibrationManager
+import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
 import com.example.cnv.debug.MapDebugHud
+import com.example.cnv.dwg.DWGImporter
+import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.fusion.FusionEngine
 import com.example.cnv.imu.IMUManager
 import com.example.cnv.map.InMemoryDemoRouteFactory
@@ -29,9 +32,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imuManager: IMUManager
     private lateinit var fusionEngine: FusionEngine
     private lateinit var mapMatchingEngine: MapMatchingEngine
+    private lateinit var dwgImporter: DWGImporter
     private lateinit var imuDebugHud: ImuDebugHud
     private lateinit var fusionDebugHud: FusionDebugHud
     private lateinit var mapDebugHud: MapDebugHud
+    private lateinit var dwgDebugHud: DwgDebugHud
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,6 +80,13 @@ class MainActivity : AppCompatActivity() {
             mapMatchingEngine = mapMatchingEngine,
         )
 
+        dwgImporter = DWGImporter(reader = StubDWGReader())
+        dwgImporter.importFrom("stub://demo-conveyor.dwg")
+        dwgDebugHud = DwgDebugHud(
+            textView = findViewById(R.id.dwg_debug_hud),
+            importer = dwgImporter,
+        )
+
         findViewById<Button>(R.id.button_open_calibration).setOnClickListener {
             startActivity(Intent(this, CalibrationActivity::class.java))
         }
@@ -88,9 +100,11 @@ class MainActivity : AppCompatActivity() {
         imuDebugHud.start()
         fusionDebugHud.start()
         mapDebugHud.start()
+        dwgDebugHud.start()
     }
 
     override fun onStop() {
+        dwgDebugHud.stop()
         mapDebugHud.stop()
         fusionDebugHud.stop()
         imuDebugHud.stop()

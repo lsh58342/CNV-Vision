@@ -1,31 +1,21 @@
 # CNV Inspector Architecture
 
-## Layer
+## Current
 
-Presentation → ViewModel → Repository → Core → Feature (camera / opencv / imu / fusion / map / …) → Platform
+STEP 10-1 DWG Import + Conveyor Route Extraction (RouteCandidate only).
 
-## Core Layer
+## Layers
 
-`core/event`, `core/config`, `core/common`, `core/math`, `core/model`
+Core · Fusion · Map Matching · DWG/route extraction · (future CAD/HeatMap)
 
-## Fusion Layer (STEP 09)
+## DWG Pipeline
 
-FusionEvent only. No Position. See [FUSION.md](./FUSION.md)
+DWGReader → GeometryModel → Layer filter → Merge → CenterLine → RouteCandidate
 
-## Map Matching Layer (STEP 10)
+See [DWG.md](./DWG.md)
 
-Route topology + MapMatchingEngine. FusionEvent → PositionEvent. No CAD coords. See [MAP.md](./MAP.md)
+## Rules
 
-## Future
-
-- STEP 10-3 DWG / Route.json via RouteLoader
-- STEP 11 CAD Viewer
-- STEP 12 HeatMap
-
-## Dependency Rule
-
-Feature → Feature 금지. EventBus만 통신.
-
-## Forbidden
-
-MainActivity 비즈니스 로직, Fusion/RoutePosition에 CAD Position, 본 STEP DWG/CAD/HeatMap 구현
+- DWGImporter does not touch MapMatchingEngine / RouteRepository
+- DWGReader is swappable (Stub now)
+- No Route generation / Coordinate Mapping in this STEP

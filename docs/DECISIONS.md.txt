@@ -99,3 +99,23 @@ RoutePosition / PositionEvent 는 CAD 좌표를 포함하지 않는다.
 ### Status
 
 Accepted
+
+---
+
+## Decision 010
+
+DWG Import는 DWGReader 인터페이스 뒤에 두고, STEP 10-1에서는 RouteCandidate까지만 생성한다.
+
+### Reason
+
+실제 DWG SDK를 교체 가능하게 유지하고, Route Generator / Coordinate Mapping(STEP 10-2)과 CAD Viewer를 분리하기 위함.
+
+DWGImporter는 MapMatchingEngine / RouteRepository를 수정하지 않는다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted
