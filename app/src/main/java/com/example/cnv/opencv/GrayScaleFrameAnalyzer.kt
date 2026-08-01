@@ -8,22 +8,27 @@ import org.opencv.android.Utils
 import org.opencv.core.Mat
 
 /**
- * CameraX analyzer: ImageProxy → OpenCV Mat → grayscale Bitmap.
+ * CameraX analyzer: ImageProxy → gray Mat → ORB keypoints overlay → Bitmap.
  */
 class GrayScaleFrameAnalyzer(
-    private val onGrayBitmap: (Bitmap) -> Unit,
+    private val onProcessedBitmap: (Bitmap) -> Unit,
 ) : ImageAnalysis.Analyzer {
+
+    private val orbFeatureDetector = OrbFeatureDetector()
 
     override fun analyze(imageProxy: ImageProxy) {
         try {
             val grayMat: Mat = ImageProxyMatConverter.toGrayMat(imageProxy)
+            val overlayMat: Mat = orbFeatureDetector.detectAndDraw(grayMat)
+            grayMat.release()
+
             val bitmap = Bitmap.createBitmap(
-                grayMat.cols(),
-                grayMat.rows(),
+                overlayMat.cols(),
+                overlayMat.rows(),
                 Bitmap.Config.ARGB_8888,
             )
-            Utils.matToBitmap(grayMat, bitmap)
-            grayMat.release()
+            Utils.matToBitmap(overlayMat, bitmap)
+            overlayMat.release()
 
             val rotationDegrees = imageProxy.imageInfo.rotationDegrees
             val output = if (rotationDegrees == 0) {
@@ -35,7 +40,7 @@ class GrayScaleFrameAnalyzer(
                     }
                 }
             }
-            onGrayBitmap(output)
+            onProcessedBitmap(output)
         } finally {
             imageProxy.close()
         }
