@@ -26,16 +26,22 @@ class ZoneDashboardController(
         val history = catalog.inspections.historyForZone(zone.id)
         val heatMaps = catalog.heatMaps.forZone(zone.id)
         val calReady = calibration?.ready == true || zone.calibrationVersion != null
+        val floorSetup = catalog.floorSetups.get(zone.floorId)
+        val dwgReady = zone.dwgRegistered || floorSetup.dwgRegistered
+        val routeReady = catalog.routes.hasRoute()
         return ZoneDashboardState(
             zone = zone,
-            dwgReady = zone.dwgRegistered,
+            dwgReady = dwgReady,
             calibrationReady = calReady,
             calibration = calibration,
             lastInspection = history.lastOrNull(),
             inspectionHistoryCount = history.size,
             heatMapCount = heatMaps.size,
             latestHeatMap = heatMaps.lastOrNull(),
-            canStartInspection = zone.dwgRegistered && zone.start.isDefined() && zone.end.isDefined(),
+            canStartInspection = dwgReady &&
+                routeReady &&
+                zone.start.isDefined() &&
+                zone.end.isDefined(),
         )
     }
 }

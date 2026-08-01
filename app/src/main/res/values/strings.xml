@@ -226,4 +226,40 @@
     <string name="result_export_csv">Export CSV</string>
     <string name="result_finish">Finish</string>
     <string name="result_empty">No inspection result available</string>
+
+    <string name="setup_building_dashboard">Building Dashboard</string>
+    <string name="setup_floor_dashboard">Floor Dashboard</string>
+    <string name="setup_add_building">Building 추가</string>
+    <string name="setup_add_floor">Floor 추가</string>
+    <string name="setup_open_building">Building 열기</string>
+    <string name="setup_open_zones">Zone 목록</string>
+    <string name="setup_register_dwg">DWG 등록</string>
+    <string name="setup_generate_route">Route 생성</string>
+    <string name="setup_create_zone">Zone 생성</string>
+    <string name="setup_route_lock">Route Lock</string>
+    <string name="setup_building_name_hint">Building 이름</string>
+    <string name="setup_floor_name_hint">Floor 이름 (예: 1F, 2F, Mezzanine)</string>
+    <string name="setup_name_required">이름을 입력하세요</string>
+    <string name="setup_empty_buildings">등록된 Building이 없습니다.</string>
+    <string name="setup_empty_floors">등록된 Floor가 없습니다.</string>
+    <string name="setup_empty_zones">Zone이 없습니다.</string>
+    <string name="setup_select_floor_for_status">Floor를 선택하면 상태가 표시됩니다.</string>
+    <string name="setup_dwg_registered">DWG가 등록되었습니다.</string>
+    <string name="setup_dwg_cancelled">DWG 선택이 취소되었습니다.</string>
+    <string name="setup_dwg_failed">DWG를 등록할 수 없습니다. Floor를 선택하고 Lock 상태를 확인하세요.</string>
+    <string name="setup_route_generated">Route가 생성되었습니다.</string>
+    <string name="setup_route_failed">Route 생성 실패 — DWG 등록 후 다시 시도하세요.</string>
+    <string name="setup_zone_need_route">Zone은 Route 생성 후에만 가능합니다.</string>
+    <string name="setup_route_locked">Route가 Lock 되었습니다.</string>
+    <string name="setup_route_lock_failed">Route Lock 실패 — Route가 필요합니다.</string>
+    <string name="setup_route_lock_status">Route Lock: %1$s</string>
+    <string name="setup_locked">LOCKED</string>
+    <string name="setup_unlocked">UNLOCKED</string>
+    <string name="setup_unlock_route">Route Unlock</string>
+    <string name="setup_route_unlocked">Route unlocked</string>
+    <string name="setup_unlock_failed">Unlock failed — Developer role and Floor required</string>
+
+    <string name="comm_workflow_full">Building → Floor → DWG → Route → Calibration → Zone → Route Lock → Operation</string>
+    <string name="comm_step_building">1. Building 생성</string>
+    <string name="comm_step_floor">2. Floor 생성</string>
 </resources>

@@ -12,6 +12,7 @@ class FactoryCatalog(
     val inspections: ZoneInspectionRepository = ZoneInspectionRepository(),
     val heatMaps: HeatMapRepository = HeatMapRepository(),
     val calibrations: CalibrationRepository = CalibrationRepository(),
+    val floorSetups: FloorSetupRepository = FloorSetupRepository(),
 ) {
     companion object {
         @Volatile

@@ -27,7 +27,7 @@ class SplashFragment : BaseScreenFragment() {
             getString(R.string.splash_restoring)
         handler.postDelayed({
             if (!isAdded) return@postDelayed
-            nav().navigateClearTo(CnvDestination.FACTORY_SELECT)
+            nav().navigateClearTo(CnvDestination.BUILDING_SELECT)
         }, 600L)
     }
 

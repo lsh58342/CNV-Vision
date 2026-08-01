@@ -1,43 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:background="@color/cnv_bg"
+    android:fillViewport="true">
 
-    <TextView
-        android:id="@+id/screen_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Commissioning"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:orientation="vertical"
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/screen_body"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:text="@string/rebuild_phase1_skeleton"
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
+        <TextView
+            android:id="@+id/commissioning_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/comm_home_title"
+            android:textAppearance="@style/TextAppearance.CNV.Title" />
 
-    <Button
-        android:id="@+id/button_screen_next"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="52dp"
-        android:text="@string/rebuild_next"
-        android:visibility="gone" />
+        <TextView
+            android:id="@+id/commissioning_context"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
-    <Button
-        android:id="@+id/button_screen_back"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp"
-        android:text="@string/nav_back" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/commissioning_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/comm_workflow_full"
+            android:textAppearance="@style/TextAppearance.CNV.Body" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_building"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_building" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_floor"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_floor" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_dwg"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_dwg" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_route"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_route" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_calibration"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_calibration" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_zone_editor"
+            style="@style/Widget.CNV.Button.Primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
+            android:text="@string/comm_step_zone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_route_lock"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:text="@string/comm_step_route_lock" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_comm_leave"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minHeight="48dp"
+            android:text="@string/comm_leave" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

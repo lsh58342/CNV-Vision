@@ -69,7 +69,7 @@ class CommissioningFragment : BaseScreenFragment() {
         }
         view.findViewById<MaterialButton>(R.id.button_comm_leave).setOnClickListener {
             siteVm.leaveCommissioningMode()
-            nav().navigateClearTo(CnvDestination.FACTORY_SELECT)
+            nav().navigateClearTo(CnvDestination.BUILDING_SELECT)
         }
     }
 }

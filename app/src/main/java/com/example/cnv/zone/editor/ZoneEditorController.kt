@@ -33,6 +33,7 @@ class ZoneEditorController(
     fun beginCadCreation(): Boolean {
         if (!isAccessible()) return false
         val floorId = context.floorId ?: return false
+        if (catalog.floorSetups.get(floorId).routeLocked) return false
         val routeId = context.routeId ?: catalog.routes.currentRouteId() ?: return false
         draft = ZoneEditorDraft(
             floorId = floorId,
@@ -45,6 +46,7 @@ class ZoneEditorController(
     fun beginDriveRecording(): Boolean {
         if (!isAccessible()) return false
         val floorId = context.floorId ?: return false
+        if (catalog.floorSetups.get(floorId).routeLocked) return false
         val routeId = context.routeId ?: catalog.routes.currentRouteId() ?: return false
         draft = ZoneEditorDraft(
             floorId = floorId,
@@ -113,7 +115,9 @@ class ZoneEditorController(
         if (!isAccessible()) return null
         val d = draft
         if (!d.canSave()) return null
+        if (catalog.floorSetups.get(d.floorId).routeLocked) return null
         val now = System.currentTimeMillis()
+        val dwgReady = catalog.floorSetups.get(d.floorId).dwgRegistered
         val zone = Zone(
             id = d.zoneId ?: UUID.randomUUID().toString(),
             floorId = d.floorId,
@@ -123,6 +127,7 @@ class ZoneEditorController(
             colorArgb = d.colorArgb,
             start = d.start,
             end = d.end,
+            dwgRegistered = dwgReady,
             updatedAtMs = now,
             createdAtMs = catalog.zones.get(d.zoneId ?: "")?.createdAtMs ?: now,
         )

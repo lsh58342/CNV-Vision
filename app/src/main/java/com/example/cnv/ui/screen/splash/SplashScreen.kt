@@ -9,7 +9,7 @@ import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
-/** Splash — enters Operation Factory selection. */
+/** Splash — enters Building Dashboard (LGES Poland only). */
 class SplashScreen : BaseScreen() {
 
     override fun onCreateView(
@@ -20,8 +20,9 @@ class SplashScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        siteVm.bootstrap()
         view.findViewById<MaterialButton>(R.id.button_splash_enter).setOnClickListener {
-            nav().navigate(CnvDestination.FACTORY_SELECT, addToBackStack = false)
+            nav().navigate(CnvDestination.BUILDING_SELECT, addToBackStack = false)
         }
     }
 }

@@ -11,20 +11,21 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import com.example.cnv.R
+import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.Zone
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
-import com.example.cnv.ui.screen.dummy.OperationDummyData
-import com.example.cnv.ui.screen.dummy.OperationUiSelection
 import com.google.android.material.button.MaterialButton
 
-/** Zone List Screen — Operation UI (dummy data, Phase 2). */
+/** Zone List — real catalog zones for current Floor. */
 class ZoneListScreen : BaseScreen() {
 
     private var query: String = ""
     private var sortByNameAsc: Boolean = true
     private lateinit var listContainer: LinearLayout
     private lateinit var emptyView: View
+    private var selectedZoneId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,12 +36,14 @@ class ZoneListScreen : BaseScreen() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         listContainer = view.findViewById(R.id.zone_list_container)
+        selectedZoneId = CurrentContext.get().zoneId
 
-        val factory = OperationUiSelection.selectedFactory()?.name ?: "—"
-        val building = OperationUiSelection.selectedBuilding()?.name ?: "—"
-        val floor = OperationUiSelection.selectedFloor()?.name ?: "—"
-        view.findViewById<TextView>(R.id.zone_list_context).text =
-            getString(R.string.op_context_full, factory, building, floor)
+        view.findViewById<TextView>(R.id.zone_list_context).text = getString(
+            R.string.op_context_full,
+            siteVm.factoryName.value ?: "LGES Poland",
+            siteVm.currentBuildingName(),
+            siteVm.currentFloorName(),
+        )
 
         val searchSlot = view.findViewById<FrameLayout>(R.id.zone_search_slot)
         val searchBar = UiComponents.inflateSearchBar(searchSlot)
@@ -50,7 +53,7 @@ class ZoneListScreen : BaseScreen() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
             override fun afterTextChanged(s: Editable?) {
                 query = s?.toString().orEmpty()
-                renderList()
+                siteVm.zones.value?.let { renderList(it) }
             }
         })
 
@@ -58,24 +61,28 @@ class ZoneListScreen : BaseScreen() {
         sortBtn.setOnClickListener {
             sortByNameAsc = !sortByNameAsc
             sortBtn.setText(if (sortByNameAsc) R.string.op_sort_name else R.string.op_sort_name_desc)
-            renderList()
+            siteVm.zones.value?.let { renderList(it) }
         }
 
         val headerSlot = view.findViewById<FrameLayout>(R.id.zone_list_header_slot)
-        headerSlot.addView(UiComponents.inflateSectionHeader(headerSlot, getString(R.string.op_zone_list_section)))
+        headerSlot.addView(
+            UiComponents.inflateSectionHeader(headerSlot, getString(R.string.op_zone_list_section)),
+        )
 
         val emptySlot = view.findViewById<FrameLayout>(R.id.zone_empty_slot)
-        emptyView = UiComponents.inflateEmptyView(emptySlot, getString(R.string.op_empty_zones))
+        emptyView = UiComponents.inflateEmptyView(emptySlot, getString(R.string.setup_empty_zones))
         emptySlot.addView(emptyView)
 
         val primarySlot = view.findViewById<FrameLayout>(R.id.zone_primary_slot)
         val continueBtn = UiComponents.inflatePrimaryButton(primarySlot, getString(R.string.op_open_dashboard))
         primarySlot.addView(continueBtn)
         continueBtn.setOnClickListener {
-            if (OperationUiSelection.zoneId == null) {
+            val id = selectedZoneId
+            if (id == null) {
                 Toast.makeText(requireContext(), R.string.op_select_zone_first, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            siteVm.selectZone(id)
             nav().navigate(CnvDestination.ZONE_DASHBOARD)
         }
 
@@ -84,13 +91,13 @@ class ZoneListScreen : BaseScreen() {
         secondarySlot.addView(backBtn)
         backBtn.setOnClickListener { nav().navigateBack() }
 
-        renderList()
+        siteVm.zones.observe(viewLifecycleOwner) { renderList(it) }
+        siteVm.loadZones()
     }
 
-    private fun renderList() {
+    private fun renderList(raw: List<Zone>) {
         UiComponents.clearChildren(listContainer)
-        val floorId = OperationUiSelection.floorId
-        var items = OperationDummyData.zones.filter { it.floorId == floorId }
+        var items = raw
         if (query.isNotBlank()) {
             items = items.filter { it.name.contains(query, ignoreCase = true) }
         }
@@ -101,16 +108,18 @@ class ZoneListScreen : BaseScreen() {
         }
         UiComponents.setEmptyVisible(emptyView, items.isEmpty())
         items.forEach { item ->
+            val last = "—"
             listContainer.addView(
                 UiComponents.inflateZoneCard(
                     parent = listContainer,
                     name = item.name,
-                    lastInspection = item.lastInspection,
-                    colorHex = item.colorHex,
-                    selected = item.id == OperationUiSelection.zoneId,
+                    lastInspection = last,
+                    colorHex = String.format("#%06X", 0xFFFFFF and item.colorArgb),
+                    selected = item.id == selectedZoneId,
                     onClick = {
-                        OperationUiSelection.zoneId = item.id
-                        renderList()
+                        selectedZoneId = item.id
+                        siteVm.selectZone(item.id)
+                        renderList(raw)
                     },
                 ),
             )

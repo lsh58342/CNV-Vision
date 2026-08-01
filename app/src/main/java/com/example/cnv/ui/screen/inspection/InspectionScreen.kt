@@ -15,7 +15,6 @@ import com.example.cnv.R
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
-import com.example.cnv.ui.screen.dummy.OperationUiSelection
 import com.google.android.material.button.MaterialButton
 
 /**
@@ -42,7 +41,7 @@ class InspectionScreen : BaseScreen() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val zoneName = OperationUiSelection.selectedZone()?.name
+        val zoneName = siteVm.currentZoneName().takeIf { it != "—" }
             ?: getString(R.string.screen_inspection)
         view.findViewById<TextView>(R.id.inspection_zone_name).text = zoneName
         view.findViewById<TextView>(R.id.inspection_session_status).text =

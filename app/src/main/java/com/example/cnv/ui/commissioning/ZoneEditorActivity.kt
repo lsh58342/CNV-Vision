@@ -7,14 +7,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.cnv.R
+import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.RouteAnchor
-import com.example.cnv.factory.seed.FactorySeedData
+import com.example.cnv.factory.repository.FactoryCatalog
+import com.example.cnv.factory.seed.LgesPolandSite
 import com.example.cnv.zone.editor.ZoneEditorController
 import com.google.android.material.button.MaterialButton
 
 /**
  * Zone Editor UI (Commissioning only).
- * CAD / Drive methods are wired structurally; CAD algorithms are not modified.
+ * Requires Floor + Route in Current Context — no demo Building/Floor/Route seeding.
  */
 class ZoneEditorActivity : AppCompatActivity() {
 
@@ -23,7 +25,7 @@ class ZoneEditorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_zone_editor)
-        FactorySeedData.ensureSeeded()
+        LgesPolandSite.ensure()
 
         if (!editor.isAccessible()) {
             Toast.makeText(this, R.string.comm_denied, Toast.LENGTH_SHORT).show()
@@ -31,7 +33,12 @@ class ZoneEditorActivity : AppCompatActivity() {
             return
         }
 
-        ensureDemoContext()
+        if (!hasFloorAndRoute()) {
+            Toast.makeText(this, R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         refreshStatus()
 
         findViewById<MaterialButton>(R.id.button_zone_cad_start).setOnClickListener {
@@ -39,7 +46,6 @@ class ZoneEditorActivity : AppCompatActivity() {
                 Toast.makeText(this, R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            // Structural CAD pick: demo anchors until CAD touch wiring lands.
             editor.setCadStart(RouteAnchor(nodeId = "N-CAD-START"))
             editor.setCadEnd(RouteAnchor(nodeId = "N-CAD-END"))
             refreshStatus()
@@ -78,12 +84,14 @@ class ZoneEditorActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.button_zone_editor_back).setOnClickListener { finish() }
     }
 
-    private fun ensureDemoContext() {
-        val ctx = com.example.cnv.factory.context.CurrentContext.get()
-        if (ctx.factoryId == null) ctx.selectFactory(FactorySeedData.FACTORY_ID)
-        if (ctx.buildingId == null) ctx.selectBuilding(FactorySeedData.BUILDING_WA1)
-        if (ctx.floorId == null) ctx.selectFloor(FactorySeedData.FLOOR_1F)
-        if (ctx.routeId == null) ctx.selectRoute(FactorySeedData.ROUTE_DEMO)
+    private fun hasFloorAndRoute(): Boolean {
+        val ctx = CurrentContext.get()
+        val catalog = FactoryCatalog.get()
+        if (ctx.floorId == null) return false
+        val routeId = ctx.routeId ?: catalog.routes.currentRouteId()
+        if (routeId == null || !catalog.routes.hasRoute()) return false
+        if (ctx.routeId == null) ctx.selectRoute(routeId)
+        return true
     }
 
     private fun refreshStatus() {

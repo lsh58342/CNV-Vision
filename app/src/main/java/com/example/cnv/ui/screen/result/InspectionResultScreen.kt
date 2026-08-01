@@ -13,7 +13,6 @@ import com.example.cnv.R
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
-import com.example.cnv.ui.screen.dummy.OperationUiSelection
 
 /**
  * Inspection Result Screen — displays existing InspectionResult summary only.
@@ -31,7 +30,7 @@ class InspectionResultScreen : BaseScreen() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val zone = OperationUiSelection.selectedZone()?.name ?: "—"
+        val zone = siteVm.currentZoneName()
         view.findViewById<TextView>(R.id.result_toolbar_subtitle).text =
             getString(R.string.result_zone_subtitle, zone)
 

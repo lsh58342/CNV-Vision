@@ -15,18 +15,18 @@
             android:id="@+id/building_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/op_building_title"
+            android:text="@string/setup_building_dashboard"
             android:textAppearance="@style/TextAppearance.CNV.Title" />
 
         <TextView
-            android:id="@+id/building_context"
+            android:id="@+id/building_factory_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
         <FrameLayout
-            android:id="@+id/building_list_header_slot"
+            android:id="@+id/building_header_slot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp" />
@@ -42,16 +42,31 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
-        <FrameLayout
-            android:id="@+id/building_primary_slot"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_add_building"
+            style="@style/Widget.CNV.Button.Primary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="16dp"
+            android:minHeight="56dp"
+            android:text="@string/setup_add_building" />
 
-        <FrameLayout
-            android:id="@+id/building_secondary_slot"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_open_building"
+            style="@style/Widget.CNV.Button.Action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" />
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/setup_open_building" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_building_commissioning"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/comm_home_title" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

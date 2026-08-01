@@ -11,8 +11,6 @@ import com.example.cnv.config.CalibrationManager
 import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.debug.RouteDebugController
 import com.example.cnv.debug.RouteDebugView
-import com.example.cnv.dwg.DWGImporter
-import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.fusion.FusionEngine
@@ -46,7 +44,6 @@ class InspectionPipeline(
     )
     private val routeRepository = catalog.routes.underlying()
     private val routeGenerator = RouteGenerator(routeRepository = routeRepository)
-    private val dwgImporter = DWGImporter(reader = StubDWGReader())
     private val mapMatchingEngine: MapMatchingEngine
     private val inspectionManager: InspectionManager
     private val routeDebugController: RouteDebugController
@@ -56,11 +53,7 @@ class InspectionPipeline(
     private var detached = false
 
     init {
-        if (routeRepository.current() == null) {
-            val dwgResult = dwgImporter.importFrom("stub://demo-conveyor.dwg")
-            routeGenerator.generate(candidates = dwgResult.candidates)
-            routeRepository.current()?.let { catalog.routes.setRoute(it) }
-        }
+        // Route must already exist from Commissioning — never auto-generate sample routes.
         mapMatchingEngine = MapMatchingEngine(routeRepository = routeRepository)
         inspectionManager = InspectionManager(repository = catalog.inspections.underlying())
         val stubRouteView = RouteDebugView(activity).apply { visibility = View.GONE }

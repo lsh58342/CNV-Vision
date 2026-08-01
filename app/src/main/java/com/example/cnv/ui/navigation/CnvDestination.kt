@@ -5,7 +5,6 @@ import com.example.cnv.ui.screen.building.BuildingScreen
 import com.example.cnv.ui.screen.commissioning.CommissioningScreen
 import com.example.cnv.ui.screen.dashboard.ZoneDashboardScreen
 import com.example.cnv.ui.screen.developer.DeveloperScreen
-import com.example.cnv.ui.screen.factory.FactoryScreen
 import com.example.cnv.ui.screen.floor.FloorScreen
 import com.example.cnv.ui.screen.heatmap.HeatMapScreen
 import com.example.cnv.ui.screen.history.HistoryScreen
@@ -20,6 +19,7 @@ import com.example.cnv.ui.screen.zone.ZoneListScreen
  */
 enum class CnvDestination {
     SPLASH,
+    @Deprecated("Factory select removed — LGES Poland only")
     FACTORY_SELECT,
     BUILDING_SELECT,
     FLOOR_SELECT,
@@ -36,7 +36,7 @@ enum class CnvDestination {
 
     fun createFragment(): Fragment = when (this) {
         SPLASH -> SplashScreen()
-        FACTORY_SELECT -> FactoryScreen()
+        FACTORY_SELECT -> BuildingScreen()
         BUILDING_SELECT -> BuildingScreen()
         FLOOR_SELECT -> FloorScreen()
         ZONE_LIST -> ZoneListScreen()

@@ -68,6 +68,10 @@ class CurrentContext {
         zoneId = id
     }
 
+    fun clearZone() {
+        zoneId = null
+    }
+
     fun clear() {
         factoryId = null
         buildingId = null
