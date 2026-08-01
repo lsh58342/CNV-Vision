@@ -1,71 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/cnv_bg"
+    android:padding="16dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/zone_dash_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:textAppearance="@style/TextAppearance.CNV.Title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <TextView
-            android:id="@+id/zone_dash_title"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/zone_dash_status_card"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="@color/cnv_surface"
+        app:cardCornerRadius="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/zone_dash_title"
+        app:strokeColor="@color/cnv_outline"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:padding="14dp">
 
-        <TextView
-            android:id="@+id/zone_dash_body"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:fontFamily="monospace"
-            android:textSize="12sp" />
+            <TextView
+                android:id="@+id/zone_dash_dwg_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.CNV.Body"
+                android:textSize="15sp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/skeleton_hint"
-            android:textSize="11sp" />
+            <TextView
+                android:id="@+id/zone_dash_cal_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textAppearance="@style/TextAppearance.CNV.Body"
+                android:textSize="15sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_start_inspection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/zone_dash_start" />
+            <TextView
+                android:id="@+id/zone_dash_last_inspection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_heatmap"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/screen_heatmap" />
+            <TextView
+                android:id="@+id/zone_dash_body"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="@style/TextAppearance.CNV.Caption"
+                android:visibility="gone" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_history"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/screen_history" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_start_inspection"
+        style="@style/Widget.CNV.Button.Start"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/zone_dash_start"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/zone_dash_status_card" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_csv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/zone_dash_csv" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_heatmap"
+        style="@style/Widget.CNV.Button.Action"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="6dp"
+        android:text="@string/screen_heatmap"
+        app:layout_constraintEnd_toStartOf="@id/button_zone_history"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/button_zone_start_inspection" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_settings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_settings" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_history"
+        style="@style/Widget.CNV.Button.Action"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:text="@string/screen_history"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/button_zone_heatmap"
+        app:layout_constraintTop_toTopOf="@id/button_zone_heatmap" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_zone_back"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_back" />
-    </LinearLayout>
-</ScrollView>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_csv"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/zone_dash_csv"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/button_zone_heatmap" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_settings"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text="@string/nav_settings"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/button_zone_back"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_zone_back"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/nav_back"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/button_zone_settings" />
+</androidx.constraintlayout.widget.ConstraintLayout>

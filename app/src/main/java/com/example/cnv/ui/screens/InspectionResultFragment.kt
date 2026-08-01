@@ -21,6 +21,8 @@ class InspectionResultFragment : BaseScreenFragment() {
         super.onViewCreated(view, savedInstanceState)
         view.findViewById<MaterialButton>(R.id.button_result_heatmap)
             .setOnClickListener { nav().navigate(CnvDestination.HEATMAP_VIEWER) }
+        view.findViewById<MaterialButton>(R.id.button_result_history)
+            .setOnClickListener { nav().navigate(CnvDestination.INSPECTION_HISTORY) }
         view.findViewById<MaterialButton>(R.id.button_result_csv).setOnClickListener {
             Toast.makeText(requireContext(), R.string.zone_dash_csv_future, Toast.LENGTH_SHORT).show()
         }

@@ -1,46 +1,209 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:background="@color/cnv_bg">
 
+    <!-- Top toolbar: Session / Timeline / Filter -->
+    <HorizontalScrollView
+        android:id="@+id/heatmap_top_toolbar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/cnv_surface"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="6dp"
+        android:scrollbars="none"
+        app:layout_constraintEnd_toStartOf="@id/heatmap_side_toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_heatmap_session"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:text="@string/heatmap_session" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_heatmap_timeline"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:minHeight="48dp"
+                android:text="@string/heatmap_timeline" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_heatmap_filter"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:minHeight="48dp"
+                android:text="@string/heatmap_filter" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_heatmap_back"
+                style="@style/Widget.CNV.Button.Secondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:minHeight="48dp"
+                android:text="@string/nav_back" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Right toolbar -->
+    <LinearLayout
+        android:id="@+id/heatmap_side_toolbar"
+        android:layout_width="56dp"
+        android:layout_height="0dp"
+        android:background="@color/cnv_surface_elevated"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingVertical="4dp"
+        app:layout_constraintBottom_toTopOf="@id/heatmap_stats_header"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_zoom_in"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="48dp"
+            android:padding="0dp"
+            android:text="@string/heatmap_zoom_in"
+            android:textSize="18sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_zoom_out"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="48dp"
+            android:padding="0dp"
+            android:text="@string/heatmap_zoom_out"
+            android:textSize="18sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_fit"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="48dp"
+            android:padding="0dp"
+            android:text="@string/heatmap_fit"
+            android:textSize="11sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_reset"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="48dp"
+            android:padding="0dp"
+            android:text="@string/heatmap_reset"
+            android:textSize="10sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_search"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:insetLeft="0dp"
+            android:insetTop="0dp"
+            android:insetRight="0dp"
+            android:insetBottom="0dp"
+            android:minWidth="48dp"
+            android:padding="0dp"
+            android:text="@string/heatmap_search"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- CAD ≥ 80% -->
     <FrameLayout
         android:id="@+id/heatmap_cad_area"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="8"
-        android:background="#11000000">
+        android:background="@color/cnv_surface"
+        app:layout_constraintBottom_toTopOf="@id/heatmap_stats_header"
+        app:layout_constraintEnd_toStartOf="@id/heatmap_side_toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/heatmap_top_toolbar">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/heatmap_cad_placeholder" />
+            android:gravity="center"
+            android:text="@string/heatmap_cad_placeholder"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <TextView
+            android:id="@+id/heatmap_overlay_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_margin="10dp"
+            android:background="#66000000"
+            android:padding="6dp"
+            android:text="@string/heatmap_overlay_label"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
     </FrameLayout>
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/heatmap_stats_header"
+        style="@style/Widget.CNV.Button.Action"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/heatmap_stats_toggle"
+        app:layout_constraintBottom_toTopOf="@id/heatmap_stats_panel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
+        android:id="@+id/heatmap_stats_panel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/cnv_surface_elevated"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <TextView
+            android:id="@+id/heatmap_stats_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/screen_heatmap"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/heatmap_overlay_skeleton"
-            android:textSize="11sp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_heatmap_back"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/nav_back" />
+            android:text="@string/heatmap_stats_body"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:lineSpacingExtra="3dp" />
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

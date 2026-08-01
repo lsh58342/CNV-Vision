@@ -24,23 +24,46 @@ class ZoneDashboardFragment : BaseScreenFragment() {
             val zone = state.zone
             view.findViewById<TextView>(R.id.zone_dash_title).text =
                 zone?.name ?: getString(R.string.zone_dash_missing)
-            view.findViewById<TextView>(R.id.zone_dash_body).text = buildString {
-                appendLine(getString(R.string.zone_dash_dwg, if (state.dwgReady) "OK" else "MISSING"))
-                appendLine(
-                    getString(
-                        R.string.zone_dash_calibration,
-                        if (state.calibrationReady) "OK" else "MISSING",
-                    ),
-                )
-                appendLine(
+
+            val dwg = view.findViewById<TextView>(R.id.zone_dash_dwg_status)
+            val cal = view.findViewById<TextView>(R.id.zone_dash_cal_status)
+            val dwgLabel = if (state.dwgReady) {
+                getString(R.string.status_ok_label)
+            } else {
+                getString(R.string.status_missing_label)
+            }
+            val calLabel = if (state.calibrationReady) {
+                getString(R.string.status_ok_label)
+            } else {
+                getString(R.string.status_missing_label)
+            }
+            dwg.text = getString(R.string.zone_dash_dwg, dwgLabel)
+            cal.text = getString(R.string.zone_dash_calibration, calLabel)
+            dwg.setTextColor(
+                resources.getColor(
+                    if (state.dwgReady) R.color.cnv_status_ok else R.color.cnv_status_missing,
+                    null,
+                ),
+            )
+            cal.setTextColor(
+                resources.getColor(
+                    if (state.calibrationReady) R.color.cnv_status_ok else R.color.cnv_status_missing,
+                    null,
+                ),
+            )
+
+            view.findViewById<TextView>(R.id.zone_dash_last_inspection).text = buildString {
+                append(
                     getString(
                         R.string.zone_dash_last_inspection,
                         state.lastInspection?.sessionId?.take(8) ?: "—",
                     ),
                 )
-                appendLine(getString(R.string.zone_dash_history_count, state.inspectionHistoryCount))
-                appendLine(getString(R.string.zone_dash_heatmap_count, state.heatMapCount))
+                append("  ·  ")
+                append(getString(R.string.zone_dash_history_count, state.inspectionHistoryCount))
             }
+            view.findViewById<TextView>(R.id.zone_dash_body).text =
+                getString(R.string.zone_dash_heatmap_count, state.heatMapCount)
         }
         siteVm.loadDashboard()
 

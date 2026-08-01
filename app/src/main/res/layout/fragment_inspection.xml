@@ -1,70 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="@color/cnv_bg"
+    android:padding="12dp">
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/inspection_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/screen_inspection"
-        android:textAppearance="?attr/textAppearanceHeadlineSmall"
-        android:textStyle="bold" />
+        android:textAppearance="@style/TextAppearance.CNV.Title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <FrameLayout
         android:id="@+id/inspection_preview_placeholder"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:background="#22000000">
+        android:layout_marginTop="10dp"
+        android:background="@color/cnv_surface"
+        app:layout_constraintBottom_toTopOf="@id/inspection_metrics"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/inspection_title">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/inspection_preview_placeholder" />
+            android:text="@string/inspection_preview_placeholder"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/inspection_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:fontFamily="monospace"
-        android:text="@string/inspection_status_skeleton" />
-
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/inspection_metrics"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_marginTop="10dp"
+        android:background="@color/cnv_surface_elevated"
+        android:orientation="vertical"
+        android:padding="12dp"
+        app:layout_constraintBottom_toTopOf="@id/button_inspection_start"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_inspection_start"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/inspection_tracking"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/inspection_start" />
+            android:text="@string/inspection_tracking_label"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textSize="16sp" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_inspection_stop"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/inspection_distance"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:text="@string/inspection_stop" />
+            android:layout_marginTop="4dp"
+            android:text="@string/inspection_distance_label"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/inspection_shock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/inspection_shock_label"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/inspection_elapsed"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/inspection_elapsed_label"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/inspection_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
     </LinearLayout>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/button_inspection_to_result"
-        android:layout_width="match_parent"
+        android:id="@+id/button_inspection_start"
+        style="@style/Widget.CNV.Button.Start"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/inspection_to_result_skeleton" />
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="6dp"
+        android:text="@string/inspection_start"
+        app:layout_constraintBottom_toTopOf="@id/button_inspection_to_result"
+        app:layout_constraintEnd_toStartOf="@id/button_inspection_stop"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_inspection_stop"
+        style="@style/Widget.CNV.Button.Stop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:text="@string/inspection_stop"
+        app:layout_constraintBottom_toBottomOf="@id/button_inspection_start"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/button_inspection_start"
+        app:layout_constraintTop_toTopOf="@id/button_inspection_start" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_inspection_to_result"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="@string/inspection_to_result_skeleton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/button_inspection_back"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_inspection_back"
-        android:layout_width="match_parent"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/nav_back" />
-</LinearLayout>
+        android:text="@string/nav_back"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/button_inspection_to_result" />
+</androidx.constraintlayout.widget.ConstraintLayout>
