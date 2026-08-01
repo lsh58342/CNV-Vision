@@ -1,4 +1,4 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -17,7 +17,7 @@ class CommissioningFragment : BaseScreenFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_commissioning, container, false)
+    ): View = inflater.inflate(R.layout.legacy_fragment_commissioning, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -1,4 +1,4 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels

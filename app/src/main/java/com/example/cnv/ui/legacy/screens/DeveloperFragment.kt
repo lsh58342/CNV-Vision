@@ -1,16 +1,16 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.cnv.R
-import com.example.cnv.ui.feature.FeatureRuntime
-import com.example.cnv.ui.feature.requireFeatureRuntime
+import com.example.cnv.ui.legacy.feature.FeatureRuntime
+import com.example.cnv.ui.legacy.feature.requireFeatureRuntime
 import com.google.android.material.button.MaterialButton
 
 /**
- * Developer Screen — debug HUDs only (hidden from Operation flow).
+ * Developer Screen -debug HUDs only (hidden from Operation flow).
  */
 class DeveloperFragment : BaseScreenFragment() {
 
@@ -20,7 +20,7 @@ class DeveloperFragment : BaseScreenFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_developer, container, false)
+    ): View = inflater.inflate(R.layout.legacy_fragment_developer, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

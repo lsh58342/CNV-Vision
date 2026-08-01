@@ -1,4 +1,4 @@
-package com.example.cnv.ui.feature
+package com.example.cnv.ui.legacy.feature
 
 import android.os.Build
 import android.os.Handler
@@ -45,8 +45,8 @@ import com.example.cnv.route.RouteGenerator
 import com.example.cnv.route.ValidationSeverity
 
 /**
- * Activity-scoped feature wiring migrated from MainCompositionRoot.
- * Owns engines; binds UI per Screen. Does not change domain algorithms.
+ * Legacy feature wiring (isolated — not hosted by rebuild MainActivity).
+ * Owns engines; binds UI per legacy Screen. Does not change domain algorithms.
  */
 class FeatureRuntime(
     private val activity: AppCompatActivity,
@@ -99,8 +99,9 @@ class FeatureRuntime(
     )
 
     init {
-        val bootstrapPreview = activity.findViewById<PreviewView>(R.id.preview_view_bootstrap)
-        val bootstrapGray = activity.findViewById<ImageView>(R.id.opencv_gray_view_bootstrap)
+        // Programmatic bootstrap surfaces (legacy isolation — not in NavHost layout).
+        val bootstrapPreview = PreviewView(activity).apply { visibility = View.GONE }
+        val bootstrapGray = ImageView(activity).apply { visibility = View.GONE }
         openCvManager = OpenCVManager(activity, bootstrapGray)
         cameraManager = CameraManager(activity, bootstrapPreview)
 

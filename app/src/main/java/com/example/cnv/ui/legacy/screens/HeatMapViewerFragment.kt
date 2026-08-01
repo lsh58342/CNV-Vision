@@ -1,4 +1,4 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,12 +7,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.example.cnv.R
-import com.example.cnv.ui.feature.FeatureRuntime
-import com.example.cnv.ui.feature.requireFeatureRuntime
+import com.example.cnv.ui.legacy.feature.FeatureRuntime
+import com.example.cnv.ui.legacy.feature.requireFeatureRuntime
 import com.google.android.material.button.MaterialButton
 
 /**
- * HeatMap Viewer — CAD + Overlay + Timeline/Filter (migrated).
+ * HeatMap Viewer -CAD + Overlay + Timeline/Filter (migrated).
  */
 class HeatMapViewerFragment : BaseScreenFragment() {
 
@@ -22,7 +22,7 @@ class HeatMapViewerFragment : BaseScreenFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_heatmap_viewer, container, false)
+    ): View = inflater.inflate(R.layout.legacy_fragment_heatmap_viewer, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

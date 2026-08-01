@@ -1,22 +1,22 @@
 package com.example.cnv.ui.navigation
 
 import androidx.fragment.app.Fragment
-import com.example.cnv.ui.screens.BuildingSelectFragment
-import com.example.cnv.ui.screens.CommissioningFragment
-import com.example.cnv.ui.screens.DeveloperFragment
-import com.example.cnv.ui.screens.FactorySelectFragment
-import com.example.cnv.ui.screens.FloorSelectFragment
-import com.example.cnv.ui.screens.HeatMapViewerFragment
-import com.example.cnv.ui.screens.InspectionFragment
-import com.example.cnv.ui.screens.InspectionHistoryFragment
-import com.example.cnv.ui.screens.InspectionResultFragment
-import com.example.cnv.ui.screens.SettingsFragment
-import com.example.cnv.ui.screens.SplashFragment
-import com.example.cnv.ui.screens.ZoneDashboardFragment
-import com.example.cnv.ui.screens.ZoneListFragment
+import com.example.cnv.ui.screen.building.BuildingScreen
+import com.example.cnv.ui.screen.commissioning.CommissioningScreen
+import com.example.cnv.ui.screen.dashboard.ZoneDashboardScreen
+import com.example.cnv.ui.screen.developer.DeveloperScreen
+import com.example.cnv.ui.screen.factory.FactoryScreen
+import com.example.cnv.ui.screen.floor.FloorScreen
+import com.example.cnv.ui.screen.heatmap.HeatMapScreen
+import com.example.cnv.ui.screen.history.HistoryScreen
+import com.example.cnv.ui.screen.inspection.InspectionScreen
+import com.example.cnv.ui.screen.result.InspectionResultScreen
+import com.example.cnv.ui.screen.settings.SettingsScreen
+import com.example.cnv.ui.screen.splash.SplashScreen
+import com.example.cnv.ui.screen.zone.ZoneListScreen
 
 /**
- * App destinations for STEP UI-3 Navigation Skeleton.
+ * App destinations for UI Rebuild Navigation Host.
  */
 enum class CnvDestination {
     SPLASH,
@@ -35,18 +35,18 @@ enum class CnvDestination {
     ;
 
     fun createFragment(): Fragment = when (this) {
-        SPLASH -> SplashFragment()
-        FACTORY_SELECT -> FactorySelectFragment()
-        BUILDING_SELECT -> BuildingSelectFragment()
-        FLOOR_SELECT -> FloorSelectFragment()
-        ZONE_LIST -> ZoneListFragment()
-        ZONE_DASHBOARD -> ZoneDashboardFragment()
-        INSPECTION -> InspectionFragment()
-        INSPECTION_RESULT -> InspectionResultFragment()
-        HEATMAP_VIEWER -> HeatMapViewerFragment()
-        INSPECTION_HISTORY -> InspectionHistoryFragment()
-        SETTINGS -> SettingsFragment()
-        DEVELOPER -> DeveloperFragment()
-        COMMISSIONING -> CommissioningFragment()
+        SPLASH -> SplashScreen()
+        FACTORY_SELECT -> FactoryScreen()
+        BUILDING_SELECT -> BuildingScreen()
+        FLOOR_SELECT -> FloorScreen()
+        ZONE_LIST -> ZoneListScreen()
+        ZONE_DASHBOARD -> ZoneDashboardScreen()
+        INSPECTION -> InspectionScreen()
+        INSPECTION_RESULT -> InspectionResultScreen()
+        HEATMAP_VIEWER -> HeatMapScreen()
+        INSPECTION_HISTORY -> HistoryScreen()
+        SETTINGS -> SettingsScreen()
+        DEVELOPER -> DeveloperScreen()
+        COMMISSIONING -> CommissioningScreen()
     }
 }

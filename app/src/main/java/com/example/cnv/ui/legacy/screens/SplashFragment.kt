@@ -1,4 +1,4 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import android.os.Bundle
 import android.os.Handler
@@ -18,7 +18,7 @@ class SplashFragment : BaseScreenFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_splash, container, false)
+    ): View = inflater.inflate(R.layout.legacy_fragment_splash, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

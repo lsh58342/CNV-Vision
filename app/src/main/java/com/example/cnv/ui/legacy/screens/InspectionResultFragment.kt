@@ -1,4 +1,4 @@
-package com.example.cnv.ui.screens
+package com.example.cnv.ui.legacy.screens
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,7 +12,7 @@ import com.example.cnv.ui.navigation.CnvDestination
 import com.google.android.material.button.MaterialButton
 
 /**
- * Inspection Result — Summary + HeatMap / CSV / History entry points.
+ * Inspection Result -Summary + HeatMap / CSV / History entry points.
  */
 class InspectionResultFragment : BaseScreenFragment() {
 
@@ -20,7 +20,7 @@ class InspectionResultFragment : BaseScreenFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = inflater.inflate(R.layout.fragment_inspection_result, container, false)
+    ): View = inflater.inflate(R.layout.legacy_fragment_inspection_result, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

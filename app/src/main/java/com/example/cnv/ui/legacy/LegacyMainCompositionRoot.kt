@@ -1,4 +1,4 @@
-package com.example.cnv
+package com.example.cnv.ui.legacy
 
 import android.content.Intent
 import android.os.Build
@@ -9,6 +9,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
+import com.example.cnv.R
 import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADView
 import com.example.cnv.camera.CameraManager
@@ -40,11 +41,10 @@ import com.example.cnv.route.ValidationSeverity
 import com.example.cnv.ui.calibration.CalibrationActivity
 
 /**
- * Legacy monolith wiring for activity_main.xml.
- * Superseded by [com.example.cnv.ui.feature.FeatureRuntime] (STEP UI-5).
- * Kept as reference only — MainActivity no longer calls this.
+ * Legacy monolith wiring for [R.layout.legacy_activity_main].
+ * Isolated in UI Rebuild Phase 1 — MainActivity does not call this.
  */
-class MainCompositionRoot(
+class LegacyMainCompositionRoot(
     private val activity: AppCompatActivity,
 ) {
 
@@ -122,7 +122,7 @@ class MainCompositionRoot(
         imuManager.stop()
         mapMatchingEngine.stop()
         fusionEngine.stop()
-        // Camera → Analyzer → OpenCV (STEP 10-5 lifecycle order)
+        // Camera -Analyzer -OpenCV (STEP 10-5 lifecycle order)
         cameraManager.stop()
         openCvManager.release()
     }

@@ -1,10 +1,13 @@
-package com.example.cnv.ui.feature
+package com.example.cnv.ui.legacy.feature
 
 import androidx.fragment.app.FragmentActivity
-import com.example.cnv.MainActivity
 
+/**
+ * Legacy FeatureRuntime access — isolated in UI Rebuild Phase 1.
+ * Rebuild MainActivity is Navigation Host only and does not host FeatureRuntime.
+ */
 fun FragmentActivity.requireFeatureRuntime(): FeatureRuntime {
-    val main = this as? MainActivity
-        ?: error("FeatureRuntime requires MainActivity host")
-    return main.featureRuntime()
+    error(
+        "Legacy FeatureRuntime is isolated; rebuild MainActivity does not host it (UI Rebuild Phase 1)",
+    )
 }
