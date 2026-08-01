@@ -1,5 +1,5 @@
 # CNV Inspector Architecture
 
-STEP 10-3: RouteValidator (read-only) + RouteDebugViewer (black canvas, no CAD).
+STEP 10-4: RouteCache + InspectionSession (freeze + append-only event recording).
 
-See [ROUTE_VALIDATION.md](./ROUTE_VALIDATION.md)
+See [INSPECTION.md](./INSPECTION.md)

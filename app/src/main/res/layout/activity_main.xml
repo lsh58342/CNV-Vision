@@ -149,6 +149,22 @@
         app:layout_constraintTop_toBottomOf="@id/route_validation_hud"
         tools:text="Issues" />
 
+    <TextView
+        android:id="@+id/inspection_debug_hud"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="8dp"
+        android:background="#66000000"
+        android:fontFamily="monospace"
+        android:padding="8dp"
+        android:textColor="@android:color/white"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toTopOf="@id/button_route_zoom_in"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="Inspection" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_route_zoom_in"
         android:layout_width="wrap_content"
@@ -167,6 +183,26 @@
         android:text="@string/route_zoom_out"
         app:layout_constraintBottom_toBottomOf="@id/button_route_zoom_in"
         app:layout_constraintStart_toEndOf="@id/button_route_zoom_in"
+        app:layout_constraintTop_toTopOf="@id/button_route_zoom_in" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_inspection_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/inspection_start"
+        app:layout_constraintBottom_toBottomOf="@id/button_route_zoom_in"
+        app:layout_constraintStart_toEndOf="@id/button_route_zoom_out"
+        app:layout_constraintTop_toTopOf="@id/button_route_zoom_in" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_inspection_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="@string/inspection_stop"
+        app:layout_constraintBottom_toBottomOf="@id/button_route_zoom_in"
+        app:layout_constraintStart_toEndOf="@id/button_inspection_start"
         app:layout_constraintTop_toTopOf="@id/button_route_zoom_in" />
 
     <com.google.android.material.button.MaterialButton

@@ -159,3 +159,23 @@ Debug Viewer는 CAD 없이 선분으로만 표시한다.
 ### Status
 
 Accepted
+
+---
+
+## Decision 013
+
+Inspection Session은 Route/Calibration을 Freeze하고 Event를 append-only로 기록한다.
+
+### Reason
+
+검사 중 기준 Route·Calibration이 바뀌지 않게 하고, STEP 11 CAD / STEP 12 HeatMap이 동일 Session 결과를 재사용하기 위함.
+
+RouteQualityScore는 STEP 10-3 Validation 결과를 재사용하며 재검증하지 않는다.
+
+### Date
+
+2026-08-01
+
+### Status
+
+Accepted

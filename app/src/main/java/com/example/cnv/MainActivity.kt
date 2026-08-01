@@ -1,10 +1,10 @@
 package com.example.cnv
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
@@ -12,9 +12,11 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.cnv.camera.CameraManager
 import com.example.cnv.config.CalibrationManager
+import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.debug.DwgDebugHud
 import com.example.cnv.debug.FusionDebugHud
 import com.example.cnv.debug.ImuDebugHud
+import com.example.cnv.debug.InspectionDebugHud
 import com.example.cnv.debug.MapDebugHud
 import com.example.cnv.debug.RouteDebugController
 import com.example.cnv.debug.RouteDebugView
@@ -23,6 +25,8 @@ import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.fusion.FusionEngine
 import com.example.cnv.imu.IMUManager
+import com.example.cnv.inspection.InspectionManager
+import com.example.cnv.inspection.RouteQualityScore
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.map.RouteRepository
 import com.example.cnv.opencv.OpenCVManager
@@ -39,11 +43,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dwgImporter: DWGImporter
     private lateinit var routeGenerator: RouteGenerator
     private lateinit var routeDebugController: RouteDebugController
+    private lateinit var inspectionManager: InspectionManager
     private lateinit var imuDebugHud: ImuDebugHud
     private lateinit var fusionDebugHud: FusionDebugHud
     private lateinit var mapDebugHud: MapDebugHud
     private lateinit var dwgDebugHud: DwgDebugHud
     private lateinit var routeGenDebugHud: RouteGenDebugHud
+    private lateinit var inspectionDebugHud: InspectionDebugHud
+    private lateinit var routeRepository: RouteRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +85,7 @@ class MainActivity : AppCompatActivity() {
             repository = fusionEngine.repository,
         )
 
-        val routeRepository = RouteRepository()
+        routeRepository = RouteRepository()
         routeGenerator = RouteGenerator(routeRepository = routeRepository)
 
         dwgImporter = DWGImporter(reader = StubDWGReader())
@@ -111,6 +118,18 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_route_zoom_in).setOnClickListener { routeDebugView.zoomIn() }
         findViewById<Button>(R.id.button_route_zoom_out).setOnClickListener { routeDebugView.zoomOut() }
 
+        inspectionManager = InspectionManager()
+        inspectionDebugHud = InspectionDebugHud(
+            textView = findViewById(R.id.inspection_debug_hud),
+            inspectionManager = inspectionManager,
+        )
+        findViewById<Button>(R.id.button_inspection_start).setOnClickListener {
+            startInspectionSession()
+        }
+        findViewById<Button>(R.id.button_inspection_stop).setOnClickListener {
+            inspectionManager.stop()
+        }
+
         findViewById<Button>(R.id.button_open_calibration).setOnClickListener {
             startActivity(Intent(this, CalibrationActivity::class.java))
         }
@@ -127,9 +146,14 @@ class MainActivity : AppCompatActivity() {
         dwgDebugHud.start()
         routeGenDebugHud.start()
         routeDebugController.start()
+        inspectionDebugHud.start()
     }
 
     override fun onStop() {
+        if (inspectionManager.state() == com.example.cnv.inspection.InspectionState.RUNNING) {
+            inspectionManager.stop()
+        }
+        inspectionDebugHud.stop()
         routeDebugController.stop()
         routeGenDebugHud.stop()
         dwgDebugHud.stop()
@@ -140,5 +164,27 @@ class MainActivity : AppCompatActivity() {
         mapMatchingEngine.stop()
         fusionEngine.stop()
         super.onStop()
+    }
+
+    private fun startInspectionSession() {
+        val route = routeRepository.current() ?: return
+        val calibration = CalibrationManager.getInstance(this)
+        val calData = calibration.getCalibrationData()
+        // Reuse STEP 10-3 validation outcome already held by debug controller — no new validate().
+        val quality = RouteQualityScore.from(routeDebugController.latestValidation())
+        val versionName = runCatching {
+            packageManager.getPackageInfo(packageName, 0).versionName
+        }.getOrNull().orEmpty().ifBlank { "1.0" }
+        inspectionManager.start(
+            InspectionManager.StartRequest(
+                route = route,
+                calibrationVersion = calData?.version ?: 0,
+                calibrationValue = calibration.getMmPerPixel(),
+                appVersion = versionName,
+                deviceInformation = "${Build.MANUFACTURER} ${Build.MODEL}",
+                samplingRateHz = 1_000_000f / IMUConfig.DEFAULT_SAMPLING_PERIOD_US,
+                routeQualityScore = quality,
+            ),
+        )
     }
 }
