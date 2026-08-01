@@ -6,6 +6,8 @@ import android.widget.Button
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
+import com.example.cnv.cad.CADController
+import com.example.cnv.cad.CADView
 import com.example.cnv.camera.CameraManager
 import com.example.cnv.config.CalibrationManager
 import com.example.cnv.core.config.IMUConfig
@@ -29,6 +31,7 @@ import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.map.RouteRepository
 import com.example.cnv.opencv.OpenCVManager
 import com.example.cnv.route.RouteGenerator
+import com.example.cnv.route.ValidationSeverity
 import com.example.cnv.ui.calibration.CalibrationActivity
 
 /**
@@ -47,6 +50,7 @@ class MainCompositionRoot(
     private lateinit var routeGenerator: RouteGenerator
     private lateinit var routeDebugController: RouteDebugController
     private lateinit var inspectionManager: InspectionManager
+    private lateinit var cadController: CADController
     private lateinit var imuDebugHud: ImuDebugHud
     private lateinit var fusionDebugHud: FusionDebugHud
     private lateinit var mapDebugHud: MapDebugHud
@@ -66,6 +70,7 @@ class MainCompositionRoot(
         bindImuAndFusion()
         bindRoutePipeline()
         bindInspectionAndUiActions()
+        bindCadViewer()
 
         pipelinePerfDebugHud = PipelinePerfDebugHud(
             textView = activity.findViewById(R.id.pipeline_perf_debug_hud),
@@ -87,12 +92,14 @@ class MainCompositionRoot(
         routeDebugController.start()
         inspectionDebugHud.start()
         pipelinePerfDebugHud.start()
+        cadController.start()
     }
 
     fun onStop() {
         if (inspectionManager.state() == InspectionState.RUNNING) {
             inspectionManager.stop()
         }
+        cadController.stop()
         pipelinePerfDebugHud.stop()
         inspectionDebugHud.stop()
         routeDebugController.stop()
@@ -160,6 +167,34 @@ class MainCompositionRoot(
             .setOnClickListener { routeDebugView.zoomIn() }
         activity.findViewById<Button>(R.id.button_route_zoom_out)
             .setOnClickListener { routeDebugView.zoomOut() }
+    }
+
+    private fun bindCadViewer() {
+        val cadView = activity.findViewById<CADView>(R.id.cad_view)
+        cadController = CADController(
+            routeRepository = routeRepository,
+            cadView = cadView,
+            mapperProvider = { routeGenerator.latestResult()?.mapper },
+            debugHud = activity.findViewById(R.id.cad_debug_hud),
+            validationErrorProvider = {
+                val issues = routeDebugController.latestValidation()?.issues.orEmpty()
+                val firstError = issues.firstOrNull { it.severity == ValidationSeverity.ERROR }
+                firstError?.let { "Err: ${it.message}" }
+            },
+            inspectionStateProvider = {
+                "Inspection: ${inspectionManager.state().name}"
+            },
+        )
+        activity.findViewById<Button>(R.id.button_cad_zoom_in)
+            .setOnClickListener { cadController.zoomIn() }
+        activity.findViewById<Button>(R.id.button_cad_zoom_out)
+            .setOnClickListener { cadController.zoomOut() }
+        activity.findViewById<Button>(R.id.button_cad_fit)
+            .setOnClickListener { cadController.fitToRoute() }
+        activity.findViewById<Button>(R.id.button_cad_reset)
+            .setOnClickListener { cadController.resetView() }
+        activity.findViewById<Button>(R.id.button_cad_theme)
+            .setOnClickListener { cadController.toggleTheme() }
     }
 
     private fun bindInspectionAndUiActions() {

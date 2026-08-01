@@ -4,6 +4,11 @@
     <string name="open_calibration">Calibration</string>
     <string name="route_zoom_in">Zoom+</string>
     <string name="route_zoom_out">Zoom-</string>
+    <string name="cad_zoom_in">CAD+</string>
+    <string name="cad_zoom_out">CAD-</string>
+    <string name="cad_fit">Fit</string>
+    <string name="cad_reset">Reset</string>
+    <string name="cad_theme">Theme</string>
     <string name="inspection_start">Start Insp</string>
     <string name="inspection_stop">Stop Insp</string>
     <string name="calibration_title">Calibration</string>
