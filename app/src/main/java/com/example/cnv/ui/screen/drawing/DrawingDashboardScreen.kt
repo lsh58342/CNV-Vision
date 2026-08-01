@@ -35,6 +35,10 @@ class DrawingDashboardScreen : BaseScreen() {
         super.onViewCreated(view, savedInstanceState)
 
         view.findViewById<MaterialButton>(R.id.button_open_drawing).setOnClickListener {
+            if (!siteVm.enterCommissioningMode()) {
+                Toast.makeText(requireContext(), R.string.ws_operation_blocked, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             nav().navigate(CnvDestination.OPEN_DRAWING)
         }
         view.findViewById<MaterialButton>(R.id.button_drawing_inspection).setOnClickListener {
@@ -61,7 +65,11 @@ class DrawingDashboardScreen : BaseScreen() {
         }
 
         val openCommissioning = {
-            nav().navigate(CnvDestination.OPEN_DRAWING)
+            if (!siteVm.enterCommissioningMode()) {
+                Toast.makeText(requireContext(), R.string.ws_operation_blocked, Toast.LENGTH_SHORT).show()
+            } else {
+                nav().navigate(CnvDestination.OPEN_DRAWING)
+            }
         }
         view.findViewById<MaterialButton>(R.id.button_comm_open_calibration).setOnClickListener { openCommissioning() }
         view.findViewById<MaterialButton>(R.id.button_comm_open_route).setOnClickListener { openCommissioning() }

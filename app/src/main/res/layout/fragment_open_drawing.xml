@@ -1,104 +1,251 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/cnv_bg"
-    android:orientation="vertical">
+    android:background="@color/cnv_bg">
 
-    <TextView
-        android:id="@+id/open_drawing_title"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="12dp"
-        android:text="@string/draw_open_drawing"
-        android:textAppearance="@style/TextAppearance.CNV.Title" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/open_drawing_hint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="8dp"
-        android:text="@string/draw_open_drawing_hint"
-        android:textAppearance="@style/TextAppearance.CNV.Caption" />
-
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <com.example.cnv.cad.CADView
-            android:id="@+id/open_drawing_cad"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    </FrameLayout>
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fillViewport="true"
-        android:scrollbars="none">
-
+        <!-- Toolbar -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/open_drawing_toolbar"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="8dp">
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_set_origin"
-                style="@style/Widget.CNV.Button.Action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:minHeight="48dp"
-                android:text="@string/setup_set_origin" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_calibration"
-                style="@style/Widget.CNV.Button.Action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:minHeight="48dp"
-                android:text="@string/comm_step_calibration" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_route"
-                style="@style/Widget.CNV.Button.Action"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:minHeight="48dp"
-                android:text="@string/setup_generate_route" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_zone"
-                style="@style/Widget.CNV.Button.Primary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:minHeight="48dp"
-                android:text="@string/comm_step_zone" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_route_lock"
+                android:id="@+id/button_workspace_back"
                 style="@style/Widget.CNV.Button.Secondary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:minHeight="48dp"
-                android:text="@string/setup_route_lock" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_open_drawing_back"
-                style="@style/Widget.CNV.Button.Secondary"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
+                android:minHeight="44dp"
                 android:text="@string/nav_back" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/workspace_drawing_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textAppearance="@style/TextAppearance.CNV.Body"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/workspace_lock_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@style/TextAppearance.CNV.Caption" />
+            </LinearLayout>
         </LinearLayout>
-    </HorizontalScrollView>
-</LinearLayout>
+
+        <TextView
+            android:id="@+id/workspace_mode_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="12dp"
+            android:paddingBottom="6dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <!-- DWG Viewer ≥80% -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <com.example.cnv.cad.CADView
+                android:id="@+id/open_drawing_cad"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <!-- Viewer tools (top-end overlay) -->
+            <LinearLayout
+                android:id="@+id/workspace_viewer_tools"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|end"
+                android:layout_margin="8dp"
+                android:background="@color/cnv_surface"
+                android:orientation="vertical"
+                android:padding="4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_zoom_in"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/route_zoom_in" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_zoom_out"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/route_zoom_out" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_fit"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/cad_fit" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_reset"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/cad_reset" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_layer_grid"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/cad_layer_grid" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_layer_node"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/cad_layer_node" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/button_cad_layer_branch"
+                    style="@style/Widget.CNV.Button.Secondary"
+                    android:layout_width="48dp"
+                    android:layout_height="40dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:padding="0dp"
+                    android:text="@string/cad_layer_branch" />
+            </LinearLayout>
+
+            <!-- Floating Action Panel -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/workspace_action_panel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="10dp"
+                app:cardBackgroundColor="@color/cnv_surface"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="6dp"
+                app:strokeColor="@color/cnv_outline"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="132dp"
+                    android:orientation="vertical"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingBottom="4dp"
+                        android:text="@string/draw_section_commissioning"
+                        android:textAppearance="@style/TextAppearance.CNV.Caption"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_origin"
+                        style="@style/Widget.CNV.Button.Action"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/setup_set_origin" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_calibration"
+                        style="@style/Widget.CNV.Button.Action"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/comm_step_calibration" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_route"
+                        style="@style/Widget.CNV.Button.Action"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/setup_generate_route" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_zone"
+                        style="@style/Widget.CNV.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/setup_create_zone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_confirm_pick"
+                        style="@style/Widget.CNV.Button.Action"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/ws_confirm_pick"
+                        android:visibility="gone" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_save"
+                        style="@style/Widget.CNV.Button.Primary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/ws_save" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_ws_route_lock"
+                        style="@style/Widget.CNV.Button.Secondary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="44dp"
+                        android:text="@string/setup_route_lock" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

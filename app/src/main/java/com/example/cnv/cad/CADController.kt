@@ -105,6 +105,9 @@ class CADController(
 
     fun toggleLayer(layer: CADLayer) = interaction.toggleLayer(layer)
 
+    /** Read-only selection snapshot for Commissioning UI (no algorithm change). */
+    fun latestSelectionInfo(): SelectionInfo? = interaction.latestSelectionInfo()
+
     private fun refreshRoute() {
         val route = routeRepository.current()
         val mapper = mapperProvider()

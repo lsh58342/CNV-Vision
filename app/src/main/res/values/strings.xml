@@ -294,7 +294,7 @@
     <string name="setup_replay_drawing_scoped">Replay — Drawing scoped (later STEP)</string>
 
     <string name="draw_open_drawing">Open Drawing</string>
-    <string name="draw_open_drawing_hint">CAD Viewer — Commissioning only (no Inspection here)</string>
+    <string name="draw_open_drawing_hint">Commissioning workspace — CAD only (no Inspection)</string>
     <string name="draw_section_status">Status</string>
     <string name="draw_section_actions">Actions</string>
     <string name="draw_section_commissioning">Commissioning</string>
@@ -317,4 +317,22 @@
     <string name="draw_status_inspection_ready">Ready</string>
     <string name="draw_status_missing">Missing</string>
     <string name="draw_status_not_ready">Not Ready</string>
+
+    <string name="ws_confirm_pick">Confirm Pick</string>
+    <string name="ws_save">Save</string>
+    <string name="ws_operation_blocked">Open Drawing is Commissioning only — Operation Mode cannot access it</string>
+    <string name="ws_locked_blocked">Route is Locked — edits require Developer Unlock</string>
+    <string name="ws_need_origin">Set Origin before Calibration</string>
+    <string name="ws_calibration_done">Calibration marked complete</string>
+    <string name="ws_pick_required">Select a node or segment on the DWG first</string>
+    <string name="ws_zone_method_cad">Method 1: CAD Start/End</string>
+    <string name="ws_zone_method_drive">Method 2: Drive Recording</string>
+    <string name="ws_zone_name_color">Zone name</string>
+    <string name="ws_mode_idle">Commissioning workspace ready</string>
+    <string name="ws_mode_origin">Origin: select on DWG, then Confirm Pick (once)</string>
+    <string name="ws_mode_zone_start">Zone CAD: select START, then Confirm Pick</string>
+    <string name="ws_mode_zone_end">Zone CAD: select END, then Confirm Pick</string>
+    <string name="ws_mode_zone_highlight">Route Highlight active — review, then Save</string>
+    <string name="ws_mode_zone_save">Enter name, then Save to store Zone</string>
+    <string name="ws_save_ok">Commissioning progress saved</string>
 </resources>
