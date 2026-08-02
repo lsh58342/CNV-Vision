@@ -3,6 +3,7 @@ package com.example.cnv.factory.repository
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Building
 import com.example.cnv.factory.model.Floor
+import com.example.cnv.inspection.db.InspectionDbGate
 
 /**
  * Composition-facing catalog of context-scoped repositories.
@@ -19,6 +20,7 @@ class FactoryCatalog(
     val calibrations: CalibrationRepository = CalibrationRepository(),
     val csvMetadata: CsvMetadataRepository = CsvMetadataRepository(),
     val replayMetadata: ReplayMetadataRepository = ReplayMetadataRepository(),
+    val conveyorProfiles: ConveyorProfileRepository = ConveyorProfileRepository(),
 ) {
     /**
      * Cascade-delete Drawing and all Drawing-owned artifacts.
@@ -28,9 +30,12 @@ class FactoryCatalog(
         zones.removeForDrawing(drawingId)
         calibrations.removeForDrawing(drawingId)
         heatMaps.removeForDrawing(drawingId)
-        inspections.removeForDrawing(drawingId)
         csvMetadata.removeForDrawing(drawingId)
         replayMetadata.removeForDrawing(drawingId)
+        conveyorProfiles.deleteAsync(drawingId)
+        InspectionDbGate.execute {
+            inspections.removeForDrawing(drawingId)
+        }
         val ctx = CurrentContext.get()
         if (drawing.routeId != null && (ctx.routeId == drawing.routeId || routes.currentRoute()?.id == drawing.routeId)) {
             routes.underlying().clear()
@@ -42,14 +47,33 @@ class FactoryCatalog(
     }
 
     /**
-     * Delete one Inspection Session and related Drawing metadata (STEP 15-3).
-     * HeatLayer is filtered in-place (no HeatMap calculation).
+     * Delete one Inspection Session and related Drawing metadata (async Room).
      */
-    fun deleteInspectionSession(drawingId: String, sessionId: String) {
-        inspections.deleteSession(sessionId)
-        heatMaps.removeSessionFromLayer(drawingId, sessionId)
-        csvMetadata.removeForSession(drawingId, sessionId)
-        replayMetadata.removeForSession(drawingId, sessionId)
+    fun deleteInspectionSessionAsync(
+        drawingId: String,
+        sessionId: String,
+        onDone: (() -> Unit)? = null,
+    ) {
+        InspectionDbGate.submit(
+            block = {
+                inspections.deleteSession(sessionId)
+                heatMaps.removeSessionFromLayer(drawingId, sessionId)
+                csvMetadata.removeForSession(drawingId, sessionId)
+                replayMetadata.removeForSession(drawingId, sessionId)
+            },
+            onMain = { onDone?.invoke() },
+        )
+    }
+
+    /** Hydrate in-memory Drawing.conveyorProfile from Room (STEP 15-4). */
+    fun hydrateConveyorProfilesAsync(onDone: (() -> Unit)? = null) {
+        conveyorProfiles.loadAllAsync { map ->
+            map.forEach { (drawingId, profile) ->
+                val drawing = drawings.get(drawingId) ?: return@forEach
+                drawings.upsert(drawing.copy(conveyorProfile = profile))
+            }
+            onDone?.invoke()
+        }
     }
 
     fun deleteFloorCascade(floorId: String): Boolean {

@@ -19,6 +19,7 @@ import com.example.cnv.cad.CADView
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.HeatLayerViewerOverlay
 import com.example.cnv.heatmap.HeatMapViewerLayerFlags
+import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 import java.text.DateFormat
@@ -48,6 +49,8 @@ class HeatMapScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        vm.setPreferredSessionId(arguments?.getString(NavArgs.SESSION_ID))
 
         val cadView = view.findViewById<CADView>(R.id.heatmap_cad_view)
         val overlay = view.findViewById<HeatLayerViewerOverlay>(R.id.heatmap_viewer_overlay)

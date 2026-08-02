@@ -13,6 +13,7 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.inspection.InspectionSessionSummary
 import com.example.cnv.ui.navigation.CnvDestination
+import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
@@ -20,8 +21,8 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Inspection Session Detail — summary / profile / actions (STEP 15-3).
- * HeatMap opens for selected Session; Replay/CSV generation deferred.
+ * Inspection Session Detail — summary / profile / actions (STEP 15-3 / 15-4).
+ * Session ids arrive via [NavArgs]; detail uses Session Snapshot only (not live Drawing profile).
  */
 class SessionDetailScreen : BaseScreen() {
 
@@ -36,29 +37,34 @@ class SessionDetailScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val sessionId = HistorySelection.selectedSessionId
-        val drawingId = HistorySelection.selectedDrawingId
+        val sessionId = arguments?.getString(NavArgs.SESSION_ID)
+        val drawingId = arguments?.getString(NavArgs.DRAWING_ID)
         if (sessionId.isNullOrBlank() || drawingId.isNullOrBlank()) {
             Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
             nav().navigateBack()
             return
         }
 
-        val summary = catalog.inspections.loadHistorySummaries(drawingId)
-            .firstOrNull { it.sessionId == sessionId }
-            ?: catalog.inspections.loadSession(sessionId)?.summary
-
-        if (summary == null || summary.drawingId != drawingId) {
-            Toast.makeText(requireContext(), R.string.history_session_missing, Toast.LENGTH_SHORT).show()
-            nav().navigateBack()
-            return
+        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+            if (!isAdded) return@loadSessionAsync
+            val summary = persisted?.summary?.takeIf { it.drawingId == drawingId }
+            if (summary == null) {
+                Toast.makeText(requireContext(), R.string.history_session_missing, Toast.LENGTH_SHORT).show()
+                nav().navigateBack()
+                return@loadSessionAsync
+            }
+            bindDetail(view, summary)
+            bindActions(view, drawingId, sessionId)
         }
+    }
 
-        bindDetail(view, summary)
-
+    private fun bindActions(view: View, drawingId: String, sessionId: String) {
         view.findViewById<MaterialButton>(R.id.button_detail_heatmap).setOnClickListener {
-            HistorySelection.select(drawingId, sessionId)
-            nav().navigate(CnvDestination.HEATMAP_VIEWER)
+            val args = Bundle().apply {
+                putString(NavArgs.DRAWING_ID, drawingId)
+                putString(NavArgs.SESSION_ID, sessionId)
+            }
+            nav().navigate(CnvDestination.HEATMAP_VIEWER, args = args)
         }
         view.findViewById<MaterialButton>(R.id.button_detail_replay).setOnClickListener {
             catalog.replayMetadata.put(
@@ -71,7 +77,6 @@ class SessionDetailScreen : BaseScreen() {
             Toast.makeText(requireContext(), R.string.history_replay_future_toast, Toast.LENGTH_SHORT).show()
         }
         view.findViewById<MaterialButton>(R.id.button_detail_csv).setOnClickListener {
-            // Metadata reference only — CSV generation is out of scope for STEP 15-3.
             catalog.csvMetadata.put(
                 CsvMetadataRepository.CsvMeta(
                     drawingId = drawingId,
@@ -105,6 +110,7 @@ class SessionDetailScreen : BaseScreen() {
             s.appVersion,
         )
 
+        // Always Session Snapshot — never live Drawing Conveyor Profile.
         val profile = s.conveyorProfile
         val speed = profile.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
             ?: getString(R.string.conveyor_nominal_unset)
@@ -133,10 +139,11 @@ class SessionDetailScreen : BaseScreen() {
             .setTitle(R.string.history_delete_session)
             .setMessage(R.string.history_delete_confirm)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                catalog.deleteInspectionSession(drawingId, sessionId)
-                HistorySelection.clear()
-                Toast.makeText(requireContext(), R.string.history_deleted, Toast.LENGTH_SHORT).show()
-                nav().navigateBack()
+                catalog.deleteInspectionSessionAsync(drawingId, sessionId) {
+                    if (!isAdded) return@deleteInspectionSessionAsync
+                    Toast.makeText(requireContext(), R.string.history_deleted, Toast.LENGTH_SHORT).show()
+                    nav().navigateBack()
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

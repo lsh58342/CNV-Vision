@@ -1,10 +1,12 @@
 package com.example.cnv.inspection
 
+import android.os.Looper
 import com.example.cnv.core.event.BaseEvent
 import com.example.cnv.core.event.FusionEvent
 import com.example.cnv.core.event.PositionEvent
 import com.example.cnv.factory.model.ConveyorDirection
 import com.example.cnv.factory.model.ConveyorMotionProfile
+import com.example.cnv.factory.model.ConveyorProfileConfig
 import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.inspection.db.CnvInspectionDatabase
 import com.example.cnv.inspection.db.InspectionEventEntity
@@ -12,10 +14,8 @@ import com.example.cnv.inspection.db.InspectionSessionEntity
 import com.example.cnv.speed.SpeedValidationSummary
 
 /**
- * Inspection session store — in-memory cache + Room persistence (STEP 13).
- *
- * API: createSession / appendEvent / finishSession / loadSession / deleteSession / loadHistory
- * Keeps legacy save / latest / all for InspectionManager compatibility.
+ * Inspection session store — in-memory cache + Room persistence.
+ * STEP 15-4: all Room DAO calls must run off the main thread ([ensureBackground]).
  */
 class InspectionRepository(
     private val limit: Int = InspectionConfig.DEFAULT_CACHE_LIMIT,
@@ -24,7 +24,6 @@ class InspectionRepository(
     private val lock = Any()
     private val results = ArrayDeque<InspectionResult>()
 
-    /** Legacy in-memory save used by InspectionManager.stop. */
     fun save(result: InspectionResult) {
         synchronized(lock) {
             results.addLast(result)
@@ -54,6 +53,7 @@ class InspectionRepository(
         calibrationVersion: Int = 0,
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
     ) {
+        ensureBackground()
         val db = database() ?: return
         db.sessionDao().insertSession(
             InspectionSessionEntity(
@@ -66,6 +66,7 @@ class InspectionRepository(
                 calibrationVersion = calibrationVersion,
                 finished = false,
                 profileNominalSpeedMPerMin = conveyorProfile.nominalSpeedMPerMin,
+                profileSpeedTolerancePercent = conveyorProfile.speedTolerancePercent,
                 profileDirection = conveyorProfile.direction.name,
                 profileExpectedFps = conveyorProfile.expectedFps,
                 profileMotionProfile = conveyorProfile.motionProfile.name,
@@ -78,6 +79,7 @@ class InspectionRepository(
         drawingId: String,
         event: BaseEvent,
     ) {
+        ensureBackground()
         val db = database() ?: return
         db.eventDao().insertEvent(toEntity(sessionId, drawingId, event))
     }
@@ -87,6 +89,7 @@ class InspectionRepository(
         drawingId: String,
         events: List<BaseEvent>,
     ) {
+        ensureBackground()
         val db = database() ?: return
         if (events.isEmpty()) return
         db.eventDao().insertEvents(events.map { toEntity(sessionId, drawingId, it) })
@@ -99,7 +102,9 @@ class InspectionRepository(
         appVersion: String,
         inspectionVersion: String = "1",
         speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
+        conveyorProfile: ConveyorProfileSnapshot? = null,
     ): InspectionSessionSummary {
+        ensureBackground()
         val durationSec = (result.durationMs / 1000f).coerceAtLeast(0.001f)
         val averageSpeed = result.statistics.totalDistanceMm / durationSec
         val coverage = result.routeQualityScore.coerceIn(0f, 1f)
@@ -119,10 +124,10 @@ class InspectionRepository(
             speedValidation = speedValidation,
         )
         val db = database()
-        var profileSnap = ConveyorProfileSnapshot.empty()
+        var profileSnap = conveyorProfile ?: ConveyorProfileSnapshot.empty()
         if (db != null) {
             val existing = db.sessionDao().getSession(result.sessionId)
-            profileSnap = existing?.toProfileSnapshot() ?: ConveyorProfileSnapshot.empty()
+            profileSnap = existing?.toProfileSnapshot() ?: profileSnap
             db.sessionDao().insertSession(
                 InspectionSessionEntity(
                     sessionId = result.sessionId,
@@ -140,11 +145,16 @@ class InspectionRepository(
                     routeVersion = result.routeVersion,
                     calibrationVersion = result.calibrationVersion,
                     finished = true,
-                    // Preserve Conveyor Profile snapshot from session start.
-                    profileNominalSpeedMPerMin = existing?.profileNominalSpeedMPerMin,
-                    profileDirection = existing?.profileDirection.orEmpty(),
-                    profileExpectedFps = existing?.profileExpectedFps ?: 0f,
-                    profileMotionProfile = existing?.profileMotionProfile.orEmpty(),
+                    profileNominalSpeedMPerMin = existing?.profileNominalSpeedMPerMin
+                        ?: profileSnap.nominalSpeedMPerMin,
+                    profileSpeedTolerancePercent = existing?.profileSpeedTolerancePercent
+                        ?: profileSnap.speedTolerancePercent,
+                    profileDirection = existing?.profileDirection?.takeIf { it.isNotBlank() }
+                        ?: profileSnap.direction.name,
+                    profileExpectedFps = existing?.profileExpectedFps?.takeIf { it > 0f }
+                        ?: profileSnap.expectedFps,
+                    profileMotionProfile = existing?.profileMotionProfile?.takeIf { it.isNotBlank() }
+                        ?: profileSnap.motionProfile.name,
                     avgExpectedSpeedMPerMin = speedValidation.averageExpectedSpeedMPerMin,
                     avgMeasuredSpeedMPerMin = speedValidation.averageMeasuredSpeedMPerMin,
                     maxSpeedDifferenceMm = speedValidation.maximumDifferenceMm,
@@ -161,6 +171,7 @@ class InspectionRepository(
     }
 
     fun loadSession(sessionId: String): PersistedInspectionSession? {
+        ensureBackground()
         val db = database() ?: return null
         val entity = db.sessionDao().getSession(sessionId) ?: return null
         val events = db.eventDao().eventsForSession(sessionId).map { it.toPersisted() }
@@ -168,6 +179,7 @@ class InspectionRepository(
     }
 
     fun deleteSession(sessionId: String) {
+        ensureBackground()
         val db = database() ?: return
         db.eventDao().deleteEventsForSession(sessionId)
         db.sessionDao().deleteSession(sessionId)
@@ -177,23 +189,24 @@ class InspectionRepository(
     }
 
     fun loadHistory(drawingId: String): List<InspectionSessionSummary> {
+        ensureBackground()
         val db = database() ?: return emptyList()
         return db.sessionDao().historyForDrawing(drawingId).map { it.toSummary() }
     }
 
     fun deleteForDrawing(drawingId: String) {
+        ensureBackground()
         val db = database() ?: return
         val sessions = db.sessionDao().historyForDrawing(drawingId).map { it.sessionId }.toSet()
         db.eventDao().deleteEventsForDrawing(drawingId)
         db.sessionDao().deleteSessionsForDrawing(drawingId)
-        // Also remove unfinished sessions for drawing
         synchronized(lock) {
             results.removeAll { sessions.contains(it.sessionId) }
         }
     }
 
-    /** Map finished Room sessions to legacy InspectionResult for existing UI. */
     fun historyAsResults(drawingId: String): List<InspectionResult> {
+        ensureBackground()
         val db = database() ?: return emptyList()
         return db.sessionDao().historyForDrawing(drawingId).map { it.toInspectionResult() }
     }
@@ -261,6 +274,9 @@ class InspectionRepository(
         expectedFps = profileExpectedFps,
         motionProfile = runCatching { ConveyorMotionProfile.valueOf(profileMotionProfile) }
             .getOrDefault(ConveyorMotionProfile.CONSTANT),
+        speedTolerancePercent = profileSpeedTolerancePercent
+            .takeIf { it > 0f }
+            ?: ConveyorProfileConfig.DEFAULT_SPEED_TOLERANCE_PERCENT,
     )
 
     private fun InspectionSessionEntity.toInspectionResult() = InspectionResult(
@@ -306,7 +322,15 @@ class InspectionRepository(
         }
 
         fun database(): CnvInspectionDatabase? = database
+
+        fun ensureBackground() {
+            check(Looper.myLooper() != Looper.getMainLooper()) {
+                "Room access on main thread is forbidden (STEP 15-4)"
+            }
+        }
     }
 
     private fun database(): CnvInspectionDatabase? = Companion.database()
+
+    private fun ensureBackground() = Companion.ensureBackground()
 }

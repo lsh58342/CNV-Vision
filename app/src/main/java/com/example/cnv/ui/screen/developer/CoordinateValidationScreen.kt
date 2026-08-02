@@ -16,6 +16,7 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.CoordinateDebugOverlay
 import com.example.cnv.heatmap.CoordinateValidationBuilder
 import com.example.cnv.heatmap.CoordinateValidationSnapshot
+import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
@@ -62,12 +63,14 @@ class CoordinateValidationScreen : BaseScreen() {
         overlay.setOverlayEnabled(true)
 
         fun reload() {
-            val snap = buildSnapshot()
-            overlay.setSnapshot(snap)
-            statsView.text = snap.stats.summaryLines().joinToString("\n")
-            if (snap.points.isEmpty()) {
-                statsView.append("\n")
-                statsView.append(getString(R.string.coord_no_session))
+            buildSnapshotAsync { snap ->
+                if (!isAdded) return@buildSnapshotAsync
+                overlay.setSnapshot(snap)
+                statsView.text = snap.stats.summaryLines().joinToString("\n")
+                if (snap.points.isEmpty()) {
+                    statsView.append("\n")
+                    statsView.append(getString(R.string.coord_no_session))
+                }
             }
         }
 
@@ -99,19 +102,30 @@ class CoordinateValidationScreen : BaseScreen() {
         super.onDestroyView()
     }
 
-    private fun buildSnapshot(): CoordinateValidationSnapshot {
+    private fun buildSnapshotAsync(onResult: (CoordinateValidationSnapshot) -> Unit) {
         val catalog = FactoryCatalog.get()
         val drawing = catalog.drawings.current()
-            ?: return CoordinateValidationSnapshot.empty("")
+        if (drawing == null) {
+            onResult(CoordinateValidationSnapshot.empty(""))
+            return
+        }
         val route = catalog.routes.currentRoute()
-            ?: return CoordinateValidationSnapshot.empty(drawing.id)
-        val summaries = catalog.inspections.loadHistorySummaries(drawing.id)
-        val sessions = summaries.mapNotNull { catalog.inspections.loadSession(it.sessionId) }
-        return CoordinateValidationBuilder.build(
-            drawing = drawing,
-            route = route,
-            sessions = sessions,
-            mapper = null,
+        if (route == null) {
+            onResult(CoordinateValidationSnapshot.empty(drawing.id))
+            return
+        }
+        InspectionDbGate.submit(
+            block = {
+                val summaries = catalog.inspections.loadHistorySummaries(drawing.id)
+                val sessions = summaries.mapNotNull { catalog.inspections.loadSession(it.sessionId) }
+                CoordinateValidationBuilder.build(
+                    drawing = drawing,
+                    route = route,
+                    sessions = sessions,
+                    mapper = null,
+                )
+            },
+            onMain = onResult,
         )
     }
 }

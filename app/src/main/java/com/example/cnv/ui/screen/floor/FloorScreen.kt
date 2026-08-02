@@ -233,18 +233,17 @@ class FloorScreen : BaseScreen() {
         val catalog = FactoryCatalog.get()
         val selectedId = CurrentContext.get().drawingId
         val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        // Placeholder cards first; fill recent inspection dates off main thread.
         items.forEach { item ->
             val zoneCount = catalog.zones.forDrawing(item.id).size
             val state = DrawingState.resolve(item, zoneCount)
-            val lastResult = catalog.inspections.latestForDrawing(item.id)
-            val lastDate = lastResult?.let { dateFmt.format(Date(it.endTimeMs)) } ?: "—"
             drawingListContainer.addView(
                 UiComponents.inflateDrawingCard(
                     parent = drawingListContainer,
                     name = item.name,
                     status = state.label(requireContext()),
                     statusColor = state.color(requireContext()),
-                    recentInspection = getString(R.string.draw_card_recent_inspection, lastDate),
+                    recentInspection = getString(R.string.draw_card_recent_inspection, "—"),
                     routeLock = DrawingUiStatus.routeLockLabel(requireContext(), item.routeLocked),
                     selected = item.id == selectedId,
                     onClick = {
@@ -253,6 +252,15 @@ class FloorScreen : BaseScreen() {
                     },
                 ),
             )
+        }
+        items.forEachIndexed { index, item ->
+            catalog.inspections.latestForDrawingAsync(item.id) { lastResult ->
+                if (!isAdded) return@latestForDrawingAsync
+                val card = drawingListContainer.getChildAt(index) ?: return@latestForDrawingAsync
+                val lastDate = lastResult?.let { dateFmt.format(Date(it.endTimeMs)) } ?: "—"
+                card.findViewById<TextView>(R.id.drawing_card_inspection)?.text =
+                    getString(R.string.draw_card_recent_inspection, lastDate)
+            }
         }
     }
 }

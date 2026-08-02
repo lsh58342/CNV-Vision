@@ -20,6 +20,7 @@ import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.inspection.InspectionState
 import com.example.cnv.inspection.RouteQualityScore
+import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.opencv.OpenCVManager
 import com.example.cnv.route.RouteGenerator
@@ -57,6 +58,9 @@ class InspectionPipeline(
     private var cameraRunning = false
     private var sensorsRunning = false
     private var detached = false
+
+    /** Frozen at START — finishSession uses this, not live Drawing profile. */
+    private var sessionConveyorSnapshot: ConveyorProfileSnapshot? = null
 
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
@@ -123,10 +127,11 @@ class InspectionPipeline(
         val drawing = drawingId?.let { catalog.drawings.get(it) }
         // Freeze Conveyor Profile for Speed Validation (session-scoped snapshot).
         speedValidatorEngine.beginSession(drawing?.conveyorProfile)
+        val profileSnap = drawing?.conveyorProfile?.let { ConveyorProfileSnapshot.from(it) }
+            ?: ConveyorProfileSnapshot.empty()
+        sessionConveyorSnapshot = profileSnap
         if (drawingId != null) {
-            val profileSnap = drawing?.conveyorProfile?.let { ConveyorProfileSnapshot.from(it) }
-                ?: ConveyorProfileSnapshot.empty()
-            catalog.inspections.createSession(
+            catalog.inspections.createSessionAsync(
                 drawingId = drawingId,
                 sessionId = session.sessionId,
                 startTimeMs = session.startTimeMs,
@@ -143,30 +148,37 @@ class InspectionPipeline(
         val active = inspectionManager.currentSession()
         val events = active?.recorder()?.snapshot().orEmpty()
         val appVersion = active?.freeze?.appVersion.orEmpty()
+        val profileSnap = sessionConveyorSnapshot
+        sessionConveyorSnapshot = null
         val speedSummary = speedValidatorEngine.endSession()
         val result = inspectionManager.stop()
         val drawingId = CurrentContext.get().drawingId
         if (result != null && drawingId != null) {
-            catalog.inspections.finishSession(
-                drawingId = drawingId,
-                result = result,
-                events = events,
-                appVersion = appVersion.ifBlank {
-                    runCatching {
-                        activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
-                    }.getOrNull().orEmpty().ifBlank { "1.0" }
-                },
-                speedValidation = speedSummary,
-            )
-            // STEP 14: regenerate Drawing Heat Layer from persisted sessions (no Viewer calc).
+            val resolvedAppVersion = appVersion.ifBlank {
+                runCatching {
+                    activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
+                }.getOrNull().orEmpty().ifBlank { "1.0" }
+            }
+            // Persist + HeatLayer regenerate off main thread (STOP must not block UI).
             val route = routeRepository.current()
-            if (route != null) {
-                catalog.heatMaps.regenerateHeatLayer(
+            val mapper = routeGenerator.latestResult()?.mapper
+            InspectionDbGate.execute {
+                catalog.inspections.finishSession(
                     drawingId = drawingId,
-                    inspectionRepository = catalog.inspections.underlying(),
-                    route = route,
-                    mapper = routeGenerator.latestResult()?.mapper,
+                    result = result,
+                    events = events,
+                    appVersion = resolvedAppVersion,
+                    speedValidation = speedSummary,
+                    conveyorProfile = profileSnap,
                 )
+                if (route != null) {
+                    catalog.heatMaps.regenerateHeatLayer(
+                        drawingId = drawingId,
+                        inspectionRepository = catalog.inspections.underlying(),
+                        route = route,
+                        mapper = mapper,
+                    )
+                }
             }
         }
         return result

@@ -47,8 +47,12 @@ class MainActivity : AppCompatActivity(), NavHost {
         }
     }
 
-    override fun navigate(to: CnvDestination, addToBackStack: Boolean) {
-        navigator.navigate(to, addToBackStack)
+    override fun navigate(
+        to: CnvDestination,
+        addToBackStack: Boolean,
+        args: android.os.Bundle?,
+    ) {
+        navigator.navigate(to, addToBackStack, args)
     }
 
     override fun navigateBack(): Boolean = navigator.navigateBack()

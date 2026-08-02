@@ -180,12 +180,17 @@ class DrawingWorkspaceScreen : BaseScreen() {
                 CommissioningWizardProgress.TOTAL_STEPS,
             )
 
-        val lastResult = drawing?.let { FactoryCatalog.get().inspections.latestForDrawing(it.id) }
-        val lastDate = lastResult?.let {
-            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(it.endTimeMs))
-        } ?: "—"
-        content.findViewById<TextView>(R.id.overview_recent_inspection).text =
-            getString(R.string.draw_card_recent_inspection, lastDate)
+        val recentView = content.findViewById<TextView>(R.id.overview_recent_inspection)
+        recentView.text = getString(R.string.draw_card_recent_inspection, "—")
+        drawing?.let { d ->
+            FactoryCatalog.get().inspections.latestForDrawingAsync(d.id) { lastResult ->
+                if (!isAdded) return@latestForDrawingAsync
+                val lastDate = lastResult?.let {
+                    SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(it.endTimeMs))
+                } ?: "—"
+                recentView.text = getString(R.string.draw_card_recent_inspection, lastDate)
+            }
+        }
 
         val updated = drawing?.updatedAtMs?.let {
             SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(it))

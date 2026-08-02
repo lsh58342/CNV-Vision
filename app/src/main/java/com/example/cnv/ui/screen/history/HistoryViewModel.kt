@@ -12,8 +12,8 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * History ViewModel — Drawing-scoped Inspection Session query/management (STEP 15-3).
- * Uses Inspection Repository only; no HeatMap/Replay/CSV generation.
+ * History ViewModel — Drawing-scoped Inspection Session query/management (STEP 15-3 / 15-4).
+ * Room access is async via Repository; no HeatMap/Replay/CSV generation.
  */
 class HistoryViewModel(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
@@ -53,12 +53,14 @@ class HistoryViewModel(
         val customFromMs: Long? = null,
         val customToMs: Long? = null,
         val emptyMessage: String? = null,
+        val loading: Boolean = false,
     )
 
     private val _state = MutableLiveData(UiState())
     val state: LiveData<UiState> = _state
 
     private var allSessions: List<InspectionSessionSummary> = emptyList()
+    private var loadGeneration = 0
 
     fun refresh() {
         val drawing = catalog.drawings.current(CurrentContext.get())
@@ -67,15 +69,27 @@ class HistoryViewModel(
             _state.value = UiState(emptyMessage = "No Drawing selected")
             return
         }
-        allSessions = catalog.inspections.loadHistorySummaries(drawing.id)
+        val gen = ++loadGeneration
         val cur = _state.value ?: UiState()
-        _state.value = applyFilters(
-            cur.copy(
-                drawingId = drawing.id,
-                drawingName = drawing.name,
-                emptyMessage = null,
-            ),
+        _state.value = cur.copy(
+            drawingId = drawing.id,
+            drawingName = drawing.name,
+            loading = true,
+            emptyMessage = null,
         )
+        catalog.inspections.loadHistorySummariesAsync(drawing.id) { sessions ->
+            if (gen != loadGeneration) return@loadHistorySummariesAsync
+            allSessions = sessions
+            val base = _state.value ?: UiState()
+            _state.value = applyFilters(
+                base.copy(
+                    drawingId = drawing.id,
+                    drawingName = drawing.name,
+                    loading = false,
+                    emptyMessage = null,
+                ),
+            )
+        }
     }
 
     fun setSort(mode: SortMode) {
@@ -108,19 +122,13 @@ class HistoryViewModel(
      * Delete Session + related HeatLayer points / CSV / Replay metadata.
      * Does not run HeatMap Generator — filters existing layer only.
      */
-    fun deleteSession(sessionId: String): Boolean {
+    fun deleteSession(sessionId: String, onDone: (() -> Unit)? = null): Boolean {
         val drawingId = _state.value?.drawingId ?: return false
-        catalog.deleteInspectionSession(drawingId, sessionId)
-        if (HistorySelection.selectedSessionId == sessionId) {
-            HistorySelection.clear()
+        catalog.deleteInspectionSessionAsync(drawingId, sessionId) {
+            refresh()
+            onDone?.invoke()
         }
-        refresh()
         return true
-    }
-
-    fun selectSession(sessionId: String) {
-        val drawingId = _state.value?.drawingId ?: return
-        HistorySelection.select(drawingId, sessionId)
     }
 
     private fun applyFilters(base: UiState): UiState {
@@ -131,6 +139,7 @@ class HistoryViewModel(
         val stats = computeStats(allSessions)
         val empty = when {
             base.drawingId == null -> "No Drawing selected"
+            base.loading -> null
             allSessions.isEmpty() -> "이 Drawing에 저장된 Inspection이 없습니다."
             list.isEmpty() -> "No sessions match filter / search"
             else -> null

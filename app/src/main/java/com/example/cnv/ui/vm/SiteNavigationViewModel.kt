@@ -50,6 +50,7 @@ class SiteNavigationViewModel : ViewModel() {
 
     private val catalog: FactoryCatalog = FactoryCatalog.get()
     private val context: CurrentContext = CurrentContext.get()
+    private var conveyorProfilesHydrated = false
 
     private val _buildings = MutableLiveData<List<Building>>(emptyList())
     val buildings: LiveData<List<Building>> = _buildings
@@ -90,6 +91,15 @@ class SiteNavigationViewModel : ViewModel() {
     fun bootstrap() {
         LgesPolandSite.ensure(catalog)
         _factoryName.value = LgesPolandSite.FACTORY_NAME
+        if (!conveyorProfilesHydrated) {
+            conveyorProfilesHydrated = true
+            catalog.hydrateConveyorProfilesAsync {
+                // Refresh drawing-bound UI once Room profiles are applied.
+                if (context.drawingId != null) {
+                    loadDrawingDashboard()
+                }
+            }
+        }
         refreshGates()
         refreshSummary()
     }
@@ -254,12 +264,14 @@ class SiteNavigationViewModel : ViewModel() {
     fun updateConveyorProfileForCurrentDrawing(profile: ConveyorProfile): Boolean {
         val drawing = catalog.drawings.current(context) ?: return false
         val now = System.currentTimeMillis()
+        val updated = profile.copy(lastUpdatedMs = now)
         catalog.drawings.upsert(
             drawing.copy(
-                conveyorProfile = profile.copy(lastUpdatedMs = now),
+                conveyorProfile = updated,
                 updatedAtMs = now,
             ),
         )
+        catalog.conveyorProfiles.saveAsync(drawing.id, updated)
         loadDrawingDashboard()
         return true
     }
@@ -349,30 +361,31 @@ class SiteNavigationViewModel : ViewModel() {
             return
         }
         val zones = catalog.zones.forDrawing(drawing.id)
-        val history = catalog.inspections.historyForDrawing(drawing.id)
         val heatMaps = catalog.heatMaps.forDrawing(drawing.id)
         val cal = catalog.calibrations.get(drawing.id)
-        _drawingDashboard.value = DrawingDashboardUi(
-            buildingName = building.name,
-            floorName = floor.name,
-            drawingName = drawing.name,
-            description = drawing.description,
-            registeredAtMs = drawing.registeredAtMs,
-            dwgReady = drawing.dwgRegistered,
-            originSet = drawing.originSet,
-            calibrationReady = drawing.calibrationReady || cal?.ready == true,
-            routeReady = drawing.routeId != null && catalog.routes.hasRoute(),
-            routeLocked = drawing.routeLocked,
-            zoneCount = zones.size,
-            zones = zones,
-            lastInspectionLabel = history.lastOrNull()?.sessionId ?: "—",
-            historyCount = history.size,
-            heatMapCount = heatMaps.size,
-            csvCount = catalog.csvMetadata.forDrawing(drawing.id).size,
-            replayCount = catalog.replayMetadata.forDrawing(drawing.id).size,
-        )
-        _zones.value = zones
-        refreshSummary()
+        catalog.inspections.historyForDrawingAsync(drawing.id) { history ->
+            _drawingDashboard.value = DrawingDashboardUi(
+                buildingName = building.name,
+                floorName = floor.name,
+                drawingName = drawing.name,
+                description = drawing.description,
+                registeredAtMs = drawing.registeredAtMs,
+                dwgReady = drawing.dwgRegistered,
+                originSet = drawing.originSet,
+                calibrationReady = drawing.calibrationReady || cal?.ready == true,
+                routeReady = drawing.routeId != null && catalog.routes.hasRoute(),
+                routeLocked = drawing.routeLocked,
+                zoneCount = zones.size,
+                zones = zones,
+                lastInspectionLabel = history.lastOrNull()?.sessionId ?: "—",
+                historyCount = history.size,
+                heatMapCount = heatMaps.size,
+                csvCount = catalog.csvMetadata.forDrawing(drawing.id).size,
+                replayCount = catalog.replayMetadata.forDrawing(drawing.id).size,
+            )
+            _zones.value = zones
+            refreshSummary()
+        }
     }
 
     // --- Zone / Operation ---
@@ -424,21 +437,39 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun loadDashboard() {
         bootstrap()
-        _dashboard.value = ZoneDashboardController(catalog, context).load()
-        refreshSummary()
+        ZoneDashboardController(catalog, context).loadAsync { state ->
+            _dashboard.value = state
+            refreshSummary()
+        }
     }
 
     fun loadHistory() {
         bootstrap()
-        _historyLines.value = catalog.inspections.historyForCurrentDrawing(context)
-        refreshSummary()
+        val drawingId = context.drawingId
+        if (drawingId == null) {
+            _historyLines.value = emptyList()
+            refreshSummary()
+            return
+        }
+        catalog.inspections.historyForDrawingAsync(drawingId) { results ->
+            _historyLines.value = results
+            refreshSummary()
+        }
     }
 
     fun loadLatestResult() {
         bootstrap()
-        val drawingLatest = catalog.inspections.historyForCurrentDrawing(context).lastOrNull()
-        _latestResult.value = drawingLatest ?: catalog.inspections.underlying().latest()
-        refreshSummary()
+        val drawingId = context.drawingId
+        if (drawingId == null) {
+            _latestResult.value = catalog.inspections.underlying().latest()
+            refreshSummary()
+            return
+        }
+        catalog.inspections.historyForDrawingAsync(drawingId) { results ->
+            _latestResult.value = results.lastOrNull()
+                ?: catalog.inspections.underlying().latest()
+            refreshSummary()
+        }
     }
 
     fun currentBuildingName(): String =

@@ -1,5 +1,7 @@
 package com.example.cnv.ui.navigation
 
+import android.os.Bundle
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import com.example.cnv.R
@@ -15,10 +17,13 @@ class ScreenNavigator(
 
     private val fm: FragmentManager get() = activity.supportFragmentManager
 
-    override fun navigate(to: CnvDestination, addToBackStack: Boolean) {
+    override fun navigate(to: CnvDestination, addToBackStack: Boolean, args: Bundle?) {
+        val fragment = to.createFragment().also { f ->
+            if (args != null) f.arguments = args
+        }
         val tx = fm.beginTransaction()
             .setReorderingAllowed(true)
-            .replace(containerId, to.createFragment(), to.name)
+            .replace(containerId, fragment, to.name)
         if (addToBackStack) {
             tx.addToBackStack(to.name)
         }

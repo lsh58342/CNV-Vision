@@ -28,8 +28,9 @@ data class InspectionSessionEntity(
     val routeVersion: String = "",
     val calibrationVersion: Int = 0,
     val finished: Boolean = false,
-    /** Conveyor Profile snapshot at Inspection start (STEP 15-1). */
+    /** Conveyor Profile snapshot at Inspection start (STEP 15-1 / 15-4). */
     val profileNominalSpeedMPerMin: Float? = null,
+    val profileSpeedTolerancePercent: Float = 5f,
     val profileDirection: String = "",
     val profileExpectedFps: Float = 0f,
     val profileMotionProfile: String = "",
