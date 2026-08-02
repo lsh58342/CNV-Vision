@@ -42,35 +42,53 @@ class MaintenanceReportViewModel(
 
     fun load(sessionId: String, drawingId: String) {
         val gen = ++loadGeneration
-        val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
         _state.value = UiState(
             loading = true,
             sessionId = sessionId,
             drawingId = drawingId,
-            heatPoints = heatPoints,
             workOrders = catalog.workOrders.forSession(sessionId),
         )
-        catalog.reports.getOrAssembleAsync(sessionId, drawingId) { report ->
-            if (gen != loadGeneration) return@getOrAssembleAsync
-            if (report == null) {
+        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+            if (gen != loadGeneration) return@loadSessionAsync
+            val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
+                .ifEmpty {
+                    catalog.heatMaps.restoreSessionPoints(
+                        sessionId,
+                        persisted?.summary?.heatPointsJson.orEmpty(),
+                    )
+                }
+            catalog.excelArchives.warm(
+                persisted?.summary?.excelFileUri?.takeIf { it.isNotBlank() }?.let {
+                    com.example.cnv.report.excel.ExcelArchiveEntry(
+                        sessionId = sessionId,
+                        drawingId = drawingId,
+                        fileUri = it,
+                        fileName = persisted.summary.excelFileName.ifBlank { "report.xlsx" },
+                    )
+                },
+            )
+            catalog.reports.getOrAssembleAsync(sessionId, drawingId) { report ->
+                if (gen != loadGeneration) return@getOrAssembleAsync
+                if (report == null) {
+                    _state.value = UiState(
+                        loading = false,
+                        errorMessage = "Maintenance Report unavailable",
+                        sessionId = sessionId,
+                        drawingId = drawingId,
+                        heatPoints = heatPoints,
+                        workOrders = catalog.workOrders.forSession(sessionId),
+                    )
+                    return@getOrAssembleAsync
+                }
                 _state.value = UiState(
                     loading = false,
-                    errorMessage = "Maintenance Report unavailable",
                     sessionId = sessionId,
                     drawingId = drawingId,
+                    report = report,
                     heatPoints = heatPoints,
                     workOrders = catalog.workOrders.forSession(sessionId),
                 )
-                return@getOrAssembleAsync
             }
-            _state.value = UiState(
-                loading = false,
-                sessionId = sessionId,
-                drawingId = drawingId,
-                report = report,
-                heatPoints = heatPoints,
-                workOrders = catalog.workOrders.forSession(sessionId),
-            )
         }
     }
 

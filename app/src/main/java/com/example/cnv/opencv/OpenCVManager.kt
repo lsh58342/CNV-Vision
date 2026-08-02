@@ -45,9 +45,11 @@ class OpenCVManager(
                     if (previous != null && !previous.isRecycled) {
                         previous.recycle()
                     }
+                    viewModel.onGrayFrameDisplayed(null)
                     return@observe
                 }
                 target.setImageBitmap(bitmap)
+                viewModel.onGrayFrameDisplayed(bitmap)
                 if (previous != null &&
                     previous !== bitmap &&
                     !previous.isRecycled

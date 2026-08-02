@@ -27,6 +27,17 @@ data class InspectionSessionSummary(
     val ruleCatalogVersion: Int = 0,
     /** Full Inspection Profile snapshot at start (STEP 19-2). */
     val inspectionProfileJson: String = "",
+    /** Route geometry frozen at Inspection start (STEP 20-3). */
+    val routeSnapshotJson: String = "",
+    /** Analysis Result JSON at finish (STEP 20-3). */
+    val analysisResultJson: String = "",
+    /** Rule Result JSON at finish (STEP 20-3). */
+    val ruleResultJson: String = "",
+    /** HeatMap points JSON for History (STEP 20-3). */
+    val heatPointsJson: String = "",
+    /** Excel archive path (STEP 20-3). */
+    val excelFileUri: String = "",
+    val excelFileName: String = "",
 )
 
 /**

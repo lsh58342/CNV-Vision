@@ -191,7 +191,18 @@ class InspectionPipeline(
         ensureDashboardLayout()
         if (drawingId != null) {
             val conveyorLive = drawing?.conveyorProfile
-            com.example.cnv.inspection.db.InspectionDbGate.execute {
+            val sid = session.sessionId
+            val did = drawingId
+            val routeSnapshotJson = com.example.cnv.inspection.RouteSnapshotCodec.encode(
+                session.routeSnapshot,
+            )
+            // Bind stream on session thread before first events accumulate.
+            session.recorder().bindStream { chunk ->
+                InspectionDbGate.execute {
+                    catalog.inspections.appendEvents(sid, did, chunk)
+                }
+            }
+            InspectionDbGate.execute {
                 val stored = catalog.inspectionProfiles.loadSync(
                     drawingId,
                     conveyorFallback = conveyorLive
@@ -219,6 +230,7 @@ class InspectionPipeline(
                     ruleCatalogVersion = catalog.rules.catalogVersion(),
                     inspectionProfileJson = com.example.cnv.profile.InspectionProfileCodec
                         .encodeSnapshot(snapshot),
+                    routeSnapshotJson = routeSnapshotJson,
                 )
                 // Same background thread — avoid nested DbGate submit.
                 catalog.inspectionProfiles.saveSync(drawingId, profile)
@@ -229,36 +241,72 @@ class InspectionPipeline(
 
     fun stopSession(): InspectionResult? {
         val active = inspectionManager.currentSession()
-        val events = active?.recorder()?.snapshot().orEmpty()
+        val sessionRoute = active?.routeSnapshot
+        val sessionId = active?.sessionId
+        // Drain remaining recorder chunk to Room before stop (avoid duplicate bulk insert).
+        active?.recorder()?.flushPending()
         val appVersion = active?.freeze?.appVersion.orEmpty()
         val profileSnap = sessionConveyorSnapshot
         sessionConveyorSnapshot = null
         val speedSummary = speedValidatorEngine.endSession()
         val result = inspectionManager.stop()
         val drawingId = CurrentContext.get().drawingId
-        if (result != null && drawingId != null) {
+        if (result != null && drawingId != null && sessionId != null) {
             val resolvedAppVersion = appVersion.ifBlank {
                 runCatching {
                     activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
                 }.getOrNull().orEmpty().ifBlank { "1.0" }
             }
-            // Persist + HeatLayer regenerate off main thread (STOP must not block UI).
-            val route = routeRepository.current()
+            val routeForHeat = sessionRoute?.toRoute()
             val mapper = routeGenerator.latestResult()?.mapper
             InspectionDbGate.execute {
+                val persisted = catalog.inspections.loadSession(sessionId)
+                val heatPoints = if (persisted != null && routeForHeat != null) {
+                    catalog.heatMaps.generateSessionPoints(
+                        drawingId = drawingId,
+                        session = persisted,
+                        route = routeForHeat,
+                        mapper = mapper,
+                    )
+                } else {
+                    emptyList()
+                }
+                val heatJson = com.example.cnv.heatmap.HeatPointsCodec.encode(heatPoints)
+                val analysis = catalog.analysis.analyzeAndPersistSync(
+                    sessionId = sessionId,
+                    preferredDrawingId = drawingId,
+                    routeOverride = routeForHeat,
+                    heatPointsOverride = heatPoints,
+                )
+                val rules = if (analysis != null) {
+                    catalog.rules.evaluateAndPersistSync(
+                        sessionId = sessionId,
+                        preferredDrawingId = drawingId,
+                        analysisOverride = analysis,
+                    )
+                } else {
+                    null
+                }
                 catalog.inspections.finishSession(
                     drawingId = drawingId,
                     result = result,
-                    events = events,
+                    events = emptyList(),
                     appVersion = resolvedAppVersion,
                     speedValidation = speedSummary,
                     conveyorProfile = profileSnap,
+                    analysisResultJson = analysis?.let {
+                        com.example.cnv.analysis.AnalysisResultCodec.encode(it)
+                    }.orEmpty(),
+                    ruleResultJson = rules?.let {
+                        com.example.cnv.rule.RuleResultCodec.encode(it)
+                    }.orEmpty(),
+                    heatPointsJson = heatJson,
                 )
-                if (route != null) {
+                if (routeForHeat != null) {
                     catalog.heatMaps.regenerateHeatLayer(
                         drawingId = drawingId,
                         inspectionRepository = catalog.inspections.underlying(),
-                        route = route,
+                        route = routeForHeat,
                         mapper = mapper,
                     )
                 }

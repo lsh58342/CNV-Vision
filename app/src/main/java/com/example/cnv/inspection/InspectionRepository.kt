@@ -11,11 +11,13 @@ import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.inspection.db.CnvInspectionDatabase
 import com.example.cnv.inspection.db.InspectionEventEntity
 import com.example.cnv.inspection.db.InspectionSessionEntity
+import com.example.cnv.report.excel.ExcelArchiveEntry
 import com.example.cnv.speed.SpeedValidationSummary
 
 /**
  * Inspection session store — in-memory cache + Room persistence.
  * STEP 15-4: all Room DAO calls must run off the main thread ([ensureBackground]).
+ * STEP 20-3: route / analysis / rule / heat / excel session artifacts.
  */
 class InspectionRepository(
     private val limit: Int = InspectionConfig.DEFAULT_CACHE_LIMIT,
@@ -54,6 +56,7 @@ class InspectionRepository(
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
         ruleCatalogVersion: Int = 0,
         inspectionProfileJson: String = "",
+        routeSnapshotJson: String = "",
     ) {
         ensureBackground()
         val db = database() ?: return
@@ -74,6 +77,7 @@ class InspectionRepository(
                 profileMotionProfile = conveyorProfile.motionProfile.name,
                 ruleCatalogVersion = ruleCatalogVersion,
                 inspectionProfileJson = inspectionProfileJson,
+                routeSnapshotJson = routeSnapshotJson,
             ),
         )
     }
@@ -107,6 +111,9 @@ class InspectionRepository(
         inspectionVersion: String = "1",
         speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
         conveyorProfile: ConveyorProfileSnapshot? = null,
+        analysisResultJson: String = "",
+        ruleResultJson: String = "",
+        heatPointsJson: String = "",
     ): InspectionSessionSummary {
         ensureBackground()
         val durationSec = (result.durationMs / 1000f).coerceAtLeast(0.001f)
@@ -130,10 +137,27 @@ class InspectionRepository(
         val db = database()
         var profileSnap = conveyorProfile ?: ConveyorProfileSnapshot.empty()
         var ruleVersion = 0
+        var profileJson = ""
+        var routeJson = ""
+        var excelUri = ""
+        var excelName = ""
         if (db != null) {
             val existing = db.sessionDao().getSession(result.sessionId)
             profileSnap = existing?.toProfileSnapshot() ?: profileSnap
             ruleVersion = existing?.ruleCatalogVersion ?: 0
+            profileJson = existing?.inspectionProfileJson.orEmpty()
+            routeJson = existing?.routeSnapshotJson.orEmpty()
+            excelUri = existing?.excelFileUri.orEmpty()
+            excelName = existing?.excelFileName.orEmpty()
+            val analysisJson = analysisResultJson.ifBlank {
+                existing?.analysisResultJson.orEmpty()
+            }
+            val ruleJson = ruleResultJson.ifBlank {
+                existing?.ruleResultJson.orEmpty()
+            }
+            val heatJson = heatPointsJson.ifBlank {
+                existing?.heatPointsJson.orEmpty()
+            }
             db.sessionDao().insertSession(
                 InspectionSessionEntity(
                     sessionId = result.sessionId,
@@ -167,7 +191,13 @@ class InspectionRepository(
                     avgSpeedDifferenceMm = speedValidation.averageDifferenceMm,
                     speedValidationScore = speedValidation.validationScore,
                     ruleCatalogVersion = ruleVersion,
-                    inspectionProfileJson = existing?.inspectionProfileJson.orEmpty(),
+                    inspectionProfileJson = profileJson,
+                    routeSnapshotJson = routeJson,
+                    analysisResultJson = analysisJson,
+                    ruleResultJson = ruleJson,
+                    heatPointsJson = heatJson,
+                    excelFileUri = excelUri,
+                    excelFileName = excelName,
                 ),
             )
             if (events.isNotEmpty()) {
@@ -175,7 +205,42 @@ class InspectionRepository(
             }
         }
         save(result)
-        return summary.copy(conveyorProfile = profileSnap, ruleCatalogVersion = ruleVersion)
+        return summary.copy(
+            conveyorProfile = profileSnap,
+            ruleCatalogVersion = ruleVersion,
+            inspectionProfileJson = profileJson,
+            routeSnapshotJson = routeJson,
+            analysisResultJson = analysisResultJson,
+            ruleResultJson = ruleResultJson,
+            heatPointsJson = heatPointsJson,
+            excelFileUri = excelUri,
+            excelFileName = excelName,
+        )
+    }
+
+    fun saveExcelArchive(entry: ExcelArchiveEntry) {
+        ensureBackground()
+        val db = database() ?: return
+        val existing = db.sessionDao().getSession(entry.sessionId) ?: return
+        db.sessionDao().insertSession(
+            existing.copy(
+                excelFileUri = entry.fileUri,
+                excelFileName = entry.fileName,
+            ),
+        )
+    }
+
+    fun loadExcelArchive(sessionId: String): ExcelArchiveEntry? {
+        ensureBackground()
+        val db = database() ?: return null
+        val entity = db.sessionDao().getSession(sessionId) ?: return null
+        if (entity.excelFileUri.isBlank()) return null
+        return ExcelArchiveEntry(
+            sessionId = entity.sessionId,
+            drawingId = entity.drawingId,
+            fileUri = entity.excelFileUri,
+            fileName = entity.excelFileName.ifBlank { "report.xlsx" },
+        )
     }
 
     fun loadSession(sessionId: String): PersistedInspectionSession? {
@@ -275,6 +340,12 @@ class InspectionRepository(
         ),
         ruleCatalogVersion = ruleCatalogVersion,
         inspectionProfileJson = inspectionProfileJson,
+        routeSnapshotJson = routeSnapshotJson,
+        analysisResultJson = analysisResultJson,
+        ruleResultJson = ruleResultJson,
+        heatPointsJson = heatPointsJson,
+        excelFileUri = excelFileUri,
+        excelFileName = excelFileName,
     )
 
     private fun InspectionSessionEntity.toProfileSnapshot() = ConveyorProfileSnapshot(

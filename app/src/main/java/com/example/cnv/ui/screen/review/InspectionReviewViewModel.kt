@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.cnv.analysis.AnalysisResultCodec
 import com.example.cnv.analysis.InspectionAnalysisResult
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.DrawingHeatPoint
@@ -13,7 +14,7 @@ import com.example.cnv.rule.InspectionRuleZoneSummary
 import com.example.cnv.rule.InspectionWarning
 
 /**
- * Inspection Review ViewModel (STEP 17-1 / 18).
+ * Inspection Review ViewModel (STEP 17-1 / 18 / 20-3).
  * Loads Analysis / Rule / HeatMap via Repositories only — no Engine direct calls.
  * Warning / Issue / Zone sections display Rule Result; rules are not re-evaluated in UI.
  */
@@ -44,43 +45,50 @@ class InspectionReviewViewModel(
         val gen = ++loadGeneration
         _state.value = UiState(loading = true, sessionId = sessionId, drawingId = drawingId)
 
-        // HeatMap: repository lookup only (no generation).
-        val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
-
-        catalog.rules.getOrEvaluateAsync(sessionId, drawingId) { rules ->
-            if (gen != loadGeneration) return@getOrEvaluateAsync
-            val analysis = catalog.analysis.getCached(sessionId)
-            if (analysis == null || rules == null) {
+        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+            if (gen != loadGeneration) return@loadSessionAsync
+            val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
+                .ifEmpty {
+                    catalog.heatMaps.restoreSessionPoints(
+                        sessionId,
+                        persisted?.summary?.heatPointsJson.orEmpty(),
+                    )
+                }
+            // Ensure Analysis cache is warm from Session snapshot before Rule callback.
+            AnalysisResultCodec.decode(persisted?.summary?.analysisResultJson)?.let {
+                catalog.analysis.putCached(it)
+            }
+            catalog.rules.getOrEvaluateAsync(sessionId, drawingId) { rules ->
+                if (gen != loadGeneration) return@getOrEvaluateAsync
+                val analysis = catalog.analysis.getCached(sessionId)
+                    ?: AnalysisResultCodec.decode(persisted?.summary?.analysisResultJson)
+                if (analysis == null || rules == null) {
+                    _state.value = UiState(
+                        loading = false,
+                        errorMessage = when {
+                            analysis == null -> "Analysis Result unavailable"
+                            else -> "Rule Result unavailable"
+                        },
+                        sessionId = sessionId,
+                        drawingId = drawingId,
+                        heatPoints = heatPoints,
+                        heatPointCount = heatPoints.size,
+                    )
+                    return@getOrEvaluateAsync
+                }
                 _state.value = UiState(
                     loading = false,
-                    errorMessage = when {
-                        analysis == null -> "Analysis Result unavailable"
-                        else -> "Rule Result unavailable"
-                    },
                     sessionId = sessionId,
                     drawingId = drawingId,
                     analysis = analysis,
                     rules = rules,
-                    warnings = rules?.warnings.orEmpty(),
-                    issues = rules?.issues.orEmpty(),
-                    zoneSummaries = rules?.zoneSummaries.orEmpty(),
+                    warnings = rules.warnings,
+                    issues = rules.issues,
+                    zoneSummaries = rules.zoneSummaries,
                     heatPoints = heatPoints,
                     heatPointCount = heatPoints.size,
                 )
-                return@getOrEvaluateAsync
             }
-            _state.value = UiState(
-                loading = false,
-                sessionId = sessionId,
-                drawingId = drawingId,
-                analysis = analysis,
-                rules = rules,
-                warnings = rules.warnings,
-                issues = rules.issues,
-                zoneSummaries = rules.zoneSummaries,
-                heatPoints = heatPoints,
-                heatPointCount = heatPoints.size,
-            )
         }
     }
 

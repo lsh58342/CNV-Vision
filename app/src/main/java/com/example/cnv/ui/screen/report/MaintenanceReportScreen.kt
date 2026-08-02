@@ -144,12 +144,25 @@ class MaintenanceReportScreen : BaseScreen() {
     }
 
     private fun bindExcelArchiveButton(view: View, sessionId: String) {
-        val entry = catalog.excelArchives.get(sessionId)
         val btn = view.findViewById<MaterialButton>(R.id.button_report_open_excel)
-        btn.isVisible = entry != null
-        if (entry != null) {
-            btn.text = getString(R.string.report_open_excel_named, entry.fileName)
+        val cached = catalog.excelArchives.get(sessionId)
+        if (cached != null) {
+            btn.isVisible = true
+            btn.text = getString(R.string.report_open_excel_named, cached.fileName)
+            return
         }
+        btn.isVisible = false
+        com.example.cnv.inspection.db.InspectionDbGate.submit(
+            block = {
+                catalog.excelArchives.getOrLoad(sessionId, catalog.inspections.underlying())
+            },
+            onMain = { entry ->
+                if (entry != null) {
+                    btn.isVisible = true
+                    btn.text = getString(R.string.report_open_excel_named, entry.fileName)
+                }
+            },
+        )
     }
 
     private fun openArchivedExcel(sessionId: String) {

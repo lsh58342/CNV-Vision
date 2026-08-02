@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -14,7 +16,7 @@ import java.util.concurrent.Executors
         ConveyorProfileEntity::class,
         InspectionProfileEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {
@@ -29,6 +31,29 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
         /** Dedicated Room query/transaction pool — never the main thread. */
         private val roomExecutor: ExecutorService = Executors.newFixedThreadPool(2)
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN routeSnapshotJson TEXT NOT NULL DEFAULT ''",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN analysisResultJson TEXT NOT NULL DEFAULT ''",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN ruleResultJson TEXT NOT NULL DEFAULT ''",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN heatPointsJson TEXT NOT NULL DEFAULT ''",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN excelFileUri TEXT NOT NULL DEFAULT ''",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_sessions ADD COLUMN excelFileName TEXT NOT NULL DEFAULT ''",
+                )
+            }
+        }
+
         fun build(context: Context): CnvInspectionDatabase =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -37,7 +62,7 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
             )
                 .setQueryExecutor(roomExecutor)
                 .setTransactionExecutor(roomExecutor)
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_6_7)
                 .build()
     }
 }

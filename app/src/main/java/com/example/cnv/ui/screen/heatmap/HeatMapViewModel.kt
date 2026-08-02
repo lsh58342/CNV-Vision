@@ -96,40 +96,60 @@ class HeatMapViewModel(
                 }
                 ?: sessions.lastOrNull()?.sessionId
 
-            val points = if (selectedId != null) {
+            fun publish(points: List<com.example.cnv.heatmap.DrawingHeatPoint>, summary: com.example.cnv.inspection.InspectionSessionSummary?) {
+                val sessionRoute = com.example.cnv.inspection.RouteSnapshotCodec
+                    .decode(summary?.routeSnapshotJson)
+                    ?.toRoute()
+                val displayRoute = sessionRoute ?: route
+                val displayLayout = sessionRoute?.let { HeatMapRouteLayout.build(it) } ?: layout
+                _state.value = UiState(
+                    drawingName = drawing.name,
+                    drawingId = drawing.id,
+                    drawing = drawing,
+                    sessions = sessions,
+                    selectedSessionId = selectedId,
+                    selectedSummary = summary,
+                    displayPoints = points,
+                    routePolyline = buildRoutePolyline(displayLayout),
+                    originWorld = resolveOrigin(drawing, displayRoute, displayLayout),
+                    zones = if (displayRoute != null && displayLayout != null) {
+                        buildZoneOverlays(drawing.id, displayRoute, displayLayout)
+                    } else {
+                        emptyList()
+                    },
+                    highlightedZoneId = _state.value?.highlightedZoneId,
+                    flags = _state.value?.flags ?: HeatMapViewerLayerFlags(),
+                    displayConfig = HeatMapDisplayConfig.DEFAULT,
+                    heatMapMapper = displayLayout?.mapper,
+                    layerGeneratedAtMs = layer?.generatedAtMs ?: 0L,
+                    emptyMessage = when {
+                        layer == null && points.isEmpty() ->
+                            "No HeatLayer for this Drawing (run Inspection first)"
+                        sessions.isEmpty() -> "No Inspection Session for this Drawing"
+                        points.isEmpty() -> "HeatLayer has no points for selected session"
+                        else -> null
+                    },
+                )
+            }
+
+            val summary = sessions.firstOrNull { it.sessionId == selectedId }
+            val memoryPoints = if (selectedId != null) {
                 catalog.heatMaps.loadHeatPointsForSession(drawing.id, selectedId)
             } else {
                 layer?.points.orEmpty()
             }
-            val summary = sessions.firstOrNull { it.sessionId == selectedId }
-
-            _state.value = UiState(
-                drawingName = drawing.name,
-                drawingId = drawing.id,
-                drawing = drawing,
-                sessions = sessions,
-                selectedSessionId = selectedId,
-                selectedSummary = summary,
-                displayPoints = points,
-                routePolyline = buildRoutePolyline(layout),
-                originWorld = resolveOrigin(drawing, route, layout),
-                zones = if (route != null && layout != null) {
-                    buildZoneOverlays(drawing.id, route, layout)
-                } else {
-                    emptyList()
-                },
-                highlightedZoneId = _state.value?.highlightedZoneId,
-                flags = _state.value?.flags ?: HeatMapViewerLayerFlags(),
-                displayConfig = HeatMapDisplayConfig.DEFAULT,
-                heatMapMapper = layout?.mapper,
-                layerGeneratedAtMs = layer?.generatedAtMs ?: 0L,
-                emptyMessage = when {
-                    layer == null -> "No HeatLayer for this Drawing (run Inspection first)"
-                    sessions.isEmpty() -> "No Inspection Session for this Drawing"
-                    points.isEmpty() -> "HeatLayer has no points for selected session"
-                    else -> null
-                },
-            )
+            if (selectedId != null && memoryPoints.isEmpty()) {
+                catalog.inspections.loadSessionAsync(selectedId) { persisted ->
+                    if (gen != loadGeneration) return@loadSessionAsync
+                    val restored = catalog.heatMaps.restoreSessionPoints(
+                        selectedId,
+                        persisted?.summary?.heatPointsJson.orEmpty(),
+                    )
+                    publish(restored, persisted?.summary ?: summary)
+                }
+            } else {
+                publish(memoryPoints, summary)
+            }
         }
     }
 
@@ -138,18 +158,36 @@ class HeatMapViewModel(
         if (cur.selectedSessionId == sessionId) return
         val drawingId = cur.drawingId ?: return
         preferredSessionId = sessionId
-        val points = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
+        val memory = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
         val summary = cur.sessions.firstOrNull { it.sessionId == sessionId }
-        _state.value = cur.copy(
-            selectedSessionId = sessionId,
-            selectedSummary = summary,
-            displayPoints = points,
-            emptyMessage = if (points.isEmpty()) {
-                "HeatLayer has no points for selected session"
-            } else {
-                null
-            },
-        )
+        fun apply(points: List<com.example.cnv.heatmap.DrawingHeatPoint>) {
+            val sessionRoute = com.example.cnv.inspection.RouteSnapshotCodec
+                .decode(summary?.routeSnapshotJson)
+                ?.toRoute()
+            val layout = sessionRoute?.let { HeatMapRouteLayout.build(it) }
+            _state.value = cur.copy(
+                selectedSessionId = sessionId,
+                selectedSummary = summary,
+                displayPoints = points,
+                routePolyline = if (layout != null) buildRoutePolyline(layout) else cur.routePolyline,
+                emptyMessage = if (points.isEmpty()) {
+                    "HeatLayer has no points for selected session"
+                } else {
+                    null
+                },
+            )
+        }
+        if (memory.isNotEmpty()) {
+            apply(memory)
+        } else {
+            catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+                val restored = catalog.heatMaps.restoreSessionPoints(
+                    sessionId,
+                    persisted?.summary?.heatPointsJson.orEmpty(),
+                )
+                apply(restored)
+            }
+        }
     }
 
     fun setFlags(flags: HeatMapViewerLayerFlags) {

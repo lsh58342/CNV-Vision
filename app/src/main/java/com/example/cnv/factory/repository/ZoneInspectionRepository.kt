@@ -38,6 +38,9 @@ class ZoneInspectionRepository(
         inspectionVersion: String = "1",
         speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
         conveyorProfile: ConveyorProfileSnapshot? = null,
+        analysisResultJson: String = "",
+        ruleResultJson: String = "",
+        heatPointsJson: String = "",
     ): InspectionSessionSummary {
         val summary = inspectionRepository.finishSession(
             drawingId = drawingId,
@@ -47,6 +50,9 @@ class ZoneInspectionRepository(
             inspectionVersion = inspectionVersion,
             speedValidation = speedValidation,
             conveyorProfile = conveyorProfile,
+            analysisResultJson = analysisResultJson,
+            ruleResultJson = ruleResultJson,
+            heatPointsJson = heatPointsJson,
         )
         index(drawingId, result.sessionId)
         return summary
@@ -60,6 +66,9 @@ class ZoneInspectionRepository(
         inspectionVersion: String = "1",
         speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
         conveyorProfile: ConveyorProfileSnapshot? = null,
+        analysisResultJson: String = "",
+        ruleResultJson: String = "",
+        heatPointsJson: String = "",
         onDone: ((InspectionSessionSummary) -> Unit)? = null,
     ) {
         InspectionDbGate.submit(
@@ -72,6 +81,9 @@ class ZoneInspectionRepository(
                     inspectionVersion = inspectionVersion,
                     speedValidation = speedValidation,
                     conveyorProfile = conveyorProfile,
+                    analysisResultJson = analysisResultJson,
+                    ruleResultJson = ruleResultJson,
+                    heatPointsJson = heatPointsJson,
                 )
             },
             onMain = { summary -> onDone?.invoke(summary) },
@@ -89,6 +101,7 @@ class ZoneInspectionRepository(
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
         ruleCatalogVersion: Int = 0,
         inspectionProfileJson: String = "",
+        routeSnapshotJson: String = "",
     ) {
         inspectionRepository.createSession(
             sessionId = sessionId,
@@ -100,6 +113,7 @@ class ZoneInspectionRepository(
             conveyorProfile = conveyorProfile,
             ruleCatalogVersion = ruleCatalogVersion,
             inspectionProfileJson = inspectionProfileJson,
+            routeSnapshotJson = routeSnapshotJson,
         )
         index(drawingId, sessionId)
     }
@@ -114,6 +128,7 @@ class ZoneInspectionRepository(
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
         ruleCatalogVersion: Int = 0,
         inspectionProfileJson: String = "",
+        routeSnapshotJson: String = "",
     ) {
         InspectionDbGate.execute {
             createSession(
@@ -126,8 +141,14 @@ class ZoneInspectionRepository(
                 conveyorProfile = conveyorProfile,
                 ruleCatalogVersion = ruleCatalogVersion,
                 inspectionProfileJson = inspectionProfileJson,
+                routeSnapshotJson = routeSnapshotJson,
             )
         }
+    }
+
+    /** Background-thread only — stream recorder chunks during Inspection. */
+    fun appendEvents(sessionId: String, drawingId: String, events: List<BaseEvent>) {
+        inspectionRepository.appendEvents(sessionId, drawingId, events)
     }
 
     /** Background-thread only. */

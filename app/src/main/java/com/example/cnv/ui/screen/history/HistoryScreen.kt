@@ -222,6 +222,14 @@ class HistoryScreen : BaseScreen() {
         )
         val excelBtn = card.findViewById<MaterialButton>(R.id.session_card_open_excel)
         val archive = FactoryCatalog.get().excelArchives.get(session.sessionId)
+            ?: session.excelFileUri.takeIf { it.isNotBlank() }?.let { uri ->
+                com.example.cnv.report.excel.ExcelArchiveEntry(
+                    sessionId = session.sessionId,
+                    drawingId = session.drawingId,
+                    fileUri = uri,
+                    fileName = session.excelFileName.ifBlank { "report.xlsx" },
+                ).also { FactoryCatalog.get().excelArchives.warm(it) }
+            }
         if (archive != null) {
             excelBtn.isVisible = true
             excelBtn.text = getString(R.string.history_open_excel_named, archive.fileName)

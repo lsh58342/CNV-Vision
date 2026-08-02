@@ -5,15 +5,18 @@ import com.example.cnv.heatmap.DrawingHeatLayer
 import com.example.cnv.heatmap.DrawingHeatPoint
 import com.example.cnv.heatmap.HeatMapGenerator
 import com.example.cnv.heatmap.HeatMapIntensityConfig
+import com.example.cnv.heatmap.HeatPointsCodec
 import com.example.cnv.inspection.InspectionRepository
 import com.example.cnv.inspection.PersistedInspectionSession
+import com.example.cnv.inspection.RouteSnapshotCodec
 import com.example.cnv.map.Route
 import com.example.cnv.route.CoordinateMapper
 
 /**
- * Drawing-scoped HeatMap store (STEP 14).
+ * Drawing-scoped HeatMap store (STEP 14 / 20-3).
  * Holds generated [DrawingHeatLayer]s + lightweight refs for History.
  * Heat calculation is delegated only to [HeatMapGenerator] — never Viewer.
+ * Session heat points are cached / restored from Session JSON for reproducibility.
  */
 class HeatMapRepository(
     private val generator: HeatMapGenerator = HeatMapGenerator(HeatMapIntensityConfig.DEFAULT),
@@ -30,6 +33,7 @@ class HeatMapRepository(
     private val lock = Any()
     private val byDrawing = LinkedHashMap<String, ArrayDeque<HeatMapRef>>()
     private val layers = LinkedHashMap<String, DrawingHeatLayer>()
+    private val sessionPoints = LinkedHashMap<String, List<DrawingHeatPoint>>()
     private val layerListeners = mutableListOf<(String) -> Unit>()
 
     /** Viewer observes HeatLayer updates (no generation in UI). */
@@ -67,7 +71,7 @@ class HeatMapRepository(
 
     /**
      * Generate Heat Layer from Inspection sessions for a Drawing.
-     * Replaces previous layer content (regenerate semantics).
+     * Uses each session's Route Snapshot when available (STEP 20-3).
      */
     fun generateHeatLayer(
         drawingId: String,
@@ -75,7 +79,21 @@ class HeatMapRepository(
         route: Route,
         mapper: CoordinateMapper? = null,
     ): DrawingHeatLayer {
-        val layer = generator.generateLayer(drawingId, sessions, route, mapper)
+        val allPoints = ArrayList<DrawingHeatPoint>()
+        for (session in sessions) {
+            val sessionRoute = RouteSnapshotCodec.decode(session.summary.routeSnapshotJson)?.toRoute()
+                ?: route
+            val points = generator.generatePoints(listOf(session), sessionRoute, mapper)
+            synchronized(lock) {
+                sessionPoints[session.summary.sessionId] = points
+            }
+            allPoints.addAll(points)
+        }
+        val layer = DrawingHeatLayer(
+            drawingId = drawingId,
+            points = allPoints,
+            sourceSessionIds = sessions.map { it.summary.sessionId }.distinct(),
+        )
         synchronized(lock) {
             layers[drawingId] = layer
             val q = byDrawing.getOrPut(drawingId) { ArrayDeque() }
@@ -105,17 +123,55 @@ class HeatMapRepository(
         return layer
     }
 
+    /**
+     * Generate + cache points for one finished session using its Route Snapshot.
+     * Does not change HeatMapGenerator algorithms.
+     */
+    fun generateSessionPoints(
+        drawingId: String,
+        session: PersistedInspectionSession,
+        route: Route,
+        mapper: CoordinateMapper? = null,
+    ): List<DrawingHeatPoint> {
+        val points = generator.generatePoints(listOf(session), route, mapper)
+        synchronized(lock) {
+            sessionPoints[session.summary.sessionId] = points
+        }
+        return points
+    }
+
     fun loadHeatLayer(drawingId: String): DrawingHeatLayer? =
         synchronized(lock) { layers[drawingId] }
 
     /**
-     * Display filter only — returns points for one session from stored layer.
-     * Does not generate or mutate HeatLayer.
+     * Display filter — memory layer, then session cache.
+     * Call [restoreSessionPoints] on background to hydrate from Session JSON.
      */
     fun loadHeatPointsForSession(drawingId: String, sessionId: String): List<DrawingHeatPoint> {
+        if (sessionId.isBlank()) {
+            return loadHeatLayer(drawingId)?.points.orEmpty()
+        }
+        synchronized(lock) {
+            sessionPoints[sessionId]?.let { return it }
+        }
         val layer = loadHeatLayer(drawingId) ?: return emptyList()
-        if (sessionId.isBlank()) return layer.points
         return layer.points.filter { it.sessionId == sessionId }
+    }
+
+    /**
+     * Background-thread: hydrate session points from persisted JSON if memory miss.
+     */
+    fun restoreSessionPoints(sessionId: String, heatPointsJson: String): List<DrawingHeatPoint> {
+        synchronized(lock) {
+            sessionPoints[sessionId]?.let { return it }
+        }
+        val decoded = HeatPointsCodec.decode(heatPointsJson)
+        if (decoded.isNotEmpty()) {
+            synchronized(lock) {
+                sessionPoints[sessionId] = decoded
+            }
+        }
+        return decoded
     }
 
     /**
@@ -123,6 +179,7 @@ class HeatMapRepository(
      */
     fun removeSessionFromLayer(drawingId: String, sessionId: String) {
         synchronized(lock) {
+            sessionPoints.remove(sessionId)
             val layer = layers[drawingId]
             if (layer != null) {
                 val filteredPoints = layer.points.filter { it.sessionId != sessionId }
@@ -146,15 +203,16 @@ class HeatMapRepository(
 
     fun deleteHeatLayer(drawingId: String) {
         synchronized(lock) {
-            layers.remove(drawingId)
+            val layer = layers.remove(drawingId)
+            layer?.sourceSessionIds?.forEach { sessionPoints.remove(it) }
             byDrawing.remove(drawingId)
         }
         notifyLayerChanged(drawingId)
     }
 
     /**
-     * Rebuild layer from current Inspection history for the Drawing.
-     * Does not permanently discard until new layer is written (replace in place).
+     * Rebuild layer from Inspection history for the Drawing.
+     * Each session uses its own Route Snapshot when present (STEP 20-3).
      */
     fun regenerateHeatLayer(
         drawingId: String,
@@ -164,7 +222,43 @@ class HeatMapRepository(
     ): DrawingHeatLayer {
         val summaries = inspectionRepository.loadHistory(drawingId)
         val sessions = summaries.mapNotNull { inspectionRepository.loadSession(it.sessionId) }
-        return generateHeatLayer(drawingId, sessions, route, mapper)
+        val allPoints = ArrayList<DrawingHeatPoint>()
+        val sourceIds = ArrayList<String>()
+        for (session in sessions) {
+            val fromJson = HeatPointsCodec.decode(session.summary.heatPointsJson)
+            val points = if (fromJson.isNotEmpty()) {
+                synchronized(lock) { sessionPoints[session.summary.sessionId] = fromJson }
+                fromJson
+            } else {
+                val sessionRoute = RouteSnapshotCodec.decode(session.summary.routeSnapshotJson)?.toRoute()
+                    ?: route
+                generateSessionPoints(drawingId, session, sessionRoute, mapper)
+            }
+            allPoints.addAll(points)
+            sourceIds += session.summary.sessionId
+        }
+        val layer = DrawingHeatLayer(
+            drawingId = drawingId,
+            points = allPoints,
+            sourceSessionIds = sourceIds.distinct(),
+        )
+        synchronized(lock) {
+            layers[drawingId] = layer
+            val q = byDrawing.getOrPut(drawingId) { ArrayDeque() }
+            q.clear()
+            layer.sourceSessionIds.forEach { sid ->
+                q.addLast(
+                    HeatMapRef(
+                        drawingId = drawingId,
+                        sessionId = sid,
+                        label = "HeatLayer",
+                        pointCount = layer.points.count { it.sessionId == sid },
+                    ),
+                )
+            }
+        }
+        notifyLayerChanged(drawingId)
+        return layer
     }
 
     fun removeForDrawing(drawingId: String) {
@@ -175,6 +269,7 @@ class HeatMapRepository(
         synchronized(lock) {
             byDrawing.clear()
             layers.clear()
+            sessionPoints.clear()
         }
     }
 }

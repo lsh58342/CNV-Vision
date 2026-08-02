@@ -81,13 +81,14 @@ class InspectionExcelExportService(
             out.flush()
         } ?: return Result(false, errorMessage = "Cannot open output stream")
 
-        catalog.excelArchives.put(
+        catalog.excelArchives.putAndPersist(
             ExcelArchiveEntry(
                 sessionId = sessionId,
                 drawingId = drawingId,
                 fileUri = targetUri.toString(),
                 fileName = fileName,
             ),
+            catalog.inspections.underlying(),
         )
         return Result(
             success = true,

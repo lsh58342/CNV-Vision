@@ -91,35 +91,50 @@ class ReplayViewModel(
         drawingName = drawing?.name ?: "—"
         val drawingId = preferredDrawingId ?: drawing?.id
         zones = drawingId?.let { catalog.zones.forDrawing(it) }.orEmpty()
-        val route = catalog.routes.currentRoute()
-        val layout = route?.let { HeatMapRouteLayout.build(it) }
-        routePolyline = buildRoutePolyline(layout)
-        zoneOverlays = if (drawingId != null && route != null && layout != null) {
-            buildZoneOverlays(drawingId, route, layout)
-        } else {
-            emptyList()
-        }
 
-        val loadContext = ReplayLoadContext(
-            preferredDrawingId = preferredDrawingId,
-            route = route,
-            zones = zones,
-            layout = layout,
-        )
-        com.example.cnv.production.RecoveryCoordinator.registerReplayReload {
-            (engine as? com.example.cnv.replay.DefaultReplayEngine)?.reloadLastSession()
+        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+            val route = com.example.cnv.inspection.RouteSnapshotCodec
+                .decode(persisted?.summary?.routeSnapshotJson)
+                ?.toRoute()
+                ?: catalog.routes.currentRoute()
+            val layout = route?.let { HeatMapRouteLayout.build(it) }
+            routePolyline = buildRoutePolyline(layout)
+            zoneOverlays = if (drawingId != null && route != null && layout != null) {
+                buildZoneOverlays(drawingId, route, layout)
+            } else {
+                emptyList()
+            }
+
+            val loadContext = ReplayLoadContext(
+                preferredDrawingId = preferredDrawingId,
+                route = route,
+                zones = zones,
+                layout = layout,
+            )
+            com.example.cnv.production.RecoveryCoordinator.registerReplayReload {
+                (engine as? com.example.cnv.replay.DefaultReplayEngine)?.reloadLastSession()
+            }
+            val watchdog = com.example.cnv.production.ProductionWatchdog.shared()
+            watchdog.setListener(
+                object : com.example.cnv.production.ProductionWatchdog.Listener {
+                    override fun onCameraStall() = Unit
+                    override fun onSensorStall() = Unit
+                    override fun onReplayStall() {
+                        com.example.cnv.production.RecoveryCoordinator.recoverReplay("stall")
+                    }
+                    override fun onFrameProcessingStall() = Unit
+                },
+            )
+            continueLoad(sessionId, preferredDrawingId, loadContext, watchdog)
         }
-        val watchdog = com.example.cnv.production.ProductionWatchdog.shared()
-        watchdog.setListener(
-            object : com.example.cnv.production.ProductionWatchdog.Listener {
-                override fun onCameraStall() = Unit
-                override fun onSensorStall() = Unit
-                override fun onReplayStall() {
-                    com.example.cnv.production.RecoveryCoordinator.recoverReplay("stall")
-                }
-                override fun onFrameProcessingStall() = Unit
-            },
-        )
+    }
+
+    private fun continueLoad(
+        sessionId: String,
+        preferredDrawingId: String?,
+        loadContext: ReplayLoadContext,
+        watchdog: com.example.cnv.production.ProductionWatchdog,
+    ) {
         watchdog.setReplayExpected(true)
         watchdog.start()
 
