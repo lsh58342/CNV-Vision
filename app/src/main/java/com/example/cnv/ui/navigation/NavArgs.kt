@@ -1,7 +1,7 @@
 package com.example.cnv.ui.navigation
 
 /**
- * Bundle keys for History → Session Detail / HeatMap / Replay (STEP 15-4).
+ * Bundle keys for History → Review / Session Detail / HeatMap / Replay (STEP 15-4 / 17-1).
  * No process-global mutable selection state.
  */
 object NavArgs {

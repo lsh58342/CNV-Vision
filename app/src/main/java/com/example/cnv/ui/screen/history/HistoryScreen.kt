@@ -225,7 +225,7 @@ class HistoryScreen : BaseScreen() {
                 putString(com.example.cnv.ui.navigation.NavArgs.DRAWING_ID, drawingId)
                 putString(com.example.cnv.ui.navigation.NavArgs.SESSION_ID, session.sessionId)
             }
-            nav().navigate(CnvDestination.INSPECTION_SESSION_DETAIL, args = args)
+            nav().navigate(CnvDestination.INSPECTION_REVIEW, args = args)
         }
         return card
     }

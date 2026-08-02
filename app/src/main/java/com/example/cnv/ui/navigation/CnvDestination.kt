@@ -12,6 +12,7 @@ import com.example.cnv.ui.screen.history.SessionDetailScreen
 import com.example.cnv.ui.screen.inspection.InspectionScreen
 import com.example.cnv.ui.screen.replay.ReplayScreen
 import com.example.cnv.ui.screen.result.InspectionResultScreen
+import com.example.cnv.ui.screen.review.InspectionReviewScreen
 import com.example.cnv.ui.screen.settings.SettingsScreen
 import com.example.cnv.ui.screen.splash.SplashScreen
 import com.example.cnv.ui.screen.zone.ZoneListScreen
@@ -39,6 +40,7 @@ enum class CnvDestination {
     HEATMAP_VIEWER,
     REPLAY,
     INSPECTION_HISTORY,
+    INSPECTION_REVIEW,
     INSPECTION_SESSION_DETAIL,
     SETTINGS,
     DEVELOPER,
@@ -63,6 +65,7 @@ enum class CnvDestination {
         HEATMAP_VIEWER -> HeatMapScreen()
         REPLAY -> ReplayScreen()
         INSPECTION_HISTORY -> HistoryScreen()
+        INSPECTION_REVIEW -> InspectionReviewScreen()
         INSPECTION_SESSION_DETAIL -> SessionDetailScreen()
         SETTINGS -> SettingsScreen()
         DEVELOPER -> DeveloperScreen()

@@ -529,4 +529,27 @@
     <string name="ws_mode_zone_highlight">Route Highlight active — review, then Save</string>
     <string name="ws_mode_zone_save">Enter name, then Save to store Zone</string>
     <string name="ws_save_ok">Commissioning progress saved</string>
+
+    <string name="review_title">Inspection Review</string>
+    <string name="review_loading">Loading Review…</string>
+    <string name="review_ready">Review ready</string>
+    <string name="review_summary_section">Inspection Summary</string>
+    <string name="review_warning_section">Warning Summary</string>
+    <string name="review_heatmap_section">HeatMap Preview</string>
+    <string name="review_issue_section">Issue List</string>
+    <string name="review_zone_section">Zone Summary</string>
+    <string name="review_actions_section">Quick Actions</string>
+    <string name="review_summary_format">Inspection Date: %1$s\nInspection Time: %2$s\nDuration: %3$s\nDistance: %4$.1f mm\nCoverage: %5$.1f%%\nValidation Score: %6$.2f\nAverage Speed: %7$.2f m/min\nMaximum Shock: %8$.2f\nShock Count: %9$d</string>
+    <string name="review_warning_none">No warnings</string>
+    <string name="review_heatmap_meta">Heat points (Repository): %1$d</string>
+    <string name="review_issue_empty">No zone issues</string>
+    <string name="review_issue_format">Type: %1$s\nSeverity: %2$s\nOccurrences: %3$d</string>
+    <string name="review_zone_empty">No zone statistics</string>
+    <string name="review_zone_format">Distance: %1$.1f mm\nShock Count: %2$d\nCoverage: %3$.1f%%\nValidation Score: %4$.2f</string>
+    <string name="review_open_replay">Open Replay</string>
+    <string name="review_open_heatmap">Open HeatMap</string>
+    <string name="review_export_report">Export Report</string>
+    <string name="review_export_csv">Export CSV</string>
+    <string name="review_view_session_detail">View Session Detail</string>
+    <string name="review_report_toast">Report export not implemented yet — use Analysis / Rule Results when available</string>
 </resources>
