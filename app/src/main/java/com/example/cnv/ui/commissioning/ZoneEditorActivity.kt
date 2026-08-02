@@ -45,8 +45,7 @@ class ZoneEditorActivity : AppCompatActivity() {
                 Toast.makeText(this, R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            editor.setCadStart(RouteAnchor(nodeId = "N-CAD-START"))
-            editor.setCadEnd(RouteAnchor(nodeId = "N-CAD-END"))
+            editor.setPolylines(listOf("S-CAD-A", "S-CAD-B"))
             refreshStatus()
             Toast.makeText(this, R.string.zone_editor_cad_demo, Toast.LENGTH_SHORT).show()
         }
@@ -101,6 +100,7 @@ class ZoneEditorActivity : AppCompatActivity() {
             appendLine("Route: ${d.routeId.ifBlank { "—" }}")
             appendLine("Start: ${d.start}")
             appendLine("End: ${d.end}")
+            appendLine("Polylines: ${d.polylineIds.joinToString().ifBlank { "—" }}")
             appendLine("CanSave: ${d.canSave()}")
         }
     }

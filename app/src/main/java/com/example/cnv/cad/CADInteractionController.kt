@@ -12,6 +12,8 @@ class CADInteractionController(
     private val selectionInfoView: TextView? = null,
     private val inspectionStateProvider: () -> String = { "—" },
     private val errorSegmentIdsProvider: () -> Set<String> = { emptySet() },
+    private val highlightSegmentIdsProvider: () -> Set<String> = { emptySet() },
+    private val highlightColorProvider: () -> Int = { SelectionState.DEFAULT_HIGHLIGHT_YELLOW },
 ) {
     private val selectionManager = SelectionManager()
     private var navigator: CADNavigator? = null
@@ -147,6 +149,10 @@ class CADInteractionController(
 
     private fun refreshSelectionVisuals() {
         selectionManager.setErrorSegments(errorSegmentIdsProvider())
+        selectionManager.setHighlightSegments(
+            highlightSegmentIdsProvider(),
+            highlightColorProvider(),
+        )
         val state = selectionManager.state()
         val world = cadView.currentWorldOrNull()
         val posText = if (world != null) {

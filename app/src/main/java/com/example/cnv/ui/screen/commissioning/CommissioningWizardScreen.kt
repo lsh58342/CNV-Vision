@@ -17,15 +17,18 @@ import com.example.cnv.R
 import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADLayer
 import com.example.cnv.cad.CADView
+import com.example.cnv.cad.SelectionState
 import com.example.cnv.dwg.DxfImportStatus
 import com.example.cnv.factory.model.RouteAnchor
+import com.example.cnv.factory.model.Zone
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.AppNavigator
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
-import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
 import com.example.cnv.zone.editor.ZoneEditorController
+import com.example.cnv.zone.editor.ZoneEditorMode
+import com.example.cnv.zone.editor.ZonePolylineResolver
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 
@@ -40,7 +43,9 @@ class CommissioningWizardScreen : BaseScreen() {
     private var cadController: CADController? = null
     private val zoneEditor = ZoneEditorController()
     private val highlightSegments = linkedSetOf<String>()
+    private var highlightColorArgb: Int = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
     private var zonePickPhase: Int = 0
+    private var zoneMultiSelectActive: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -113,7 +118,10 @@ class CommissioningWizardScreen : BaseScreen() {
         cadController?.stop()
         cadController = null
         zonePickPhase = 0
+        zoneMultiSelectActive = false
         highlightSegments.clear()
+        highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+        zoneEditor.reset()
 
         val snap = CommissioningWizardProgress.snapshot()
         root.findViewById<TextView>(R.id.wiz_step_title).text = getString(currentStep.titleRes)
@@ -243,17 +251,33 @@ class CommissioningWizardScreen : BaseScreen() {
             }
             CommissioningWizardProgress.Step.ZONE -> {
                 cadSlot.isVisible = true
-                action.setText(R.string.ws_zone_method_cad)
+                input.isVisible = true
+                input.hint = getString(R.string.zone_editor_name_hint)
+                validationList.isVisible = true
+                action.setText(R.string.ws_zone_create)
                 action2.isVisible = true
-                action2.setText(R.string.ws_zone_method_drive)
-                status.text = if (snap.zoneOk) {
+                action2.setText(R.string.ws_zone_method_cad)
+                if (siteVm.canCreateZone() && zoneEditor.beginCadCreation()) {
+                    zoneMultiSelectActive = true
+                    highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+                }
+                input.setText(zoneEditor.draft().name)
+                status.text = if (zoneMultiSelectActive) {
+                    getString(R.string.ws_zone_selected_count, zoneEditor.draft().selectedCount())
+                } else if (snap.zoneOk) {
                     getString(R.string.wiz_status_zone_ok, snap.zoneCount)
                 } else {
                     getString(R.string.wiz_status_need_zone)
                 }
-                attachCad(content)
-                action.setOnClickListener { beginZoneCad(content) }
-                action2.setOnClickListener { beginZoneDrive(content) }
+                bindZoneEditorPanel(validationList, content)
+                attachCad(content, zoneMultiSelect = true)
+                refreshZoneHighlights()
+                action2.setOnClickListener {
+                    beginZoneMultiSelect(content)
+                }
+                action.setOnClickListener {
+                    createOrSaveZoneFromSelection(content, input)
+                }
             }
             CommissioningWizardProgress.Step.VALIDATION -> {
                 action.isVisible = false
@@ -296,7 +320,11 @@ class CommissioningWizardScreen : BaseScreen() {
         }
     }
 
-    private fun attachCad(content: View, originPickEnabled: Boolean = false) {
+    private fun attachCad(
+        content: View,
+        originPickEnabled: Boolean = false,
+        zoneMultiSelect: Boolean = false,
+    ) {
         cadController?.stop()
         cadController?.setOnOriginTapListener(null)
         cadController?.setOnTapSelectionListener(null)
@@ -306,7 +334,9 @@ class CommissioningWizardScreen : BaseScreen() {
             cadView = cadView,
             mapperProvider = { siteVm.currentRouteMapper() },
             debugHud = null,
-            errorSegmentIdsProvider = { highlightSegments.toSet() },
+            errorSegmentIdsProvider = { emptySet() },
+            highlightSegmentIdsProvider = { highlightSegments.toSet() },
+            highlightColorProvider = { highlightColorArgb },
         )
         cadController?.setLayerEnabled(CADLayer.DEBUG, false)
         cadController?.start()
@@ -320,6 +350,23 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
                 cadController?.setOriginWorldMarker(pick.world.x, pick.world.y)
                 commitOriginPick(pick.progressOnStartSegment)
+            }
+        }
+        if (zoneMultiSelect) {
+            cadController?.setOnTapSelectionListener { info ->
+                val segmentId = info.segmentId.takeIf { it != "—" } ?: return@setOnTapSelectionListener
+                if (!zoneMultiSelectActive) {
+                    beginZoneMultiSelect(content)
+                }
+                if (zoneEditor.togglePolyline(segmentId)) {
+                    refreshZoneHighlights()
+                    content.findViewById<TextView>(R.id.wiz_workspace_status)?.text =
+                        getString(R.string.ws_zone_selected_count, zoneEditor.draft().selectedCount())
+                    bindZoneEditorPanel(
+                        content.findViewById(R.id.wiz_validation_list),
+                        content,
+                    )
+                }
             }
         }
     }
@@ -347,18 +394,195 @@ class CommissioningWizardScreen : BaseScreen() {
         }
     }
 
-    private fun beginZoneCad(content: View) {
-        if (!siteVm.canCreateZone() || !zoneEditor.beginCadCreation()) {
+    private fun beginZoneMultiSelect(content: View) {
+        if (!siteVm.canCreateZone()) {
             Toast.makeText(requireContext(), R.string.setup_zone_need_route, Toast.LENGTH_SHORT).show()
             return
         }
-        zonePickPhase = 1
-        highlightSegments.clear()
+        if (zoneEditor.draft().mode != ZoneEditorMode.CAD_MULTI_SELECT) {
+            if (!zoneEditor.beginCadCreation()) {
+                Toast.makeText(requireContext(), R.string.setup_zone_need_route, Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+        zoneMultiSelectActive = true
+        highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+        refreshZoneHighlights()
         content.findViewById<TextView>(R.id.wiz_workspace_status).text =
-            getString(R.string.ws_mode_zone_start)
+            getString(R.string.ws_zone_selected_count, zoneEditor.draft().selectedCount())
         content.findViewById<MaterialButton>(R.id.button_wiz_action).apply {
-            setText(R.string.ws_confirm_pick)
-            setOnClickListener { confirmZonePick(content) }
+            setText(R.string.ws_zone_create)
+            isEnabled = true
+            alpha = 1f
+        }
+        Toast.makeText(requireContext(), R.string.ws_zone_multi_hint, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun createOrSaveZoneFromSelection(content: View, input: TextInputEditText) {
+        if (!zoneMultiSelectActive && zoneEditor.draft().mode != ZoneEditorMode.CAD_MULTI_SELECT) {
+            beginZoneMultiSelect(content)
+        }
+        val name = input.text?.toString().orEmpty().trim()
+        zoneEditor.setName(name)
+        val draft = zoneEditor.draft()
+        if (draft.polylineIds.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.ws_zone_need_selection, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!CommissioningWizardProgress.zoneOnRoute(draft.start, draft.end, draft.polylineIds)) {
+            Toast.makeText(requireContext(), R.string.wiz_zone_not_on_route, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val existing = FactoryCatalog.get().zones.listForCurrentDrawing()
+            .filter { it.id != draft.zoneId }
+        if (name.isBlank()) {
+            Toast.makeText(requireContext(), R.string.zone_editor_name_hint, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!CommissioningWizardProgress.isZoneNameUnique(name, existing)) {
+            Toast.makeText(requireContext(), R.string.wiz_zone_name_dup, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (CommissioningWizardProgress.zonesOverlap(
+                FactoryCatalog.get(),
+                draft.start,
+                draft.end,
+                existing,
+                draft.polylineIds,
+            )
+        ) {
+            Toast.makeText(requireContext(), R.string.wiz_zone_overlap, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (draft.colorArgb == 0) {
+            zoneEditor.setColor("Orange", Color.parseColor("#FF9800"))
+        }
+        val saved = zoneEditor.save()
+        if (saved == null) {
+            Toast.makeText(requireContext(), R.string.zone_editor_save_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(requireContext(), R.string.zone_editor_saved, Toast.LENGTH_SHORT).show()
+        zoneMultiSelectActive = false
+        highlightColorArgb = saved.colorArgb
+        highlightSegments.clear()
+        highlightSegments.addAll(saved.polylineIds.ifEmpty {
+            ZonePolylineResolver.resolvedIds(
+                saved,
+                FactoryCatalog.get().routes.currentRoute() ?: return@ifEmpty emptyList(),
+            )
+        })
+        siteVm.loadZones()
+        refresh()
+        view?.let { showStep(it) }
+    }
+
+    private fun beginZoneEdit(content: View, zone: Zone) {
+        if (!zoneEditor.beginEdit(zone.id)) {
+            Toast.makeText(requireContext(), R.string.setup_zone_need_route, Toast.LENGTH_SHORT).show()
+            return
+        }
+        zoneMultiSelectActive = true
+        highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+        content.findViewById<TextInputEditText>(R.id.wiz_input).setText(zone.name)
+        content.findViewById<MaterialButton>(R.id.button_wiz_action).setText(R.string.ws_zone_save_edit)
+        refreshZoneHighlights()
+        content.findViewById<TextView>(R.id.wiz_workspace_status).text =
+            getString(R.string.ws_zone_selected_count, zoneEditor.draft().selectedCount())
+        bindZoneEditorPanel(content.findViewById(R.id.wiz_validation_list), content)
+    }
+
+    private fun deleteZone(content: View, zoneId: String) {
+        if (!zoneEditor.delete(zoneId)) {
+            Toast.makeText(requireContext(), R.string.zone_editor_save_failed, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (zoneEditor.draft().zoneId == zoneId) {
+            zoneEditor.reset()
+            zoneMultiSelectActive = false
+        }
+        highlightSegments.clear()
+        highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+        Toast.makeText(requireContext(), R.string.ws_zone_deleted, Toast.LENGTH_SHORT).show()
+        siteVm.loadZones()
+        refresh()
+        view?.let { showStep(it) }
+    }
+
+    private fun hoverZone(zone: Zone) {
+        if (zoneMultiSelectActive) return
+        val route = FactoryCatalog.get().routes.currentRoute() ?: return
+        highlightColorArgb = zone.colorArgb
+        highlightSegments.clear()
+        highlightSegments.addAll(ZonePolylineResolver.resolvedIds(zone, route))
+    }
+
+    private fun refreshZoneHighlights() {
+        highlightSegments.clear()
+        if (zoneMultiSelectActive) {
+            highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+            highlightSegments.addAll(zoneEditor.draft().polylineIds)
+            return
+        }
+        val route = FactoryCatalog.get().routes.currentRoute() ?: return
+        val zones = FactoryCatalog.get().zones.listForCurrentDrawing()
+        if (zones.isEmpty()) return
+        // Idle: show all zones (single overlay color uses first zone; hover overrides).
+        highlightColorArgb = zones.first().colorArgb
+        zones.forEach { z ->
+            highlightSegments.addAll(ZonePolylineResolver.resolvedIds(z, route))
+        }
+    }
+
+    private fun bindZoneEditorPanel(list: LinearLayout, content: View) {
+        UiComponents.clearChildren(list)
+        list.isVisible = true
+        val draft = zoneEditor.draft()
+        list.addView(
+            UiComponents.inflateInfoCard(
+                list,
+                getString(R.string.ws_zone_method_cad),
+                getString(R.string.ws_zone_selected_count, draft.selectedCount()) +
+                    "\n" + getString(R.string.ws_zone_multi_hint),
+            ),
+        )
+        val zones = FactoryCatalog.get().zones.listForCurrentDrawing()
+        list.addView(UiComponents.inflateSectionHeader(list, getString(R.string.ws_zone_list_title)))
+        if (zones.isEmpty()) {
+            list.addView(UiComponents.inflateEmptyView(list, getString(R.string.wiz_status_need_zone)))
+            return
+        }
+        val route = FactoryCatalog.get().routes.currentRoute()
+        zones.forEach { zone ->
+            val count = if (route != null) {
+                ZonePolylineResolver.resolvedIds(zone, route).size
+            } else {
+                zone.polylineIds.size
+            }
+            val card = UiComponents.inflateStatusCard(
+                list,
+                zone.name,
+                "$count Segments · ${zone.colorLabel}",
+                zone.colorArgb,
+            )
+            card.setOnClickListener { hoverZone(zone) }
+            list.addView(card)
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            val editBtn = UiComponents.inflateSecondaryButton(row, getString(R.string.ws_zone_edit))
+            editBtn.setOnClickListener { beginZoneEdit(content, zone) }
+            val delBtn = UiComponents.inflateSecondaryButton(row, getString(R.string.ws_zone_delete))
+            delBtn.setOnClickListener { deleteZone(content, zone.id) }
+            row.addView(editBtn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = 8
+            })
+            row.addView(delBtn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            list.addView(row)
         }
     }
 
@@ -371,55 +595,29 @@ class CommissioningWizardScreen : BaseScreen() {
         val segmentId = info?.segmentId?.takeIf { it != "—" } ?: "S-DRIVE"
         zoneEditor.markDriveStart(RouteAnchor(segmentId = segmentId, distanceFromSegmentStartMm = 0f))
         zoneEditor.markDriveEnd(RouteAnchor(segmentId = segmentId, progress = 1f))
-        applyHighlightFromDraft()
+        zoneEditor.setPolylines(listOf(segmentId))
+        zoneMultiSelectActive = true
+        highlightColorArgb = SelectionState.DEFAULT_HIGHLIGHT_YELLOW
+        refreshZoneHighlights()
         promptAndSaveZone(content)
-    }
-
-    private fun confirmZonePick(content: View) {
-        val info = cadController?.latestSelectionInfo()
-        val nodeId = info?.nodeId?.takeIf { it != "—" }
-        val segmentId = info?.segmentId?.takeIf { it != "—" }
-        val anchor = when {
-            nodeId != null -> RouteAnchor(nodeId = nodeId)
-            segmentId != null -> RouteAnchor(segmentId = segmentId, progress = info?.progress ?: 0f)
-            else -> null
-        }
-        if (anchor == null) {
-            Toast.makeText(requireContext(), R.string.ws_pick_required, Toast.LENGTH_SHORT).show()
-            return
-        }
-        when (zonePickPhase) {
-            1 -> {
-                if (!zoneEditor.setCadStart(anchor)) return
-                zonePickPhase = 2
-                content.findViewById<TextView>(R.id.wiz_workspace_status).text =
-                    getString(R.string.ws_mode_zone_end)
-            }
-            2 -> {
-                if (!zoneEditor.setCadEnd(anchor)) return
-                applyHighlightFromDraft()
-                content.findViewById<TextView>(R.id.wiz_workspace_status).text =
-                    getString(R.string.ws_mode_zone_highlight)
-                promptAndSaveZone(content)
-            }
-        }
-    }
-
-    private fun applyHighlightFromDraft() {
-        val draft = zoneEditor.draft()
-        val route = FactoryCatalog.get().routes.currentRoute() ?: return
-        highlightSegments.clear()
-        highlightSegments.addAll(RouteHighlightHelper.segmentIdsBetween(route, draft.start, draft.end))
     }
 
     private fun promptAndSaveZone(content: View) {
         val draft = zoneEditor.draft()
-        if (!CommissioningWizardProgress.zoneOnRoute(draft.start, draft.end)) {
+        if (!CommissioningWizardProgress.zoneOnRoute(draft.start, draft.end, draft.polylineIds)) {
             Toast.makeText(requireContext(), R.string.wiz_zone_not_on_route, Toast.LENGTH_SHORT).show()
             return
         }
         val existing = FactoryCatalog.get().zones.listForCurrentDrawing()
-        if (CommissioningWizardProgress.zonesOverlap(FactoryCatalog.get(), draft.start, draft.end, existing)) {
+            .filter { it.id != draft.zoneId }
+        if (CommissioningWizardProgress.zonesOverlap(
+                FactoryCatalog.get(),
+                draft.start,
+                draft.end,
+                existing,
+                draft.polylineIds,
+            )
+        ) {
             Toast.makeText(requireContext(), R.string.wiz_zone_overlap, Toast.LENGTH_SHORT).show()
             return
         }
@@ -445,6 +643,7 @@ class CommissioningWizardScreen : BaseScreen() {
                     Toast.makeText(requireContext(), R.string.zone_editor_saved, Toast.LENGTH_SHORT).show()
                     highlightSegments.clear()
                     zonePickPhase = 0
+                    zoneMultiSelectActive = false
                     siteVm.loadZones()
                     refresh()
                     showStep(requireView())

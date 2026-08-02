@@ -13,6 +13,9 @@ data class SelectionState(
     val pickWorldX: Double? = null,
     val pickWorldY: Double? = null,
     val errorSegmentIds: Set<String> = emptySet(),
+    /** Zone editor multi-select highlight (yellow while drafting). */
+    val highlightSegmentIds: Set<String> = emptySet(),
+    val highlightColorArgb: Int = DEFAULT_HIGHLIGHT_YELLOW,
     val selectionCount: Int = 0,
 ) {
     val hasSelection: Boolean
@@ -20,5 +23,6 @@ data class SelectionState(
 
     companion object {
         val EMPTY: SelectionState = SelectionState()
+        const val DEFAULT_HIGHLIGHT_YELLOW: Int = 0xFFFFEB3B.toInt()
     }
 }

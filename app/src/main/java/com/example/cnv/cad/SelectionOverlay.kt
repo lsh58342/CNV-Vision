@@ -39,6 +39,18 @@ class SelectionOverlay(
             )
         }
 
+        highlightStroke.applyStroke(selection.highlightColorArgb, style.routeStrokePx + 8f)
+        for (segId in selection.highlightSegmentIds) {
+            val pair = layout.segmentWorld[segId] ?: continue
+            canvas.drawLine(
+                camera.worldToViewX(pair.first.x),
+                camera.worldToViewY(pair.first.y),
+                camera.worldToViewX(pair.second.x),
+                camera.worldToViewY(pair.second.y),
+                highlightStroke,
+            )
+        }
+
         selection.selectedSegmentId?.let { id ->
             val pair = layout.segmentWorld[id] ?: return@let
             highlightStroke.applyStroke(theme.currentPosition, style.routeStrokePx + 6f)

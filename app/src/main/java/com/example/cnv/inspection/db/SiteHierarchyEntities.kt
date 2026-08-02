@@ -131,6 +131,7 @@ data class SiteZoneEntity(
     val colorArgb: Int,
     val startJson: String,
     val endJson: String,
+    val polylineIdsJson: String = "",
     val calibrationVersion: Int? = null,
     val createdAtMs: Long = 0L,
     val updatedAtMs: Long = 0L,
@@ -144,6 +145,7 @@ data class SiteZoneEntity(
         colorArgb = colorArgb,
         start = RouteAnchorCodec.decode(startJson),
         end = RouteAnchorCodec.decode(endJson),
+        polylineIds = PolylineIdsCodec.decode(polylineIdsJson),
         calibrationVersion = calibrationVersion,
         createdAtMs = createdAtMs,
         updatedAtMs = updatedAtMs,
@@ -159,6 +161,7 @@ data class SiteZoneEntity(
             colorArgb = model.colorArgb,
             startJson = RouteAnchorCodec.encode(model.start),
             endJson = RouteAnchorCodec.encode(model.end),
+            polylineIdsJson = PolylineIdsCodec.encode(model.polylineIds),
             calibrationVersion = model.calibrationVersion,
             createdAtMs = model.createdAtMs,
             updatedAtMs = model.updatedAtMs,
@@ -238,6 +241,18 @@ object RouteAnchorCodec {
             distanceFromSegmentStartMm = parts.getOrNull(2)?.toFloatOrNull(),
             progress = parts.getOrNull(3)?.toFloatOrNull(),
         )
+    }
+}
+
+object PolylineIdsCodec {
+    private const val SEP = "\u0001"
+
+    fun encode(ids: List<String>): String =
+        ids.map { it.trim() }.filter { it.isNotEmpty() }.joinToString(SEP)
+
+    fun decode(raw: String): List<String> {
+        if (raw.isBlank()) return emptyList()
+        return raw.split(SEP).map { it.trim() }.filter { it.isNotEmpty() }
     }
 }
 

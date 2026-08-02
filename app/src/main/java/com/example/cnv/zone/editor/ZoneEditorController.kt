@@ -10,8 +10,9 @@ import java.util.UUID
 /**
  * Commissioning-only Zone Editor controller (Drawing-scoped).
  *
- * Method 1 (CAD): pick start → pick end → name/color → save
- * Method 2 (Drive): record → mark start/end from Route Position → name/color → save
+ * CAD multi-select: toggle Route segment/polyline ids → name/color → save
+ * Legacy CAD: pick start → pick end → name/color → save
+ * Drive: record → mark start/end from Route Position → name/color → save
  */
 class ZoneEditorController(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
@@ -27,6 +28,20 @@ class ZoneEditorController(
         context.appMode == AppMode.COMMISSIONING
 
     fun beginCadCreation(): Boolean {
+        if (!isAccessible()) return false
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        val routeId = drawing.routeId ?: context.routeId ?: catalog.routes.currentRouteId() ?: return false
+        draft = ZoneEditorDraft(
+            drawingId = drawing.id,
+            routeId = routeId,
+            mode = ZoneEditorMode.CAD_MULTI_SELECT,
+        )
+        return true
+    }
+
+    /** Legacy two-pick flow (start → end). */
+    fun beginCadStartEndCreation(): Boolean {
         if (!isAccessible()) return false
         val drawing = catalog.drawings.current(context) ?: return false
         if (drawing.routeLocked) return false
@@ -57,6 +72,12 @@ class ZoneEditorController(
         val zone = catalog.zones.get(zoneId) ?: return false
         val drawing = catalog.drawings.get(zone.drawingId) ?: return false
         if (drawing.routeLocked) return false
+        val route = catalog.routes.currentRoute()
+        val ids = if (route != null) {
+            ZonePolylineResolver.resolvedIds(zone, route)
+        } else {
+            zone.polylineIds
+        }
         draft = ZoneEditorDraft(
             zoneId = zone.id,
             drawingId = zone.drawingId,
@@ -66,8 +87,35 @@ class ZoneEditorController(
             colorArgb = zone.colorArgb,
             start = zone.start,
             end = zone.end,
-            mode = ZoneEditorMode.NAME_COLOR,
+            polylineIds = ids,
+            mode = ZoneEditorMode.CAD_MULTI_SELECT,
         )
+        return true
+    }
+
+    fun togglePolyline(polylineId: String): Boolean {
+        if (draft.mode != ZoneEditorMode.CAD_MULTI_SELECT) return false
+        val id = polylineId.trim()
+        if (id.isEmpty() || id == "—") return false
+        val next = draft.polylineIds.toMutableList()
+        if (next.any { it.equals(id, ignoreCase = true) }) {
+            next.removeAll { it.equals(id, ignoreCase = true) }
+        } else {
+            next.add(id)
+        }
+        draft = draft.copy(polylineIds = next, start = anchorsFromPolylines(next).first, end = anchorsFromPolylines(next).second)
+        return true
+    }
+
+    fun setPolylines(ids: List<String>): Boolean {
+        if (draft.mode != ZoneEditorMode.CAD_MULTI_SELECT &&
+            draft.mode != ZoneEditorMode.NAME_COLOR
+        ) {
+            return false
+        }
+        val cleaned = ids.map { it.trim() }.filter { it.isNotEmpty() && it != "—" }.distinct()
+        val anchors = anchorsFromPolylines(cleaned)
+        draft = draft.copy(polylineIds = cleaned, start = anchors.first, end = anchors.second)
         return true
     }
 
@@ -95,7 +143,12 @@ class ZoneEditorController(
 
     fun markDriveEnd(anchor: RouteAnchor): Boolean {
         if (draft.mode != ZoneEditorMode.DRIVE_MARK_END) return false
-        draft = draft.copy(end = anchor, mode = ZoneEditorMode.NAME_COLOR)
+        val ids = listOfNotNull(anchor.segmentId ?: draft.start.segmentId)
+        draft = draft.copy(
+            end = anchor,
+            polylineIds = ids,
+            mode = ZoneEditorMode.NAME_COLOR,
+        )
         return true
     }
 
@@ -107,6 +160,14 @@ class ZoneEditorController(
         draft = draft.copy(colorLabel = label, colorArgb = argb)
     }
 
+    fun prepareNameColor(): Boolean {
+        val d = draft
+        if (d.mode != ZoneEditorMode.CAD_MULTI_SELECT) return false
+        if (d.polylineIds.isEmpty()) return false
+        draft = d.copy(mode = ZoneEditorMode.NAME_COLOR)
+        return true
+    }
+
     fun save(): Zone? {
         if (!isAccessible()) return null
         val d = draft
@@ -114,6 +175,11 @@ class ZoneEditorController(
         val drawing = catalog.drawings.get(d.drawingId) ?: return null
         if (drawing.routeLocked) return null
         val now = System.currentTimeMillis()
+        val anchors = if (d.polylineIds.isNotEmpty()) {
+            anchorsFromPolylines(d.polylineIds)
+        } else {
+            d.start to d.end
+        }
         val zone = Zone(
             id = d.zoneId ?: UUID.randomUUID().toString(),
             drawingId = d.drawingId,
@@ -121,8 +187,11 @@ class ZoneEditorController(
             name = d.name,
             colorLabel = d.colorLabel,
             colorArgb = d.colorArgb,
-            start = d.start,
-            end = d.end,
+            start = anchors.first,
+            end = anchors.second,
+            polylineIds = d.polylineIds.ifEmpty {
+                listOfNotNull(anchors.first.segmentId, anchors.second.segmentId).distinct()
+            },
             updatedAtMs = now,
             createdAtMs = catalog.zones.get(d.zoneId ?: "")?.createdAtMs ?: now,
         )
@@ -141,5 +210,13 @@ class ZoneEditorController(
 
     fun reset() {
         draft = ZoneEditorDraft()
+    }
+
+    private fun anchorsFromPolylines(ids: List<String>): Pair<RouteAnchor, RouteAnchor> {
+        if (ids.isEmpty()) return RouteAnchor() to RouteAnchor()
+        val first = ids.first()
+        val last = ids.last()
+        return RouteAnchor(segmentId = first, progress = 0f) to
+            RouteAnchor(segmentId = last, progress = 1f)
     }
 }

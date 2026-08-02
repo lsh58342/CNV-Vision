@@ -8,6 +8,8 @@ enum class ZoneEditorMode {
     CAD_PICK_START,
     CAD_PICK_END,
     CAD_CONFIRM,
+    /** Multi polyline/segment toggle selection. */
+    CAD_MULTI_SELECT,
     DRIVE_RECORDING,
     DRIVE_MARK_START,
     DRIVE_MARK_END,

@@ -15,12 +15,15 @@ data class ZoneEditorDraft(
     val colorArgb: Int = 0xFFFF9800.toInt(),
     val start: RouteAnchor = RouteAnchor(),
     val end: RouteAnchor = RouteAnchor(),
+    /** Multi-select Route segment / polyline ids. */
+    val polylineIds: List<String> = emptyList(),
     val mode: ZoneEditorMode = ZoneEditorMode.IDLE,
 ) {
-    fun canSave(): Boolean =
-        name.isNotBlank() &&
-            drawingId.isNotBlank() &&
-            routeId.isNotBlank() &&
-            start.isDefined() &&
-            end.isDefined()
+    fun canSave(): Boolean {
+        if (name.isBlank() || drawingId.isBlank() || routeId.isBlank()) return false
+        if (polylineIds.isNotEmpty()) return true
+        return start.isDefined() && end.isDefined()
+    }
+
+    fun selectedCount(): Int = polylineIds.size
 }

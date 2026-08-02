@@ -120,16 +120,27 @@ object CommissioningWizardProgress {
         start: RouteAnchor,
         end: RouteAnchor,
         existing: List<Zone>,
+        nextPolylineIds: List<String> = emptyList(),
     ): Boolean {
         val route = catalog.routes.currentRoute() ?: return false
-        val next = RouteHighlightHelper.segmentIdsBetween(route, start, end)
+        val next = if (nextPolylineIds.isNotEmpty()) {
+            nextPolylineIds.toSet()
+        } else {
+            RouteHighlightHelper.segmentIdsBetween(route, start, end)
+        }
         if (next.isEmpty()) return false
         return existing.any { z ->
-            val segs = RouteHighlightHelper.segmentIdsBetween(route, z.start, z.end)
+            val segs = com.example.cnv.zone.editor.ZonePolylineResolver.resolvedIds(z, route).toSet()
             segs.intersect(next).isNotEmpty()
         }
     }
 
-    fun zoneOnRoute(start: RouteAnchor, end: RouteAnchor): Boolean =
-        start.isDefined() && end.isDefined()
+    fun zoneOnRoute(
+        start: RouteAnchor,
+        end: RouteAnchor,
+        polylineIds: List<String> = emptyList(),
+    ): Boolean {
+        if (polylineIds.isNotEmpty()) return true
+        return start.isDefined() && end.isDefined()
+    }
 }

@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
         SiteCalibrationEntity::class,
         SiteDrawingRouteEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {
@@ -151,6 +151,14 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE site_zones ADD COLUMN polylineIdsJson TEXT NOT NULL DEFAULT ''",
+                )
+            }
+        }
+
         fun build(context: Context): CnvInspectionDatabase =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -159,7 +167,7 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
             )
                 .setQueryExecutor(roomExecutor)
                 .setTransactionExecutor(roomExecutor)
-                .addMigrations(MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .build()
     }
 }

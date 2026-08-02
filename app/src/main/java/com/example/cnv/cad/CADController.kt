@@ -22,6 +22,8 @@ class CADController(
     private val validationErrorProvider: () -> String? = { null },
     private val inspectionStateProvider: () -> String? = { null },
     private val errorSegmentIdsProvider: () -> Set<String> = { emptySet() },
+    private val highlightSegmentIdsProvider: () -> Set<String> = { emptySet() },
+    private val highlightColorProvider: () -> Int = { SelectionState.DEFAULT_HIGHLIGHT_YELLOW },
     private val selectionInfoView: TextView? = null,
     private val eventDispatcher: EventDispatcher = CoreEventModule.eventDispatcher(),
     private val refreshIntervalMs: Long = 200L,
@@ -47,6 +49,8 @@ class CADController(
         selectionInfoView = selectionInfoView,
         inspectionStateProvider = { inspectionStateProvider() ?: "—" },
         errorSegmentIdsProvider = errorSegmentIdsProvider,
+        highlightSegmentIdsProvider = highlightSegmentIdsProvider,
+        highlightColorProvider = highlightColorProvider,
     )
 
     private val onPosition: (PositionEvent) -> Unit = { event ->

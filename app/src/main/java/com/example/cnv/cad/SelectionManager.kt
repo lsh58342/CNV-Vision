@@ -22,6 +22,10 @@ class SelectionManager(
         state = state.copy(errorSegmentIds = ids)
     }
 
+    fun setHighlightSegments(ids: Set<String>, colorArgb: Int = SelectionState.DEFAULT_HIGHLIGHT_YELLOW) {
+        state = state.copy(highlightSegmentIds = ids, highlightColorArgb = colorArgb)
+    }
+
     fun clear() {
         state = state.copy(
             selectedNodeId = null,
