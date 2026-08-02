@@ -328,26 +328,61 @@ STEP 08
 
 Sensor Fusion
 
-STEP 09  Sensor Fusion Engine
+STEP 09
 
-STEP 10  Map Matching Engine
+Sensor Fusion Engine
 
-STEP11 CAD Viewer
+STEP 10
 
-STEP11-2 CAD Interaction
+Map Matching Engine
 
-STEP12 HeatMap
+STEP 11
 
-STEP 13  CSV Recording
+CAD Viewer
 
-STEP 14  Replay Engine
+STEP 11-1
 
-STEP 15  AI Anomaly Classification
+Drawing Workspace
 
-STEP 16  Report Generator
+STEP 11-2
 
-STEP 17  Production Optimization
+CAD Interaction
 
+STEP 12
+
+HeatMap Generation Engine
+
+STEP 12-1
+
+HeatMap Coordinate Validation
+
+STEP 12-2
+
+HeatMap Viewer
+
+STEP 13
+
+Inspection Session Recording
+
+STEP 13-1
+
+Inspection History
+
+STEP 14
+
+Replay Engine
+
+STEP 15
+
+AI Anomaly Classification
+
+STEP 16
+
+Report Generator
+
+STEP 17
+
+Production Optimization
 ---
 
 # Commit Rule

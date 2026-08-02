@@ -1,0 +1,5 @@
+1.기능 구현
+2.Build Success 확인
+3.AI 코드 리뷰(설계/성능/메모리)
+4.리팩토링
+5.Git Commit & Tag
