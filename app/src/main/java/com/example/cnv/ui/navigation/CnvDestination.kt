@@ -8,6 +8,7 @@ import com.example.cnv.ui.screen.drawing.DrawingWorkspaceScreen
 import com.example.cnv.ui.screen.floor.FloorScreen
 import com.example.cnv.ui.screen.heatmap.HeatMapScreen
 import com.example.cnv.ui.screen.history.HistoryScreen
+import com.example.cnv.ui.screen.history.SessionDetailScreen
 import com.example.cnv.ui.screen.inspection.InspectionScreen
 import com.example.cnv.ui.screen.result.InspectionResultScreen
 import com.example.cnv.ui.screen.settings.SettingsScreen
@@ -36,6 +37,7 @@ enum class CnvDestination {
     INSPECTION_RESULT,
     HEATMAP_VIEWER,
     INSPECTION_HISTORY,
+    INSPECTION_SESSION_DETAIL,
     SETTINGS,
     DEVELOPER,
     COORDINATE_VALIDATION,
@@ -58,6 +60,7 @@ enum class CnvDestination {
         INSPECTION_RESULT -> InspectionResultScreen()
         HEATMAP_VIEWER -> HeatMapScreen()
         INSPECTION_HISTORY -> HistoryScreen()
+        INSPECTION_SESSION_DETAIL -> SessionDetailScreen()
         SETTINGS -> SettingsScreen()
         DEVELOPER -> DeveloperScreen()
         COORDINATE_VALIDATION -> com.example.cnv.ui.screen.developer.CoordinateValidationScreen()

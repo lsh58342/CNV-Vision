@@ -118,6 +118,32 @@ class HeatMapRepository(
         return layer.points.filter { it.sessionId == sessionId }
     }
 
+    /**
+     * Remove one Session's points/refs from stored HeatLayer (no Generator call).
+     */
+    fun removeSessionFromLayer(drawingId: String, sessionId: String) {
+        synchronized(lock) {
+            val layer = layers[drawingId]
+            if (layer != null) {
+                val filteredPoints = layer.points.filter { it.sessionId != sessionId }
+                val filteredSources = layer.sourceSessionIds.filter { it != sessionId }
+                if (filteredPoints.isEmpty() && filteredSources.isEmpty()) {
+                    layers.remove(drawingId)
+                } else {
+                    layers[drawingId] = layer.copy(
+                        points = filteredPoints,
+                        sourceSessionIds = filteredSources,
+                    )
+                }
+            }
+            byDrawing[drawingId]?.removeAll { it.sessionId == sessionId }
+            if (byDrawing[drawingId]?.isEmpty() == true) {
+                byDrawing.remove(drawingId)
+            }
+        }
+        notifyLayerChanged(drawingId)
+    }
+
     fun deleteHeatLayer(drawingId: String) {
         synchronized(lock) {
             layers.remove(drawingId)

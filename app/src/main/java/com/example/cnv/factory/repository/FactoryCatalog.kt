@@ -41,6 +41,17 @@ class FactoryCatalog(
         return drawings.delete(drawingId)
     }
 
+    /**
+     * Delete one Inspection Session and related Drawing metadata (STEP 15-3).
+     * HeatLayer is filtered in-place (no HeatMap calculation).
+     */
+    fun deleteInspectionSession(drawingId: String, sessionId: String) {
+        inspections.deleteSession(sessionId)
+        heatMaps.removeSessionFromLayer(drawingId, sessionId)
+        csvMetadata.removeForSession(drawingId, sessionId)
+        replayMetadata.removeForSession(drawingId, sessionId)
+    }
+
     fun deleteFloorCascade(floorId: String): Boolean {
         drawings.forFloor(floorId).map { it.id }.forEach { deleteDrawingCascade(it) }
         val ctx = CurrentContext.get()

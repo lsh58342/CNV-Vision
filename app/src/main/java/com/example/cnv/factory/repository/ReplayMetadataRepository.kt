@@ -30,6 +30,14 @@ class ReplayMetadataRepository {
         synchronized(lock) { byDrawing.remove(drawingId) }
     }
 
+    fun removeForSession(drawingId: String, sessionId: String) {
+        synchronized(lock) {
+            val q = byDrawing[drawingId] ?: return
+            q.removeAll { it.sessionId == sessionId }
+            if (q.isEmpty()) byDrawing.remove(drawingId)
+        }
+    }
+
     fun clear() {
         synchronized(lock) { byDrawing.clear() }
     }

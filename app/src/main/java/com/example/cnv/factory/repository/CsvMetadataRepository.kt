@@ -29,6 +29,17 @@ class CsvMetadataRepository {
         synchronized(lock) { byDrawing.remove(drawingId) }
     }
 
+    /** Remove CSV metadata entries tied to a Session (label / session token). */
+    fun removeForSession(drawingId: String, sessionId: String) {
+        synchronized(lock) {
+            val q = byDrawing[drawingId] ?: return
+            q.removeAll { meta ->
+                meta.label.contains(sessionId) || meta.label.contains(sessionId.take(8))
+            }
+            if (q.isEmpty()) byDrawing.remove(drawingId)
+        }
+    }
+
     fun clear() {
         synchronized(lock) { byDrawing.clear() }
     }

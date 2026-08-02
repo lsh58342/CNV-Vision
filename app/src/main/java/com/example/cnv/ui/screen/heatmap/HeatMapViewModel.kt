@@ -79,9 +79,13 @@ class HeatMapViewModel(
         val layer = catalog.heatMaps.loadHeatLayer(drawing.id)
         val layout = route?.let { HeatMapRouteLayout.build(it) }
         val sessions = catalog.inspections.loadHistorySummaries(drawing.id)
-        val selectedId = _state.value?.selectedSessionId?.takeIf { id ->
-            sessions.any { it.sessionId == id }
-        } ?: sessions.lastOrNull()?.sessionId
+        val preferred = com.example.cnv.ui.screen.history.HistorySelection.selectedSessionId
+            ?.takeIf { id -> sessions.any { it.sessionId == id } }
+        val selectedId = preferred
+            ?: _state.value?.selectedSessionId?.takeIf { id ->
+                sessions.any { it.sessionId == id }
+            }
+            ?: sessions.lastOrNull()?.sessionId
 
         val points = if (selectedId != null) {
             catalog.heatMaps.loadHeatPointsForSession(drawing.id, selectedId)
