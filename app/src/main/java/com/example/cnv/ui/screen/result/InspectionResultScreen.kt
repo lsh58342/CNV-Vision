@@ -10,8 +10,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
+import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
+import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 
 /**
@@ -81,24 +83,37 @@ class InspectionResultScreen : BaseScreen() {
             UiComponents.inflateSectionHeader(actionsHeader, getString(R.string.result_actions_section)),
         )
 
-        val later = {
-            Toast.makeText(requireContext(), R.string.op_feature_later, Toast.LENGTH_SHORT).show()
-        }
-
         val heatmapSlot = view.findViewById<FrameLayout>(R.id.result_heatmap_slot)
         val heatmapBtn = UiComponents.inflatePrimaryButton(heatmapSlot, getString(R.string.result_open_heatmap))
         heatmapSlot.addView(heatmapBtn)
-        heatmapBtn.setOnClickListener { later() }
+        heatmapBtn.setOnClickListener {
+            val summary = viewModel.summary.value
+            val drawingId = CurrentContext.get().drawingId
+            if (summary == null || summary.empty || drawingId.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val args = Bundle().apply {
+                putString(NavArgs.SESSION_ID, summary.sessionId)
+                putString(NavArgs.DRAWING_ID, drawingId)
+            }
+            nav().navigate(CnvDestination.HEATMAP_VIEWER, args = args)
+        }
 
         val historySlot = view.findViewById<FrameLayout>(R.id.result_history_slot)
         val historyBtn = UiComponents.inflatePrimaryButton(historySlot, getString(R.string.result_open_history))
         historySlot.addView(historyBtn)
-        historyBtn.setOnClickListener { later() }
+        historyBtn.setOnClickListener {
+            nav().navigate(CnvDestination.INSPECTION_HISTORY)
+        }
 
         val csvSlot = view.findViewById<FrameLayout>(R.id.result_csv_slot)
         val csvBtn = UiComponents.inflateSecondaryButton(csvSlot, getString(R.string.result_export_csv))
         csvSlot.addView(csvBtn)
-        csvBtn.setOnClickListener { later() }
+        csvBtn.setOnClickListener {
+            // CSV Recording engine not implemented — metadata/report CSV only via Review/Report.
+            Toast.makeText(requireContext(), R.string.op_feature_later, Toast.LENGTH_SHORT).show()
+        }
 
         val finishSlot = view.findViewById<FrameLayout>(R.id.result_finish_slot)
         val finishBtn = UiComponents.inflateSecondaryButton(finishSlot, getString(R.string.result_finish))

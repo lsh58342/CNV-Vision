@@ -267,7 +267,7 @@ class SiteNavigationViewModel : ViewModel() {
         return true
     }
 
-    fun markCalibrationReadyForCurrentDrawing(): Boolean {
+    fun markCalibrationReadyForCurrentDrawing(mmPerPixel: Float? = null): Boolean {
         val drawing = catalog.drawings.current(context) ?: return false
         if (drawing.routeLocked) return false
         if (!drawing.originSet) return false
@@ -275,7 +275,7 @@ class SiteNavigationViewModel : ViewModel() {
             CalibrationRepository.CalibrationRef(
                 drawingId = drawing.id,
                 calibrationVersion = 1,
-                mmPerPixel = null,
+                mmPerPixel = mmPerPixel,
                 ready = true,
             ),
         )

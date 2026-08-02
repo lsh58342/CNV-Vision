@@ -195,11 +195,8 @@ class CommissioningWizardScreen : BaseScreen() {
                         Toast.makeText(requireContext(), R.string.ws_need_origin, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
+                    // Open Calibration; Drawing ready flag is set only after Finish succeeds.
                     AppNavigator.openCalibration(requireActivity())
-                    siteVm.markCalibrationReadyForCurrentDrawing()
-                    Toast.makeText(requireContext(), R.string.ws_calibration_done, Toast.LENGTH_SHORT).show()
-                    refresh()
-                    showStep(requireView())
                 }
             }
             CommissioningWizardProgress.Step.ROUTE -> {

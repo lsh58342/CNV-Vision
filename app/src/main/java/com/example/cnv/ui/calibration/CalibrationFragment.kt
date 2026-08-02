@@ -57,7 +57,9 @@ class CalibrationFragment : Fragment() {
         }
         view.findViewById<Button>(R.id.button_save_calibration).setOnClickListener {
             val realMm = realDistanceInput.text.toString().toFloatOrNull() ?: 0f
-            viewModel.finishCalibration(realMm)
+            if (viewModel.finishCalibration(realMm)) {
+                syncDrawingCalibrationReady()
+            }
         }
         view.findViewById<Button>(R.id.button_cancel_calibration).setOnClickListener {
             viewModel.cancelCalibration()
@@ -107,6 +109,31 @@ class CalibrationFragment : Fragment() {
     override fun onDestroyView() {
         (activity as? CalibrationActivity)?.stopCameraPipeline()
         super.onDestroyView()
+    }
+
+    /**
+     * Wire CalibrationManager finish → Drawing-scoped ready flag + mmPerPixel (STEP 20-5).
+     */
+    private fun syncDrawingCalibrationReady() {
+        val catalog = com.example.cnv.factory.repository.FactoryCatalog.get()
+        val ctx = com.example.cnv.factory.context.CurrentContext.get()
+        val drawing = catalog.drawings.current(ctx) ?: return
+        if (drawing.routeLocked || !drawing.originSet) return
+        val mm = com.example.cnv.config.CalibrationManager
+            .getInstance(requireContext())
+            .getMmPerPixel()
+            .takeIf { it > 0f }
+        catalog.calibrations.put(
+            com.example.cnv.factory.repository.CalibrationRepository.CalibrationRef(
+                drawingId = drawing.id,
+                calibrationVersion = 1,
+                mmPerPixel = mm,
+                ready = true,
+            ),
+        )
+        catalog.drawings.upsert(
+            drawing.copy(calibrationReady = true, updatedAtMs = System.currentTimeMillis()),
+        )
     }
 
     companion object {

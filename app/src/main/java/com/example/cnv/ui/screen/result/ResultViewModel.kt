@@ -39,7 +39,7 @@ class ResultViewModel : ViewModel() {
         } else {
             val stats = result.statistics
             SummaryUi(
-                sessionId = result.sessionId.take(8),
+                sessionId = result.sessionId,
                 distanceMm = stats.totalDistanceMm,
                 durationSec = result.durationMs / 1000L,
                 shockCount = stats.shockCount,
