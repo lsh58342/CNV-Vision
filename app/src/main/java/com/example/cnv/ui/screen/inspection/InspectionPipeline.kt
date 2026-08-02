@@ -142,6 +142,16 @@ class InspectionPipeline(
                     }.getOrNull().orEmpty().ifBlank { "1.0" }
                 },
             )
+            // STEP 14: regenerate Drawing Heat Layer from persisted sessions (no Viewer calc).
+            val route = routeRepository.current()
+            if (route != null) {
+                catalog.heatMaps.regenerateHeatLayer(
+                    drawingId = drawingId,
+                    inspectionRepository = catalog.inspections.underlying(),
+                    route = route,
+                    mapper = routeGenerator.latestResult()?.mapper,
+                )
+            }
         }
         return result
     }
