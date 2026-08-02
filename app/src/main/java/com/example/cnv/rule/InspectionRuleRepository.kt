@@ -77,6 +77,23 @@ class InspectionRuleRepository(
         }
     }
 
+    /**
+     * Background-thread sync path for Excel / Report exporters.
+     */
+    fun evaluateSync(
+        sessionId: String,
+        preferredDrawingId: String? = null,
+    ): InspectionRuleResult? {
+        getCached(sessionId)?.let { return it }
+        val analysis = catalog.analysis.getCached(sessionId)
+            ?: catalog.analysis.analyzeSync(sessionId, preferredDrawingId)
+            ?: return null
+        val snapshot = runCatching {
+            catalog.inspections.loadSession(sessionId)?.summary?.ruleCatalogVersion
+        }.getOrNull()?.takeIf { it > 0 } ?: catalogVersion()
+        return evaluateAndCache(analysis, preferredDrawingId ?: analysis.drawingId, snapshot)
+    }
+
     fun evaluateFromCachedAnalysis(sessionId: String): InspectionRuleResult? {
         getCached(sessionId)?.let { return it }
         val analysis = catalog.analysis.getCached(sessionId) ?: return null

@@ -580,5 +580,14 @@
     <string name="report_export_pdf">Export PDF</string>
     <string name="report_export_csv">Export CSV</string>
     <string name="report_export_json">Export JSON</string>
+    <string name="report_export_excel">Export Excel (.xlsx)</string>
+    <string name="report_open_excel">Open Excel Archive</string>
+    <string name="report_open_excel_named">Open Excel: %1$s</string>
     <string name="report_open_replay">Open Replay</string>
+    <string name="excel_exporting">Generating Excel…</string>
+    <string name="excel_export_ok">Excel saved: %1$s</string>
+    <string name="excel_export_fail">Excel export failed</string>
+    <string name="excel_open_fail">Cannot open Excel file</string>
+    <string name="history_open_excel">Open Excel</string>
+    <string name="history_open_excel_named">Open Excel: %1$s</string>
 </resources>

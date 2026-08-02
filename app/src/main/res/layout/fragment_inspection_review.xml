@@ -165,6 +165,15 @@
             android:text="@string/review_export_report" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_review_excel"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/report_export_excel" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button_review_csv"
             style="@style/Widget.CNV.Button.Secondary"
             android:layout_width="match_parent"

@@ -32,5 +32,15 @@
             android:layout_marginTop="4dp"
             android:fontFamily="monospace"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/session_card_open_excel"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="40dp"
+            android:text="@string/history_open_excel"
+            android:visibility="gone" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

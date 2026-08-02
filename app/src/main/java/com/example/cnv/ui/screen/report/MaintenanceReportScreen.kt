@@ -1,5 +1,6 @@
 package com.example.cnv.ui.screen.report
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
@@ -15,6 +17,9 @@ import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.report.MaintenanceReport
 import com.example.cnv.report.ReportExportFormat
 import com.example.cnv.report.ZoneIssueRow
+import com.example.cnv.report.excel.ExcelExportUi
+import com.example.cnv.report.excel.InspectionExcelExportService
+import com.example.cnv.report.excel.InspectionExcelReportGenerator
 import com.example.cnv.rule.RuleHit
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.navigation.NavArgs
@@ -26,19 +31,55 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Maintenance Report & Work Order (STEP 19).
+ * Maintenance Report & Work Order (STEP 19 / 19-1).
  * Displays Analysis + Rule Results only — no recalculation.
+ * Excel export uses Repository data via [InspectionExcelExportService].
  */
 class MaintenanceReportScreen : BaseScreen() {
 
     private val vm: MaintenanceReportViewModel by viewModels { MaintenanceReportViewModel.Factory() }
     private val catalog = FactoryCatalog.get()
+    private val excelExport = InspectionExcelExportService(catalog)
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
     private val tsFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
     private var sessionId: String? = null
     private var drawingId: String? = null
+    private var pendingExcelFileName: String = InspectionExcelReportGenerator.defaultFileName()
+
+    private val createExcelLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val sid = sessionId ?: return@registerForActivityResult
+        val did = drawingId ?: return@registerForActivityResult
+        ExcelExportUi.takePersistablePermission(requireContext(), uri)
+        Toast.makeText(requireContext(), R.string.excel_exporting, Toast.LENGTH_SHORT).show()
+        excelExport.exportAsync(
+            sessionId = sid,
+            drawingId = did,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingExcelFileName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            if (exportResult.success) {
+                Toast.makeText(
+                    requireContext(),
+                    getString(R.string.excel_export_ok, exportResult.fileName.orEmpty()),
+                    Toast.LENGTH_SHORT,
+                ).show()
+                view?.let { bindExcelArchiveButton(it, sid) }
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    exportResult.errorMessage ?: getString(R.string.excel_export_fail),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,11 +99,19 @@ class MaintenanceReportScreen : BaseScreen() {
         bindActions(view, drawingId!!, sessionId!!)
         vm.state.observe(viewLifecycleOwner) { state -> bindState(view, state) }
         vm.load(sessionId!!, drawingId!!)
+        bindExcelArchiveButton(view, sessionId!!)
     }
 
     private fun bindActions(view: View, drawingId: String, sessionId: String) {
         view.findViewById<MaterialButton>(R.id.button_report_create_wo_priority).setOnClickListener {
             vm.createWorkOrderFromPriority()
+        }
+        view.findViewById<MaterialButton>(R.id.button_report_export_excel).setOnClickListener {
+            pendingExcelFileName = InspectionExcelReportGenerator.defaultFileName()
+            createExcelLauncher.launch(ExcelExportUi.createDocumentIntent(pendingExcelFileName))
+        }
+        view.findViewById<MaterialButton>(R.id.button_report_open_excel).setOnClickListener {
+            openArchivedExcel(sessionId)
         }
         view.findViewById<MaterialButton>(R.id.button_report_export_pdf).setOnClickListener {
             vm.export(ReportExportFormat.PDF)
@@ -91,6 +140,25 @@ class MaintenanceReportScreen : BaseScreen() {
         }
         view.findViewById<MaterialButton>(R.id.button_report_back).setOnClickListener {
             nav().navigateBack()
+        }
+    }
+
+    private fun bindExcelArchiveButton(view: View, sessionId: String) {
+        val entry = catalog.excelArchives.get(sessionId)
+        val btn = view.findViewById<MaterialButton>(R.id.button_report_open_excel)
+        btn.isVisible = entry != null
+        if (entry != null) {
+            btn.text = getString(R.string.report_open_excel_named, entry.fileName)
+        }
+    }
+
+    private fun openArchivedExcel(sessionId: String) {
+        val entry = catalog.excelArchives.get(sessionId) ?: return
+        val uri = Uri.parse(entry.fileUri)
+        runCatching {
+            startActivity(ExcelExportUi.openIntent(uri))
+        }.onFailure {
+            Toast.makeText(requireContext(), R.string.excel_open_fail, Toast.LENGTH_SHORT).show()
         }
     }
 

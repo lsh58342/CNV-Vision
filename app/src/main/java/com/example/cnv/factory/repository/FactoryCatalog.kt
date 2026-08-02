@@ -7,6 +7,7 @@ import com.example.cnv.factory.model.Floor
 import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.report.MaintenanceReportRepository
 import com.example.cnv.report.WorkOrderRepository
+import com.example.cnv.report.excel.ExcelArchiveRepository
 import com.example.cnv.rule.InspectionRuleRepository
 
 /**
@@ -26,6 +27,7 @@ class FactoryCatalog(
     val replayMetadata: ReplayMetadataRepository = ReplayMetadataRepository(),
     val conveyorProfiles: ConveyorProfileRepository = ConveyorProfileRepository(),
     val workOrders: WorkOrderRepository = WorkOrderRepository(),
+    val excelArchives: ExcelArchiveRepository = ExcelArchiveRepository(),
 ) {
     /** Lazy to avoid catalog construction recursion. */
     val analysis: InspectionAnalysisRepository by lazy { InspectionAnalysisRepository(this) }
@@ -51,6 +53,7 @@ class FactoryCatalog(
         rules.invalidateDrawing(drawingId)
         reports.invalidateDrawing(drawingId)
         workOrders.removeForDrawing(drawingId)
+        excelArchives.removeForDrawing(drawingId)
         InspectionDbGate.execute {
             inspections.removeForDrawing(drawingId)
         }
@@ -82,6 +85,7 @@ class FactoryCatalog(
                 rules.invalidate(sessionId)
                 reports.invalidate(sessionId)
                 workOrders.removeForSession(sessionId)
+                excelArchives.remove(sessionId)
             },
             onMain = { onDone?.invoke() },
         )

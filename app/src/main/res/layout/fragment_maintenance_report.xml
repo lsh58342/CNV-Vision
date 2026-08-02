@@ -207,6 +207,25 @@
             android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_report_export_excel"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="52dp"
+            android:text="@string/report_export_excel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_report_open_excel"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/report_open_excel"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/button_report_export_pdf"
             style="@style/Widget.CNV.Button.Secondary"
             android:layout_width="match_parent"

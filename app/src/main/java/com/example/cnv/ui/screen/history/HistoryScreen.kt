@@ -15,6 +15,7 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
+import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.inspection.InspectionSessionSummary
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
@@ -219,6 +220,29 @@ class HistoryScreen : BaseScreen() {
             session.speedValidation.validationScore,
             session.inspectionVersion,
         )
+        val excelBtn = card.findViewById<MaterialButton>(R.id.session_card_open_excel)
+        val archive = FactoryCatalog.get().excelArchives.get(session.sessionId)
+        if (archive != null) {
+            excelBtn.isVisible = true
+            excelBtn.text = getString(R.string.history_open_excel_named, archive.fileName)
+            excelBtn.setOnClickListener {
+                runCatching {
+                    startActivity(
+                        com.example.cnv.report.excel.ExcelExportUi.openIntent(
+                            android.net.Uri.parse(archive.fileUri),
+                        ),
+                    )
+                }.onFailure {
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        R.string.excel_open_fail,
+                        android.widget.Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        } else {
+            excelBtn.isVisible = false
+        }
         card.setOnClickListener {
             val drawingId = session.drawingId
             val args = android.os.Bundle().apply {

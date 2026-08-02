@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
@@ -14,6 +15,9 @@ import com.example.cnv.analysis.InspectionAnalysisResult
 import com.example.cnv.factory.repository.CsvMetadataRepository
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
+import com.example.cnv.report.excel.ExcelExportUi
+import com.example.cnv.report.excel.InspectionExcelExportService
+import com.example.cnv.report.excel.InspectionExcelReportGenerator
 import com.example.cnv.rule.InspectionIssue
 import com.example.cnv.rule.InspectionRuleZoneSummary
 import com.example.cnv.rule.InspectionWarning
@@ -26,7 +30,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Inspection Review & Action Center (STEP 17-1).
+ * Inspection Review & Action Center (STEP 17-1 / 19-1).
  * Displays Analysis Result + Rule Result + HeatMap Repository preview.
  * Does not analyze events, regenerate HeatMap, or re-run rules.
  */
@@ -34,11 +38,41 @@ class InspectionReviewScreen : BaseScreen() {
 
     private val vm: InspectionReviewViewModel by viewModels { InspectionReviewViewModel.Factory() }
     private val catalog = FactoryCatalog.get()
+    private val excelExport = InspectionExcelExportService(catalog)
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
     private var sessionId: String? = null
     private var drawingId: String? = null
+    private var pendingExcelFileName: String = InspectionExcelReportGenerator.defaultFileName()
+
+    private val createExcelLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val sid = sessionId ?: return@registerForActivityResult
+        val did = drawingId ?: return@registerForActivityResult
+        ExcelExportUi.takePersistablePermission(requireContext(), uri)
+        Toast.makeText(requireContext(), R.string.excel_exporting, Toast.LENGTH_SHORT).show()
+        excelExport.exportAsync(
+            sessionId = sid,
+            drawingId = did,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingExcelFileName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.excel_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.excel_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -94,6 +128,10 @@ class InspectionReviewScreen : BaseScreen() {
                     putString(NavArgs.SESSION_ID, sessionId)
                 },
             )
+        }
+        view.findViewById<MaterialButton>(R.id.button_review_excel).setOnClickListener {
+            pendingExcelFileName = InspectionExcelReportGenerator.defaultFileName()
+            createExcelLauncher.launch(ExcelExportUi.createDocumentIntent(pendingExcelFileName))
         }
         view.findViewById<MaterialButton>(R.id.button_review_csv).setOnClickListener {
             catalog.csvMetadata.put(
