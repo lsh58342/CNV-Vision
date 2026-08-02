@@ -8,11 +8,15 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.example.cnv.R
-import com.example.cnv.ui.navigation.AppNavigator
+import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.ui.navigation.CnvDestination
+import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 
-/** Settings — Calibration / Developer / About (always accessible). */
+/**
+ * Settings — Inspection profiles + Developer Options + About (STEP 20-4).
+ * Always accessible; no Role checks.
+ */
 class SettingsScreen : BaseScreen() {
 
     override fun onCreateView(
@@ -28,9 +32,27 @@ class SettingsScreen : BaseScreen() {
             view.findViewById<TextView>(R.id.screen_body).text = it
         }
 
-        view.findViewById<Button>(R.id.button_settings_calibration).setOnClickListener {
-            AppNavigator.openCalibration(requireActivity())
+        val openProfile = View.OnClickListener {
+            val drawingId = CurrentContext.get().drawingId
+            if (drawingId.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.settings_need_drawing, Toast.LENGTH_SHORT).show()
+                return@OnClickListener
+            }
+            val args = Bundle().apply {
+                putString(NavArgs.DRAWING_ID, drawingId)
+            }
+            nav().navigate(CnvDestination.INSPECTION_PROFILE_EDITOR, args = args)
         }
+
+        view.findViewById<Button>(R.id.button_settings_inspection_profile)
+            .setOnClickListener(openProfile)
+        view.findViewById<Button>(R.id.button_settings_sensor_profile)
+            .setOnClickListener(openProfile)
+        view.findViewById<Button>(R.id.button_settings_rule_profile)
+            .setOnClickListener(openProfile)
+        view.findViewById<Button>(R.id.button_settings_conveyor_profile)
+            .setOnClickListener(openProfile)
+
         view.findViewById<Button>(R.id.button_settings_developer).setOnClickListener {
             nav().navigate(CnvDestination.DEVELOPER)
         }

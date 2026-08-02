@@ -72,7 +72,6 @@
     <string name="comm_step_calibration">3. Calibration</string>
     <string name="comm_step_zone">4. Zone Editor</string>
     <string name="comm_leave">Leave Commissioning</string>
-    <string name="comm_denied">Commissioning requires Admin or Developer</string>
     <string name="comm_dwg_structure">DWG registration structure ready (use existing DWG pipeline)</string>
     <string name="comm_route_structure">Route generation structure ready (use existing Route Generator)</string>
     <string name="comm_calibration_structure">Calibration structure ready (use existing Calibration)</string>
@@ -89,11 +88,17 @@
     <string name="zone_editor_saved">Zone saved</string>
 
     <string name="settings_title">Settings</string>
-    <string name="settings_role_hint">Developer tools are available only for Admin / Developer.</string>
-    <string name="settings_role_operator">Role: Operator</string>
-    <string name="settings_role_admin">Role: Admin</string>
-    <string name="settings_role_developer">Role: Developer</string>
     <string name="settings_open_commissioning">Open Commissioning</string>
+    <string name="settings_inspection_profile">Inspection Profile</string>
+    <string name="settings_sensor_profile">Sensor Profile</string>
+    <string name="settings_rule_profile">Rule Profile</string>
+    <string name="settings_conveyor_profile">Conveyor Profile</string>
+    <string name="settings_developer_options">Developer Options</string>
+    <string name="settings_need_drawing">Select a Drawing first</string>
+    <string name="dev_option_hud">Debug Overlay / Developer HUD</string>
+    <string name="dev_option_perf">Performance / Frame Statistics</string>
+    <string name="dev_option_tracking">Tracking Overlay</string>
+    <string name="developer_hud_idle">Developer HUD — tap an option below</string>
 
     <string name="splash_title">CNV</string>
     <string name="splash_initializing">Initializing…</string>
@@ -115,8 +120,7 @@
     <string name="developer_skeleton">FPS\nTracking\nFusion\nRoute\nLogs\nDebug HUD placeholders</string>
     <string name="coord_validation_title">Coordinate Validation</string>
     <string name="coord_validation_hint">Blue=Event · Red=Shock · Green=Current · Yellow=Origin · Polyline=path</string>
-    <string name="coord_validation_open">Coordinate Validation Overlay</string>
-    <string name="coord_developer_only">Coordinate Validation is Developer Mode only</string>
+    <string name="coord_validation_open">Tracking Overlay (Coordinate Validation)</string>
     <string name="coord_no_session">No Inspection Session for current Drawing</string>
     <string name="coord_fit">Fit</string>
     <string name="coord_reload">Reload</string>
@@ -163,7 +167,7 @@
     <string name="heatmap_bottom_stats">Inspection Date: %1$s\nDuration: %2$s\nDistance: %3$.0f mm\nShock Count: %4$d\nCoverage: %5$.1f%%\nMaximum Shock: %6$.2f</string>
     <string name="history_sort">Sort</string>
     <string name="settings_operation_section">Operation</string>
-    <string name="settings_admin_section">Admin / Developer (hidden in Operation)</string>
+    <string name="settings_admin_section">Tools</string>
     <string name="status_ok_label">OK</string>
     <string name="status_missing_label">MISSING</string>
 
