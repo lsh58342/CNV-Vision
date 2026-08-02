@@ -183,9 +183,10 @@ class CommissioningWizardScreen : BaseScreen() {
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                attachCad(root, originPickEnabled = !snap.originOk)
+                attachCad(root, originPickEnabled = FactoryCatalog.get().drawings.current()?.routeLocked != true)
                 applyOriginMarkerFromDrawing()
-                action.isEnabled = !snap.originOk
+                val locked = FactoryCatalog.get().drawings.current()?.routeLocked == true
+                action.isEnabled = !locked
                 action.alpha = if (action.isEnabled) 1f else 0.45f
                 action.setOnClickListener {
                     if (FactoryCatalog.get().drawings.current()?.routeLocked == true) {
@@ -196,9 +197,15 @@ class CommissioningWizardScreen : BaseScreen() {
                         Toast.makeText(requireContext(), R.string.wiz_fail_dwg, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
-                    val info = cadController?.latestSelectionInfo()
-                    val progress = info?.progress?.takeIf { info.segmentId != "—" } ?: 0f
-                    commitOriginPick(progress)
+                    // Origin is set by tapping the route (nearest point). Button only confirms.
+                    if (FactoryCatalog.get().drawings.current()?.originSet == true) {
+                        applyOriginMarkerFromDrawing()
+                        Toast.makeText(requireContext(), R.string.setup_origin_set, Toast.LENGTH_SHORT).show()
+                        refresh()
+                        view?.let { showStep(it) }
+                    } else {
+                        Toast.makeText(requireContext(), R.string.ws_pick_required, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             CommissioningWizardProgress.Step.CALIBRATION -> {
@@ -341,13 +348,19 @@ class CommissioningWizardScreen : BaseScreen() {
         cadView.post { cadController?.fitToRoute() }
         if (originPickEnabled) {
             cadController?.setOnOriginTapListener { viewX, viewY ->
+                println(
+                    "LOG[OriginPick][TOUCH]\n" +
+                        "Screen X=${"%.1f".format(viewX)}\n" +
+                        "Screen Y=${"%.1f".format(viewY)}",
+                )
                 val pick = cadController?.pickRouteStartPoint(viewX, viewY)
                 if (pick == null) {
                     Toast.makeText(requireContext(), R.string.ws_pick_required, Toast.LENGTH_SHORT).show()
                     return@setOnOriginTapListener
                 }
+                // Immediate marker at hit world (before persistence).
                 cadController?.setOriginWorldMarker(pick.world.x, pick.world.y)
-                commitOriginPick(pick.progressOnStartSegment)
+                commitOriginPick(pick)
             }
         }
         if (zoneMultiSelect) {
@@ -369,12 +382,12 @@ class CommissioningWizardScreen : BaseScreen() {
         }
     }
 
-    private fun commitOriginPick(progress: Float) {
-        val p = progress.coerceIn(0f, 1f)
-        if (siteVm.setOriginForCurrentDrawing(p, p)) {
-            cadController?.originWorldFromProgress(p)?.let { (x, y) ->
-                cadController?.setOriginWorldMarker(x, y)
-            }
+    private fun commitOriginPick(pick: com.example.cnv.cad.RouteStartPointPicker.Pick) {
+        val wx = pick.world.x.toFloat()
+        val wy = pick.world.y.toFloat()
+        if (siteVm.setOriginForCurrentDrawing(wx, wy)) {
+            // Marker uses saved world coords — not remapped to start segment.
+            cadController?.setOriginWorldMarker(pick.world.x, pick.world.y)
             Toast.makeText(requireContext(), R.string.setup_origin_set, Toast.LENGTH_SHORT).show()
             refresh()
             view?.let { showStep(it) }
@@ -386,9 +399,14 @@ class CommissioningWizardScreen : BaseScreen() {
     private fun applyOriginMarkerFromDrawing() {
         val drawing = FactoryCatalog.get().drawings.current() ?: return
         if (!drawing.originSet) return
-        val progress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
-        cadController?.originWorldFromProgress(progress)?.let { (x, y) ->
-            cadController?.setOriginWorldMarker(x, y)
+        val ox = drawing.originX ?: return
+        val oy = drawing.originY ?: return
+        if (com.example.cnv.factory.model.OriginCoordinate.isLegacyProgressPair(ox, oy)) {
+            cadController?.originWorldFromProgress(ox)?.let { (x, y) ->
+                cadController?.setOriginWorldMarker(x, y)
+            }
+        } else {
+            cadController?.setOriginWorldMarker(ox.toDouble(), oy.toDouble())
         }
     }
 

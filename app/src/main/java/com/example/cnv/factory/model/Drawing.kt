@@ -18,7 +18,7 @@ data class Drawing(
      * user may override after DXF import.
      */
     val conveyorLayerName: String = com.example.cnv.dwg.DWGConfig.DEFAULT_LAYER_FILTER,
-    /** Conveyor start / Route Origin — set once after DWG registration. */
+    /** Conveyor / Inspection Origin in drawing-world coordinates (STEP 20-23). */
     val originSet: Boolean = false,
     val originX: Float? = null,
     val originY: Float? = null,

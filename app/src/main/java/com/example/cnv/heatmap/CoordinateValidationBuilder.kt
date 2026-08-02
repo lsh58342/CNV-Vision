@@ -40,16 +40,35 @@ object CoordinateValidationBuilder {
         var shockCount = 0
         var offRoute = 0
 
-        // Origin (yellow)
-        val originProgress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
-        val originSeg = route.startSegmentId
-        val originWorld = HeatMapRouteLayout.toDrawingCoordinate(layout, originSeg, originProgress)
+        // Origin (yellow) — world coords on Drawing (legacy progress supported).
+        val originResolved = com.example.cnv.factory.model.OriginCoordinate.resolveWorld(
+            drawing = drawing,
+            route = route,
+            layout = layout,
+        )
+        val originWorld = originResolved?.let {
+            com.example.cnv.route.WorldCoordinate(it.first, it.second)
+        }
         if (originWorld != null) {
+            val originMm = if (
+                com.example.cnv.factory.model.OriginCoordinate.isLegacyProgressPair(
+                    drawing.originX,
+                    drawing.originY,
+                )
+            ) {
+                HeatMapRouteLayout.absoluteRouteMm(
+                    layout,
+                    route.startSegmentId,
+                    (drawing.originX ?: 0f).coerceIn(0f, 1f),
+                ) ?: 0f
+            } else {
+                0f
+            }
             points.add(
                 CoordinateDebugPoint(
                     drawingX = originWorld.x,
                     drawingY = originWorld.y,
-                    routePositionMm = HeatMapRouteLayout.absoluteRouteMm(layout, originSeg, originProgress) ?: 0f,
+                    routePositionMm = originMm,
                     routePositionLabel = "ORIGIN",
                     timestampNs = 0L,
                     kind = CoordinateDebugPointKind.ORIGIN,

@@ -662,7 +662,7 @@ class SiteNavigationViewModel : ViewModel() {
         val drawing = catalog.drawings.current(context) ?: return false
         if (drawing.routeLocked) return false
         if (!drawing.dwgRegistered) return false
-        if (drawing.originSet) return false // once only
+        // Allow re-pick while unlocked so Origin can be corrected (STEP 20-23).
         catalog.drawings.upsert(
             drawing.copy(
                 originSet = true,
@@ -670,6 +670,12 @@ class SiteNavigationViewModel : ViewModel() {
                 originY = y,
                 updatedAtMs = System.currentTimeMillis(),
             ),
+        )
+        println(
+            "LOG[OriginPick][SAVE]\n" +
+                "Origin X=${"%.2f".format(x)}\n" +
+                "Origin Y=${"%.2f".format(y)}\n" +
+                "Drawing=${drawing.id}",
         )
         loadDrawingDashboard()
         return true

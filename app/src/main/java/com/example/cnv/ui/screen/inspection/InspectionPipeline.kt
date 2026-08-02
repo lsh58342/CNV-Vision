@@ -523,14 +523,14 @@ class InspectionPipeline(
         val drawing = ctx.drawingId?.let { catalog.drawings.get(it) } ?: catalog.drawings.current(ctx)
         var originX: Double? = null
         var originY: Double? = null
-        if (drawing?.originSet == true) {
-            val progress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
-            val startSeg = route.startSegmentId ?: ordered.firstOrNull()
-            if (startSeg != null) {
-                val o = HeatMapRouteLayout.toDrawingCoordinate(layout, startSeg, progress)
-                originX = o?.x
-                originY = o?.y
-            }
+        if (drawing != null) {
+            val o = com.example.cnv.factory.model.OriginCoordinate.resolveWorld(
+                drawing = drawing,
+                route = route,
+                layout = layout,
+            )
+            originX = o?.first
+            originY = o?.second
         }
 
         val zone = catalog.zones.current(ctx)

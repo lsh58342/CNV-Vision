@@ -5,17 +5,22 @@ import com.example.cnv.route.WorldCoordinate
 import kotlin.math.hypot
 
 /**
- * Picks a Route Start Point (Origin) from a CAD view tap.
- * Projects onto the nearest route segment, then maps progress onto [Route.startSegmentId]
- * so Drawing.originX matches existing HeatMap / validation consumers.
+ * Picks Drawing Origin from a CAD view tap (STEP 20-23).
+ *
+ * Origin = **nearest point on any Route segment** to the touch (not Route start,
+ * not remapped onto [Route.startSegmentId]).
+ * Off-route taps still snap to the nearest segment point.
  */
 object RouteStartPointPicker {
 
     data class Pick(
-        val progressOnStartSegment: Float,
         val world: WorldCoordinate,
         val nearestSegmentId: String,
+        val nearestSegmentIndex: Int,
         val nearestProgress: Float,
+        val nearestDistancePx: Float,
+        val screenX: Float,
+        val screenY: Float,
     )
 
     fun pick(
@@ -24,23 +29,32 @@ object RouteStartPointPicker {
         route: Route,
         layout: CADRenderer.Layout,
         camera: CADCamera,
-        maxDistancePx: Float = 48f,
+        /** Unused for gating — kept for API compat; off-route always snaps to nearest. */
+        maxDistancePx: Float = Float.MAX_VALUE,
     ): Pick? {
-        val nearest = nearestOnRoute(viewX, viewY, layout, camera, maxDistancePx) ?: return null
-        val startPair = layout.segmentWorld[route.startSegmentId]
-            ?: return Pick(
-                progressOnStartSegment = nearest.progress,
-                world = nearest.world,
-                nearestSegmentId = nearest.segmentId,
-                nearestProgress = nearest.progress,
-            )
-        val progress = projectProgress(nearest.world, startPair)
-        val worldOnStart = lerp(startPair.first, startPair.second, progress)
+        val nearest = nearestOnRoute(viewX, viewY, route, layout, camera) ?: return null
+        println(
+            "LOG[OriginPick][HIT]\n" +
+                "Screen X=${"%.1f".format(viewX)}\n" +
+                "Screen Y=${"%.1f".format(viewY)}\n" +
+                "World X=${"%.2f".format(nearest.world.x)}\n" +
+                "World Y=${"%.2f".format(nearest.world.y)}\n" +
+                "Nearest Segment Index=${nearest.segmentIndex}\n" +
+                "Nearest Segment Id=${nearest.segmentId}\n" +
+                "Nearest Progress=${"%.3f".format(nearest.progress)}\n" +
+                "Nearest Distance=${"%.1f".format(nearest.distancePx)}px",
+        )
+        // maxDistancePx reserved for future soft UX hints only.
+        @Suppress("UNUSED_EXPRESSION")
+        maxDistancePx
         return Pick(
-            progressOnStartSegment = progress,
-            world = worldOnStart,
+            world = nearest.world,
             nearestSegmentId = nearest.segmentId,
+            nearestSegmentIndex = nearest.segmentIndex,
             nearestProgress = nearest.progress,
+            nearestDistancePx = nearest.distancePx,
+            screenX = viewX,
+            screenY = viewY,
         )
     }
 
@@ -55,6 +69,7 @@ object RouteStartPointPicker {
 
     private data class Nearest(
         val segmentId: String,
+        val segmentIndex: Int,
         val progress: Float,
         val world: WorldCoordinate,
         val distancePx: Float,
@@ -63,21 +78,23 @@ object RouteStartPointPicker {
     private fun nearestOnRoute(
         viewX: Float,
         viewY: Float,
+        route: Route,
         layout: CADRenderer.Layout,
         camera: CADCamera,
-        maxDistancePx: Float,
     ): Nearest? {
         var best: Nearest? = null
-        for ((id, pair) in layout.segmentWorld) {
+        val orderedIds = orderedSegmentIds(route, layout)
+        orderedIds.forEachIndexed { index, id ->
+            val pair = layout.segmentWorld[id] ?: return@forEachIndexed
             val x1 = camera.worldToViewX(pair.first.x)
             val y1 = camera.worldToViewY(pair.first.y)
             val x2 = camera.worldToViewX(pair.second.x)
             val y2 = camera.worldToViewY(pair.second.y)
             val projected = projectView(viewX, viewY, x1, y1, x2, y2)
-            if (projected.distance > maxDistancePx) continue
-            if (best == null || projected.distance < best.distancePx) {
+            if (best == null || projected.distance < best!!.distancePx) {
                 best = Nearest(
                     segmentId = id,
+                    segmentIndex = index,
                     progress = projected.t,
                     world = lerp(pair.first, pair.second, projected.t),
                     distancePx = projected.distance,
@@ -87,15 +104,24 @@ object RouteStartPointPicker {
         return best
     }
 
-    private fun projectProgress(
-        world: WorldCoordinate,
-        pair: Pair<WorldCoordinate, WorldCoordinate>,
-    ): Float {
-        val dx = pair.second.x - pair.first.x
-        val dy = pair.second.y - pair.first.y
-        if (dx == 0.0 && dy == 0.0) return 0f
-        val t = ((world.x - pair.first.x) * dx + (world.y - pair.first.y) * dy) / (dx * dx + dy * dy)
-        return t.toFloat().coerceIn(0f, 1f)
+    private fun orderedSegmentIds(route: Route, layout: CADRenderer.Layout): List<String> {
+        val ordered = ArrayList<String>()
+        val visited = HashSet<String>()
+        var segmentId: String? = route.startSegmentId
+        var guard = 0
+        while (segmentId != null && segmentId !in visited && guard < route.segments.size + 2) {
+            guard++
+            visited.add(segmentId)
+            if (layout.segmentWorld.containsKey(segmentId)) {
+                ordered.add(segmentId)
+            }
+            val seg = route.segment(segmentId) ?: break
+            segmentId = route.preferredOutgoingEdge(seg.toNodeId)?.segmentId
+        }
+        for (id in layout.segmentWorld.keys) {
+            if (id !in visited) ordered.add(id)
+        }
+        return ordered
     }
 
     private fun projectView(

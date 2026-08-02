@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Drawing
+import com.example.cnv.factory.model.OriginCoordinate
 import com.example.cnv.factory.model.Zone
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.DrawingHeatPoint
@@ -228,13 +229,8 @@ class HeatMapViewModel(
         drawing: Drawing,
         route: Route?,
         layout: HeatMapRouteLayout.LayoutResult?,
-    ): Pair<Double, Double>? {
-        if (!drawing.originSet || route == null || layout == null) return null
-        val progress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
-        val world = HeatMapRouteLayout.toDrawingCoordinate(layout, route.startSegmentId, progress)
-            ?: return null
-        return world.x to world.y
-    }
+    ): Pair<Double, Double>? =
+        OriginCoordinate.resolveWorld(drawing, route, layout)
 
     private fun buildZoneOverlays(
         drawingId: String,

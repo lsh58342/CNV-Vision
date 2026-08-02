@@ -136,6 +136,12 @@ class CADInteractionController(
     fun latestSelectionInfo(): SelectionInfo? = latestInfo
 
     private fun handleTap(x: Float, y: Float) {
+        println(
+            "LOG[OriginPick][TOUCH_EVENT]\n" +
+                "Screen X=${"%.1f".format(x)}\n" +
+                "Screen Y=${"%.1f".format(y)}\n" +
+                "OriginListener=${onOriginTap != null}",
+        )
         onOriginTap?.invoke(x, y)
         val route = cadView.routeOrNull() ?: return
         val layout = cadView.layoutOrNull() ?: return
