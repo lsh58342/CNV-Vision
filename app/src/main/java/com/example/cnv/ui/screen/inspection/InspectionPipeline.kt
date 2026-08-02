@@ -16,6 +16,7 @@ import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.fusion.FusionEngine
 import com.example.cnv.imu.IMUManager
+import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.inspection.InspectionState
@@ -23,8 +24,13 @@ import com.example.cnv.inspection.RouteQualityScore
 import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.opencv.OpenCVManager
+import com.example.cnv.production.ProductionMetrics
 import com.example.cnv.route.RouteGenerator
+import com.example.cnv.rule.RuleSeverity
 import com.example.cnv.speed.SpeedValidatorEngine
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Inspection UI bridge — wires existing Camera / OpenCV / Fusion / Inspection engines.
@@ -61,6 +67,17 @@ class InspectionPipeline(
 
     /** Frozen at START — finishSession uses this, not live Drawing profile. */
     private var sessionConveyorSnapshot: ConveyorProfileSnapshot? = null
+
+    /** Cached route layout for dashboard coordinate / coverage display (built once). */
+    private var dashboardLayout: HeatMapRouteLayout.LayoutResult? = null
+
+    /** Lightweight live shock display aggregates from FusionResult (not Analysis Engine). */
+    private var liveMaxShock: Float = 0f
+    private var liveShockSum: Float = 0f
+    private var liveShockSamples: Int = 0
+    private var liveShockCount: Int = 0
+    private var liveDistanceMm: Float = 0f
+    private var lastFusionTimestampNs: Long = 0L
 
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
@@ -170,6 +187,8 @@ class InspectionPipeline(
         val profileSnap = drawing?.conveyorProfile?.let { ConveyorProfileSnapshot.from(it) }
             ?: ConveyorProfileSnapshot.empty()
         sessionConveyorSnapshot = profileSnap
+        resetLiveAggregates()
+        ensureDashboardLayout()
         if (drawingId != null) {
             val conveyorLive = drawing?.conveyorProfile
             com.example.cnv.inspection.db.InspectionDbGate.execute {
@@ -248,54 +267,215 @@ class InspectionPipeline(
         return result
     }
 
-    fun readStatus(): InspectionUiStatus {
+    fun readStatus(): InspectionUiStatus = readLiveDashboard().toUiStatus()
+
+    /**
+     * Live Dashboard snapshot — Repository / Engine reads only (STEP 20-1).
+     * Does not run Analysis, Rule evaluation, HeatMap, or Distance algorithms.
+     */
+    fun readLiveDashboard(): LiveInspectionDashboardState {
         val fusion = fusionEngine.repository.latest()
         val position = mapMatchingEngine.latestPosition()
         val session = inspectionManager.currentSession()
         val state = inspectionManager.state()
-        val tracking = when {
-            state == InspectionState.RUNNING && position != null -> "LOCKED"
-            state == InspectionState.RUNNING -> "SEARCHING"
+        val running = state == InspectionState.RUNNING
+        val sample = speedValidatorEngine.latest()
+        val speedSummary = speedValidatorEngine.sessionSummary()
+        val layout = ensureDashboardLayout()
+
+        if (fusion != null && fusion.timestampNs != lastFusionTimestampNs) {
+            lastFusionTimestampNs = fusion.timestampNs
+            liveDistanceMm += kotlin.math.abs(fusion.distance)
+            if (fusion.shockLevel > 0f) {
+                liveShockCount++
+                liveShockSum += fusion.shockLevel
+                liveShockSamples++
+                if (fusion.shockLevel > liveMaxShock) liveMaxShock = fusion.shockLevel
+            }
+        }
+
+        val trackingLabel = when {
+            running && position != null -> "LOCKED"
+            running -> "SEARCHING"
             else -> state.name
         }
-        val distance = when {
-            session != null && state == InspectionState.RUNNING -> {
-                session.recorder().computeStatistics(
-                    freeze = session.freeze,
-                    startTimeMs = session.startTimeMs,
-                    endTimeMs = System.currentTimeMillis(),
-                ).totalDistanceMm
-            }
-            fusion != null -> fusion.distance
-            else -> 0f
-        }
-        val shocks = when {
-            session != null && state == InspectionState.RUNNING -> {
-                session.recorder().computeStatistics(
-                    freeze = session.freeze,
-                    startTimeMs = session.startTimeMs,
-                    endTimeMs = System.currentTimeMillis(),
-                ).shockCount
-            }
-            else -> 0
-        }
-        val elapsedSec = if (session != null && state == InspectionState.RUNNING) {
-            session.elapsedMs() / 1000.0
+        val routeMm = if (position != null && layout != null) {
+            HeatMapRouteLayout.absoluteRouteMm(layout, position.segmentId, position.progress) ?: 0f
         } else {
-            0.0
+            liveDistanceMm
         }
-        val sample = speedValidatorEngine.latest()
-        return InspectionUiStatus(
-            trackingLabel = tracking,
-            distanceMm = distance,
-            shockCount = shocks,
+        val world = if (position != null && layout != null) {
+            HeatMapRouteLayout.toDrawingCoordinate(layout, position.segmentId, position.progress)
+        } else {
+            null
+        }
+        val coverage = if (layout != null && layout.totalLengthMm > 0f) {
+            (routeMm / layout.totalLengthMm).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        val zoneName = resolveZoneName(routeMm, layout)
+        val ctx = CurrentContext.get()
+        val drawing = ctx.drawingId?.let { catalog.drawings.get(it) } ?: catalog.drawings.current(ctx)
+        val floor = drawing?.floorId?.let { catalog.floors.get(it) }
+            ?: ctx.floorId?.let { catalog.floors.get(it) }
+        val building = floor?.buildingId?.let { catalog.buildings.get(it) }
+            ?: ctx.buildingId?.let { catalog.buildings.get(it) }
+        val timeLabel = if (session != null) {
+            SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(session.startTimeMs))
+        } else {
+            "—"
+        }
+        val elapsedSec = if (session != null && running) session.elapsedMs() / 1000.0 else 0.0
+        val avgShock = if (liveShockSamples > 0) liveShockSum / liveShockSamples else 0f
+        val confidence = position?.confidence
+            ?: fusion?.confidence
+            ?: sample?.validatedFusionConfidence
+            ?: 0f
+        val speedDiff = if (sample != null) {
+            sample.measuredSpeedMPerMin - sample.nominalSpeedMPerMin
+        } else {
+            null
+        }
+        val warnings = buildWarnings(sample != null && speedValidatorEngine.mismatchWarning())
+        return LiveInspectionDashboardState(
+            buildingName = building?.name ?: "—",
+            floorName = floor?.name ?: "—",
+            drawingName = drawing?.name ?: "—",
+            inspectionTimeLabel = timeLabel,
             elapsedSec = elapsedSec,
+            currentZoneName = zoneName,
+            routePositionMm = routeMm,
+            coordinateX = world?.x?.toFloat(),
+            coordinateY = world?.y?.toFloat(),
+            currentSpeedMPerMin = sample?.measuredSpeedMPerMin,
+            nominalSpeedMPerMin = sample?.nominalSpeedMPerMin
+                ?: drawing?.conveyorProfile?.nominalSpeedMPerMin,
+            speedDifferenceMPerMin = speedDiff,
+            currentShock = fusion?.shockLevel ?: 0f,
+            maximumShock = liveMaxShock,
+            averageShock = avgShock,
+            trackingConfidence = confidence,
+            coverage = coverage,
+            validationScore = speedSummary.validationScore,
+            trackingLabel = trackingLabel,
             sessionState = state.name,
-            running = state == InspectionState.RUNNING,
+            running = running,
+            system = buildSystemStatus(running, trackingLabel, fusion != null),
+            warnings = warnings,
+            distanceMm = routeMm,
+            shockCount = liveShockCount,
             speedMismatchWarning = speedValidatorEngine.mismatchWarning(),
-            speedValidationConfidence = sample?.confidence,
-            validatedFusionConfidence = sample?.validatedFusionConfidence,
         )
+    }
+
+    private fun buildSystemStatus(
+        running: Boolean,
+        trackingLabel: String,
+        hasFusion: Boolean,
+    ): SystemStatusSnapshot {
+        val metrics = ProductionMetrics.snapshot()
+        fun fromAge(ageMs: Double, expected: Boolean): SystemModuleState = when {
+            !expected -> SystemModuleState.READY
+            ageMs.isInfinite() || ageMs > 5_000 -> SystemModuleState.ERROR
+            ageMs > 2_000 -> SystemModuleState.WARNING
+            running -> SystemModuleState.RUNNING
+            else -> SystemModuleState.READY
+        }
+        val trackingState = when {
+            !running -> SystemModuleState.READY
+            trackingLabel == "LOCKED" -> SystemModuleState.RUNNING
+            trackingLabel == "SEARCHING" -> SystemModuleState.WARNING
+            else -> SystemModuleState.READY
+        }
+        val roomState = when {
+            metrics.roomRetries > 5 -> SystemModuleState.ERROR
+            metrics.roomRetries > 0 -> SystemModuleState.WARNING
+            else -> SystemModuleState.READY
+        }
+        return SystemStatusSnapshot(
+            camera = fromAge(metrics.cameraStallMs, cameraRunning),
+            openCv = fromAge(metrics.processStallMs, cameraRunning),
+            tracking = trackingState,
+            fusion = when {
+                !sensorsRunning -> SystemModuleState.READY
+                !hasFusion && running -> SystemModuleState.WARNING
+                running -> SystemModuleState.RUNNING
+                else -> SystemModuleState.READY
+            },
+            replay = SystemModuleState.READY,
+            room = roomState,
+        )
+    }
+
+    private fun buildWarnings(speedMismatch: Boolean): List<LiveDashboardWarning> {
+        val out = ArrayList<LiveDashboardWarning>()
+        if (speedMismatch) {
+            out += LiveDashboardWarning("Speed", "Nominal vs measured mismatch")
+        }
+        // Cached Rule Result only — never re-evaluate.
+        val sessionId = inspectionManager.currentSession()?.sessionId
+        val cached = sessionId?.let { catalog.rules.getCached(it) }
+        cached?.triggered().orEmpty()
+            .filter {
+                it.severity == RuleSeverity.CRITICAL ||
+                    it.severity == RuleSeverity.HIGH ||
+                    it.severity == RuleSeverity.MEDIUM
+            }
+            .forEach { hit ->
+                out += LiveDashboardWarning(hit.ruleId, hit.description)
+            }
+        val metrics = ProductionMetrics.snapshot()
+        if (metrics.cameraStallMs.isFinite() && metrics.cameraStallMs > 3_000 && cameraRunning) {
+            out += LiveDashboardWarning("Camera", "Frame stall")
+        }
+        return out
+    }
+
+    private fun resolveZoneName(
+        routeMm: Float,
+        layout: HeatMapRouteLayout.LayoutResult?,
+    ): String {
+        val ctx = CurrentContext.get()
+        val current = catalog.zones.current(ctx)
+        if (current != null) return current.name
+        val drawingId = ctx.drawingId ?: return "—"
+        if (layout == null) return "—"
+        val zones = catalog.zones.forDrawing(drawingId)
+        for (zone in zones) {
+            val start = resolveAnchorMm(zone.start, layout) ?: continue
+            val end = resolveAnchorMm(zone.end, layout) ?: start
+            val lo = minOf(start, end)
+            val hi = maxOf(start, end)
+            if (routeMm in lo..hi) return zone.name
+        }
+        return "—"
+    }
+
+    private fun resolveAnchorMm(
+        anchor: com.example.cnv.factory.model.RouteAnchor,
+        layout: HeatMapRouteLayout.LayoutResult,
+    ): Float? {
+        val segmentId = anchor.segmentId ?: return null
+        val progress = anchor.progress ?: 0f
+        return HeatMapRouteLayout.absoluteRouteMm(layout, segmentId, progress)
+    }
+
+    private fun ensureDashboardLayout(): HeatMapRouteLayout.LayoutResult? {
+        dashboardLayout?.let { return it }
+        val route = routeRepository.current() ?: return null
+        val built = HeatMapRouteLayout.build(route)
+        dashboardLayout = built
+        return built
+    }
+
+    private fun resetLiveAggregates() {
+        liveMaxShock = 0f
+        liveShockSum = 0f
+        liveShockSamples = 0
+        liveShockCount = 0
+        liveDistanceMm = 0f
+        lastFusionTimestampNs = 0L
     }
 
     private fun startSensors() {
@@ -305,6 +485,7 @@ class InspectionPipeline(
         mapMatchingEngine.start()
         imuManager.start()
         routeDebugController.start()
+        ensureDashboardLayout()
         sensorsRunning = true
     }
 
@@ -316,5 +497,7 @@ class InspectionPipeline(
         speedValidatorEngine.stop()
         fusionEngine.stop()
         sensorsRunning = false
+        dashboardLayout = null
+        resetLiveAggregates()
     }
 }

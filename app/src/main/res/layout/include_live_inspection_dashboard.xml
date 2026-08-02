@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="4dp"
+    android:paddingBottom="4dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/live_dash_title"
+        android:textAppearance="@style/TextAppearance.CNV.Caption"
+        android:textStyle="bold" />
+
+    <!-- Inspection Header -->
+    <TextView
+        android:id="@+id/live_dash_building"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_floor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_drawing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_inspection_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_elapsed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="4dp"
+        android:background="@color/cnv_surface" />
+
+    <TextView
+        android:id="@+id/live_dash_zone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_route_mm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_coord"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_speed"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_nominal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_speed_diff"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_shock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_max_shock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_avg_shock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_tracking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_coverage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_validation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="4dp"
+        android:background="@color/cnv_surface" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/live_dash_system_title"
+        android:textAppearance="@style/TextAppearance.CNV.Caption"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/live_dash_st_camera"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_st_opencv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_st_tracking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_st_fusion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_st_replay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    <TextView
+        android:id="@+id/live_dash_st_room"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <LinearLayout
+        android:id="@+id/live_dash_warning_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="#33FF5252"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/live_dash_warning_title"
+            android:textColor="#FF5252"
+            android:textStyle="bold"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <TextView
+            android:id="@+id/live_dash_warning_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FF5252"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+    </LinearLayout>
+</LinearLayout>

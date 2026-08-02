@@ -590,4 +590,33 @@
     <string name="excel_open_fail">Cannot open Excel file</string>
     <string name="history_open_excel">Open Excel</string>
     <string name="history_open_excel_named">Open Excel: %1$s</string>
+
+    <!-- Live Inspection Dashboard (STEP 20-1) -->
+    <string name="live_dash_title">Live Dashboard</string>
+    <string name="live_dash_system_title">System Status</string>
+    <string name="live_dash_warning_title">Warnings</string>
+    <string name="live_dash_building_fmt">Building: %1$s</string>
+    <string name="live_dash_floor_fmt">Floor: %1$s</string>
+    <string name="live_dash_drawing_fmt">Drawing: %1$s</string>
+    <string name="live_dash_time_fmt">Inspection Time: %1$s</string>
+    <string name="live_dash_elapsed_fmt">Elapsed: %1$.1f s</string>
+    <string name="live_dash_zone_fmt">Current Zone: %1$s</string>
+    <string name="live_dash_route_mm_fmt">Route Position: %1$.0f mm</string>
+    <string name="live_dash_coord_fmt">Coordinate: X=%1$.1f Y=%2$.1f</string>
+    <string name="live_dash_coord_na">Coordinate: —</string>
+    <string name="live_dash_speed_label">Current Speed:</string>
+    <string name="live_dash_nominal_label">Nominal Speed:</string>
+    <string name="live_dash_speed_diff_label">Speed Difference:</string>
+    <string name="live_dash_shock_fmt">Current Shock: %1$.2f</string>
+    <string name="live_dash_max_shock_fmt">Maximum Shock: %1$.2f</string>
+    <string name="live_dash_avg_shock_fmt">Average Shock: %1$.2f</string>
+    <string name="live_dash_tracking_fmt">Tracking: %1$s (conf %2$.2f)</string>
+    <string name="live_dash_coverage_fmt">Coverage: %1$.1f%%</string>
+    <string name="live_dash_validation_fmt">Validation Score: %1$.2f</string>
+    <string name="live_dash_mod_camera">Camera</string>
+    <string name="live_dash_mod_opencv">OpenCV</string>
+    <string name="live_dash_mod_tracking">Tracking</string>
+    <string name="live_dash_mod_fusion">Fusion</string>
+    <string name="live_dash_mod_replay">Replay</string>
+    <string name="live_dash_mod_room">Room</string>
 </resources>

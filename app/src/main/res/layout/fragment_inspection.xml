@@ -45,27 +45,39 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="4dp"
-        android:layout_weight="7" />
+        android:layout_weight="5" />
 
-    <LinearLayout
-        android:id="@+id/inspection_status_section"
+    <ScrollView
+        android:id="@+id/inspection_dashboard_scroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:layout_height="0dp"
+        android:layout_weight="5"
+        android:fillViewport="true"
         android:paddingHorizontal="12dp"
         android:paddingTop="4dp">
 
-        <FrameLayout
-            android:id="@+id/inspection_status_header_slot"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
         <LinearLayout
-            android:id="@+id/inspection_status_cards"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </LinearLayout>
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/live_inspection_dashboard"
+                layout="@layout/include_live_inspection_dashboard" />
+
+            <FrameLayout
+                android:id="@+id/inspection_status_header_slot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp" />
+
+            <LinearLayout
+                android:id="@+id/inspection_status_cards"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:id="@+id/inspection_actions"

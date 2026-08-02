@@ -18,8 +18,8 @@ import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
 /**
- * Inspection Screen — Camera preview + START/STOP + live status only.
- * No HeatMap / History / Settings / Developer / Commissioning chrome.
+ * Inspection Screen — Camera preview + START/STOP + Live Dashboard.
+ * Dashboard reads Repository / Engine snapshots only (STEP 20-1).
  */
 class InspectionScreen : BaseScreen() {
 
@@ -31,6 +31,7 @@ class InspectionScreen : BaseScreen() {
     private lateinit var distanceCardValue: TextView
     private lateinit var shockCardValue: TextView
     private lateinit var elapsedCardValue: TextView
+    private var dashboardBinder: LiveInspectionDashboardBinder? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +47,10 @@ class InspectionScreen : BaseScreen() {
         view.findViewById<TextView>(R.id.inspection_zone_name).text = zoneName
         view.findViewById<TextView>(R.id.inspection_session_status).text =
             getString(R.string.insp_session_status, "IDLE")
+
+        dashboardBinder = LiveInspectionDashboardBinder(
+            view.findViewById(R.id.live_inspection_dashboard),
+        )
 
         val headerSlot = view.findViewById<FrameLayout>(R.id.inspection_status_header_slot)
         headerSlot.addView(
@@ -81,6 +86,10 @@ class InspectionScreen : BaseScreen() {
         val preview = view.findViewById<PreviewView>(R.id.inspection_preview)
         viewModel.attachPreview(preview)
 
+        viewModel.dashboard.observe(viewLifecycleOwner) { dash ->
+            dashboardBinder?.bind(dash)
+        }
+
         viewModel.status.observe(viewLifecycleOwner) { status ->
             view.findViewById<TextView>(R.id.inspection_session_status).text =
                 getString(R.string.insp_session_status, status.sessionState)
@@ -104,6 +113,7 @@ class InspectionScreen : BaseScreen() {
     }
 
     override fun onDestroyView() {
+        dashboardBinder = null
         viewModel.detachPreview()
         super.onDestroyView()
     }
