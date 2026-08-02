@@ -2,6 +2,7 @@ package com.example.cnv.factory.repository
 
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.heatmap.DrawingHeatLayer
+import com.example.cnv.heatmap.DrawingHeatPoint
 import com.example.cnv.heatmap.HeatMapGenerator
 import com.example.cnv.heatmap.HeatMapIntensityConfig
 import com.example.cnv.inspection.InspectionRepository
@@ -29,6 +30,21 @@ class HeatMapRepository(
     private val lock = Any()
     private val byDrawing = LinkedHashMap<String, ArrayDeque<HeatMapRef>>()
     private val layers = LinkedHashMap<String, DrawingHeatLayer>()
+    private val layerListeners = mutableListOf<(String) -> Unit>()
+
+    /** Viewer observes HeatLayer updates (no generation in UI). */
+    fun addLayerListener(listener: (drawingId: String) -> Unit) {
+        synchronized(lock) { layerListeners.add(listener) }
+    }
+
+    fun removeLayerListener(listener: (drawingId: String) -> Unit) {
+        synchronized(lock) { layerListeners.remove(listener) }
+    }
+
+    private fun notifyLayerChanged(drawingId: String) {
+        val copy = synchronized(lock) { layerListeners.toList() }
+        copy.forEach { it(drawingId) }
+    }
 
     fun put(ref: HeatMapRef) {
         synchronized(lock) {
@@ -85,17 +101,29 @@ class HeatMapRepository(
                 )
             }
         }
+        notifyLayerChanged(drawingId)
         return layer
     }
 
     fun loadHeatLayer(drawingId: String): DrawingHeatLayer? =
         synchronized(lock) { layers[drawingId] }
 
+    /**
+     * Display filter only — returns points for one session from stored layer.
+     * Does not generate or mutate HeatLayer.
+     */
+    fun loadHeatPointsForSession(drawingId: String, sessionId: String): List<DrawingHeatPoint> {
+        val layer = loadHeatLayer(drawingId) ?: return emptyList()
+        if (sessionId.isBlank()) return layer.points
+        return layer.points.filter { it.sessionId == sessionId }
+    }
+
     fun deleteHeatLayer(drawingId: String) {
         synchronized(lock) {
             layers.remove(drawingId)
             byDrawing.remove(drawingId)
         }
+        notifyLayerChanged(drawingId)
     }
 
     /**

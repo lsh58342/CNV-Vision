@@ -2,41 +2,189 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@color/cnv_bg"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="8dp">
 
-    <TextView
-        android:id="@+id/screen_title"
+    <!-- Toolbar -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="HeatMap"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/screen_heatmap"
+            android:textAppearance="@style/TextAppearance.CNV.Title" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_zoom_in"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:minWidth="44dp"
+            android:text="@string/heatmap_zoom_in" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_zoom_out"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="44dp"
+            android:minWidth="44dp"
+            android:text="@string/heatmap_zoom_out" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_fit"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="44dp"
+            android:text="@string/heatmap_fit" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_reset"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="44dp"
+            android:text="@string/heatmap_reset" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_heatmap_back"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:minHeight="44dp"
+            android:text="@string/nav_back" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/screen_body"
+        android:id="@+id/heatmap_drawing_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textAppearance="@style/TextAppearance.CNV.Body"
+        android:textColor="@android:color/white" />
+
+    <TextView
+        android:id="@+id/heatmap_inspection_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <Spinner
+        android:id="@+id/heatmap_session_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:minHeight="48dp" />
+
+    <!-- Layer toggles -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggle_heatmap"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="40dp"
+                android:text="@string/heatmap_toggle_heat" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggle_route"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:minHeight="40dp"
+                android:text="@string/heatmap_toggle_route" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggle_zone"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:minHeight="40dp"
+                android:text="@string/heatmap_toggle_zone" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggle_origin"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:minHeight="40dp"
+                android:text="@string/heatmap_toggle_origin" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/toggle_shock"
+                style="@style/Widget.CNV.Button.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:minHeight="40dp"
+                android:text="@string/heatmap_toggle_shock" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- CAD ≥85% -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
-        android:text="@string/rebuild_phase1_skeleton"
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
+        android:layout_marginTop="6dp"
+        android:layout_weight="1">
 
-    <Button
-        android:id="@+id/button_screen_next"
+        <com.example.cnv.cad.CADView
+            android:id="@+id/heatmap_cad_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.example.cnv.heatmap.HeatLayerViewerOverlay
+            android:id="@+id/heatmap_viewer_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <TextView
+            android:id="@+id/heatmap_empty_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#99000000"
+            android:padding="12dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            android:textColor="@android:color/white"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Bottom panel -->
+    <TextView
+        android:id="@+id/heatmap_bottom_panel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="52dp"
-        android:text="@string/rebuild_next" />
-
-    <Button
-        android:id="@+id/button_screen_back"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:minHeight="48dp"
-        android:text="@string/nav_back" />
+        android:layout_marginTop="6dp"
+        android:background="#1A1A1A"
+        android:fontFamily="monospace"
+        android:minHeight="72dp"
+        android:padding="10dp"
+        android:textAppearance="@style/TextAppearance.CNV.Caption"
+        android:textColor="#E0E0E0" />
 </LinearLayout>

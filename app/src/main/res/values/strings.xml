@@ -149,6 +149,17 @@
     <string name="heatmap_overlay_label">HeatMap Overlay</string>
     <string name="heatmap_stats_toggle">Statistics (tap to expand)</string>
     <string name="heatmap_stats_body">Shock Count: —\nCoverage: —\nDistance: —\nInspection Time: —\nAverage Shock: —\nMaximum Shock: —</string>
+    <string name="heatmap_drawing_label">Drawing: %1$s</string>
+    <string name="heatmap_inspection_date_label">Inspection: %1$s</string>
+    <string name="heatmap_no_session_date">—</string>
+    <string name="heatmap_no_sessions">No sessions</string>
+    <string name="heatmap_toggle_heat">HeatMap</string>
+    <string name="heatmap_toggle_route">Route</string>
+    <string name="heatmap_toggle_zone">Zone</string>
+    <string name="heatmap_toggle_origin">Origin</string>
+    <string name="heatmap_toggle_shock">Shock</string>
+    <string name="heatmap_bottom_empty">Inspection Date: —\nDuration: —\nDistance: —\nShock Count: —\nCoverage: —\nMaximum Shock: —</string>
+    <string name="heatmap_bottom_stats">Inspection Date: %1$s\nDuration: %2$s\nDistance: %3$.0f mm\nShock Count: %4$d\nCoverage: %5$.1f%%\nMaximum Shock: %6$.2f</string>
     <string name="history_sort">Sort</string>
     <string name="settings_operation_section">Operation</string>
     <string name="settings_admin_section">Admin / Developer (hidden in Operation)</string>
