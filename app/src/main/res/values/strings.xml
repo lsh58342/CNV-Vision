@@ -112,6 +112,13 @@
     <string name="heatmap_cad_placeholder">CAD Viewer (≥80%)\nHeatMap Overlay</string>
     <string name="history_skeleton">Inspection list\n(date / duration / shock / coverage)</string>
     <string name="developer_skeleton">FPS\nTracking\nFusion\nRoute\nLogs\nDebug HUD placeholders</string>
+    <string name="coord_validation_title">Coordinate Validation</string>
+    <string name="coord_validation_hint">Blue=Event · Red=Shock · Green=Current · Yellow=Origin · Polyline=path</string>
+    <string name="coord_validation_open">Coordinate Validation Overlay</string>
+    <string name="coord_developer_only">Coordinate Validation is Developer Mode only</string>
+    <string name="coord_no_session">No Inspection Session for current Drawing</string>
+    <string name="coord_fit">Fit</string>
+    <string name="coord_reload">Reload</string>
     <string name="settings_camera_skeleton">Camera</string>
     <string name="settings_about">About</string>
     <string name="settings_about_msg">CNV Inspection Management — Operation UI</string>

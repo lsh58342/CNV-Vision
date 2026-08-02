@@ -38,6 +38,7 @@ enum class CnvDestination {
     INSPECTION_HISTORY,
     SETTINGS,
     DEVELOPER,
+    COORDINATE_VALIDATION,
     @Deprecated("Commissioning lives in Drawing Workspace tab")
     COMMISSIONING,
     ;
@@ -59,6 +60,7 @@ enum class CnvDestination {
         INSPECTION_HISTORY -> HistoryScreen()
         SETTINGS -> SettingsScreen()
         DEVELOPER -> DeveloperScreen()
+        COORDINATE_VALIDATION -> com.example.cnv.ui.screen.developer.CoordinateValidationScreen()
         COMMISSIONING -> DrawingWorkspaceScreen()
     }
 }

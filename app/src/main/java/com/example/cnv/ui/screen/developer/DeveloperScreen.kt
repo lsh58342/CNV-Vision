@@ -30,6 +30,9 @@ class DeveloperScreen : BaseScreen() {
                 Toast.makeText(requireContext(), R.string.setup_unlock_failed, Toast.LENGTH_SHORT).show()
             }
         }
+        view.findViewById<Button>(R.id.button_coord_validation).setOnClickListener {
+            nav().navigate(CnvDestination.COORDINATE_VALIDATION)
+        }
         view.findViewById<Button>(R.id.button_screen_next).setOnClickListener {
             if (!siteVm.enterCommissioningMode()) {
                 Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()

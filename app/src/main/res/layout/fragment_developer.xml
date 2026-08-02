@@ -33,6 +33,14 @@
         android:text="@string/setup_unlock_route" />
 
     <Button
+        android:id="@+id/button_coord_validation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="52dp"
+        android:text="@string/coord_validation_open" />
+
+    <Button
         android:id="@+id/button_screen_next"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

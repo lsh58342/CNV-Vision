@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cnv_bg"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/coord_validation_title"
+        android:textAppearance="@style/TextAppearance.CNV.Title" />
+
+    <TextView
+        android:id="@+id/coord_validation_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/coord_validation_hint"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1">
+
+        <com.example.cnv.cad.CADView
+            android:id="@+id/coord_cad_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.example.cnv.heatmap.CoordinateDebugOverlay
+            android:id="@+id/coord_debug_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/coord_stats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="monospace"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_coord_fit"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:text="@string/coord_fit" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_coord_reload"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:text="@string/coord_reload" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_coord_back"
+        style="@style/Widget.CNV.Button.Secondary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="48dp"
+        android:text="@string/nav_back" />
+</LinearLayout>
