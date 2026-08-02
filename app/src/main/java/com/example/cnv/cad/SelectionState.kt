@@ -8,6 +8,10 @@ data class SelectionState(
     val selectedNodeId: String? = null,
     val selectedSegmentId: String? = null,
     val selectedBranchNodeId: String? = null,
+    /** Segment projection 0..1 from last hit-test (not PositionEvent). */
+    val pickProgress: Float = 0f,
+    val pickWorldX: Double? = null,
+    val pickWorldY: Double? = null,
     val errorSegmentIds: Set<String> = emptySet(),
     val selectionCount: Int = 0,
 ) {

@@ -20,6 +20,7 @@ import com.example.cnv.factory.repository.CalibrationRepository
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.seed.LgesPolandSite
 import com.example.cnv.inspection.InspectionResult
+import com.example.cnv.route.CoordinateMapper
 import com.example.cnv.route.RouteGenerator
 import com.example.cnv.zone.dashboard.ZoneDashboardController
 import com.example.cnv.zone.dashboard.ZoneDashboardState
@@ -53,6 +54,12 @@ class SiteNavigationViewModel : ViewModel() {
     private val catalog: FactoryCatalog = FactoryCatalog.get()
     private val context: CurrentContext = CurrentContext.get()
     private var conveyorProfilesHydrated = false
+
+    /** Mapper from last RouteGenerator run (Commissioning CAD wiring). */
+    @Volatile
+    private var routeMapper: CoordinateMapper? = null
+
+    fun currentRouteMapper(): CoordinateMapper? = routeMapper
 
     private val _buildings = MutableLiveData<List<Building>>(emptyList())
     val buildings: LiveData<List<Building>> = _buildings
@@ -319,7 +326,8 @@ class SiteNavigationViewModel : ViewModel() {
         val generator = RouteGenerator(routeRepository = routeRepo)
         val dwgResult = importer.importFrom(source, layerName = layer)
         if (dwgResult.candidates.isEmpty()) return false
-        generator.generate(candidates = dwgResult.candidates)
+        val generated = generator.generate(candidates = dwgResult.candidates) ?: return false
+        routeMapper = generated.mapper
         val route = routeRepo.current() ?: return false
         catalog.routes.setRoute(route)
         catalog.drawings.upsert(
@@ -330,6 +338,27 @@ class SiteNavigationViewModel : ViewModel() {
         )
         loadDrawingDashboard()
         return true
+    }
+
+    /**
+     * Loads Route into [RouteRepository] for Origin CAD pick without marking Drawing.routeId.
+     * Does not bypass Origin gate for official Generate Route.
+     */
+    fun ensureRoutePreviewForCurrentDrawing(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (!drawing.dwgRegistered || drawing.routeLocked) return false
+        if (catalog.routes.hasRoute() && routeMapper != null) return true
+        val routeRepo = catalog.routes.underlying()
+        val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
+        val layer = drawing.conveyorLayerName.ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
+        val importer = DWGImporter(reader = CadReaderFactory.create(source))
+        val generator = RouteGenerator(routeRepository = routeRepo)
+        val dwgResult = importer.importFrom(source, layerName = layer)
+        if (dwgResult.candidates.isEmpty()) return false
+        val generated = generator.generate(candidates = dwgResult.candidates) ?: return false
+        routeMapper = generated.mapper
+        catalog.routes.setRoute(generated.route)
+        return catalog.routes.hasRoute()
     }
 
     private fun peekCadLayers(sourcePath: String): List<String> {

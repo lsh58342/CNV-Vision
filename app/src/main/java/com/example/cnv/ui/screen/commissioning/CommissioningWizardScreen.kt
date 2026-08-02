@@ -163,7 +163,15 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.ws_mode_origin)
                 }
-                attachCad(content)
+                if (!snap.dwgOk) {
+                    Toast.makeText(requireContext(), R.string.wiz_fail_dwg, Toast.LENGTH_SHORT).show()
+                } else if (!siteVm.ensureRoutePreviewForCurrentDrawing()) {
+                    Toast.makeText(requireContext(), R.string.setup_route_failed, Toast.LENGTH_LONG).show()
+                }
+                attachCad(content, originPickEnabled = !snap.originOk)
+                applyOriginMarkerFromDrawing()
+                action.isEnabled = !snap.originOk
+                action.alpha = if (action.isEnabled) 1f else 0.45f
                 action.setOnClickListener {
                     if (FactoryCatalog.get().drawings.current()?.routeLocked == true) {
                         Toast.makeText(requireContext(), R.string.ws_locked_blocked, Toast.LENGTH_SHORT).show()
@@ -174,14 +182,8 @@ class CommissioningWizardScreen : BaseScreen() {
                         return@setOnClickListener
                     }
                     val info = cadController?.latestSelectionInfo()
-                    val x = info?.progress ?: 0.5f
-                    if (siteVm.setOriginForCurrentDrawing(x, 0.5f)) {
-                        Toast.makeText(requireContext(), R.string.setup_origin_set, Toast.LENGTH_SHORT).show()
-                        refresh()
-                        showStep(requireView())
-                    } else {
-                        Toast.makeText(requireContext(), R.string.setup_origin_failed, Toast.LENGTH_SHORT).show()
-                    }
+                    val progress = info?.progress?.takeIf { info.segmentId != "—" } ?: 0f
+                    commitOriginPick(progress)
                 }
             }
             CommissioningWizardProgress.Step.CALIBRATION -> {
@@ -282,18 +284,55 @@ class CommissioningWizardScreen : BaseScreen() {
         }
     }
 
-    private fun attachCad(content: View) {
+    private fun attachCad(content: View, originPickEnabled: Boolean = false) {
+        cadController?.stop()
+        cadController?.setOnOriginTapListener(null)
+        cadController?.setOnTapSelectionListener(null)
         val cadView = content.findViewById<CADView>(R.id.wiz_cad_view)
         cadController = CADController(
             routeRepository = FactoryCatalog.get().routes.underlying(),
             cadView = cadView,
-            mapperProvider = { null },
+            mapperProvider = { siteVm.currentRouteMapper() },
             debugHud = null,
             errorSegmentIdsProvider = { highlightSegments.toSet() },
         )
         cadController?.setLayerEnabled(CADLayer.DEBUG, false)
         cadController?.start()
         cadController?.fitToRoute()
+        if (originPickEnabled) {
+            cadController?.setOnOriginTapListener { viewX, viewY ->
+                val pick = cadController?.pickRouteStartPoint(viewX, viewY)
+                if (pick == null) {
+                    Toast.makeText(requireContext(), R.string.ws_pick_required, Toast.LENGTH_SHORT).show()
+                    return@setOnOriginTapListener
+                }
+                cadController?.setOriginWorldMarker(pick.world.x, pick.world.y)
+                commitOriginPick(pick.progressOnStartSegment)
+            }
+        }
+    }
+
+    private fun commitOriginPick(progress: Float) {
+        val p = progress.coerceIn(0f, 1f)
+        if (siteVm.setOriginForCurrentDrawing(p, p)) {
+            cadController?.originWorldFromProgress(p)?.let { (x, y) ->
+                cadController?.setOriginWorldMarker(x, y)
+            }
+            Toast.makeText(requireContext(), R.string.setup_origin_set, Toast.LENGTH_SHORT).show()
+            refresh()
+            view?.let { showStep(it) }
+        } else {
+            Toast.makeText(requireContext(), R.string.setup_origin_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun applyOriginMarkerFromDrawing() {
+        val drawing = FactoryCatalog.get().drawings.current() ?: return
+        if (!drawing.originSet) return
+        val progress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
+        cadController?.originWorldFromProgress(progress)?.let { (x, y) ->
+            cadController?.setOriginWorldMarker(x, y)
+        }
     }
 
     private fun beginZoneCad(content: View) {

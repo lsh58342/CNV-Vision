@@ -36,6 +36,12 @@ class CADController(
     @Volatile
     private var positionOverlayText: String? = null
 
+    @Volatile
+    private var originWorldX: Double? = null
+
+    @Volatile
+    private var originWorldY: Double? = null
+
     private val interaction = CADInteractionController(
         cadView = cadView,
         selectionInfoView = selectionInfoView,
@@ -108,6 +114,40 @@ class CADController(
     /** Read-only selection snapshot for Commissioning UI (no algorithm change). */
     fun latestSelectionInfo(): SelectionInfo? = interaction.latestSelectionInfo()
 
+    fun setOnTapSelectionListener(listener: ((SelectionInfo) -> Unit)?) {
+        interaction.onTapSelection = listener
+    }
+
+    fun setOnOriginTapListener(listener: ((viewX: Float, viewY: Float) -> Unit)?) {
+        interaction.onOriginTap = listener
+    }
+
+    fun setOriginWorldMarker(x: Double?, y: Double?) {
+        originWorldX = x
+        originWorldY = y
+        pushOverlay()
+        cadView.invalidate()
+    }
+
+    fun pickRouteStartPoint(viewX: Float, viewY: Float): RouteStartPointPicker.Pick? {
+        val route = cadView.routeOrNull() ?: return null
+        val layout = cadView.layoutOrNull() ?: return null
+        return RouteStartPointPicker.pick(
+            viewX = viewX,
+            viewY = viewY,
+            route = route,
+            layout = layout,
+            camera = cadView.viewport().camera,
+        )
+    }
+
+    fun originWorldFromProgress(progress: Float): Pair<Double, Double>? {
+        val route = cadView.routeOrNull() ?: return null
+        val layout = cadView.layoutOrNull() ?: return null
+        val world = RouteStartPointPicker.worldAtStartProgress(route, layout, progress) ?: return null
+        return world.x to world.y
+    }
+
     private fun refreshRoute() {
         val route = routeRepository.current()
         val mapper = mapperProvider()
@@ -147,6 +187,8 @@ class CADController(
                 currentPositionText = positionOverlayText,
                 validationErrorText = validationErrorText,
                 inspectionStateText = inspectionStateText,
+                originWorldX = originWorldX,
+                originWorldY = originWorldY,
             ),
         )
     }

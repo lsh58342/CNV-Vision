@@ -17,6 +17,12 @@ class CADInteractionController(
     private var navigator: CADNavigator? = null
     private var gestureManager: CADGestureManager? = null
 
+    /** Optional UI hook after a successful route hit-test (view coords already converted). */
+    var onTapSelection: ((SelectionInfo) -> Unit)? = null
+
+    /** Optional Origin pick hook — receives raw view coordinates for [RouteStartPointPicker]. */
+    var onOriginTap: ((viewX: Float, viewY: Float) -> Unit)? = null
+
     @Volatile
     private var latestPositionEvent: PositionEvent? = null
 
@@ -128,11 +134,15 @@ class CADInteractionController(
     fun latestSelectionInfo(): SelectionInfo? = latestInfo
 
     private fun handleTap(x: Float, y: Float) {
+        onOriginTap?.invoke(x, y)
         val route = cadView.routeOrNull() ?: return
         val layout = cadView.layoutOrNull() ?: return
         selectionManager.setErrorSegments(errorSegmentIdsProvider())
         selectionManager.selectAt(x, y, route, layout, cadView.viewport().camera)
         refreshSelectionVisuals()
+        if (selectionManager.state().hasSelection) {
+            latestInfo?.let { onTapSelection?.invoke(it) }
+        }
     }
 
     private fun refreshSelectionVisuals() {

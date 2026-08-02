@@ -132,7 +132,7 @@ class CADRenderer(
             )
         }
 
-        overlay.draw(canvas, overlayModel, theme)
+        overlay.draw(canvas, overlayModel, theme, camera)
 
         val elapsedMs = (SystemClock.elapsedRealtimeNanos() - startNs) / 1_000_000.0
         lastStats = FrameStats(
