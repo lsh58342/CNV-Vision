@@ -1,0 +1,271 @@
+package com.example.cnv.ui.screen.replay
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.Zone
+import com.example.cnv.factory.repository.FactoryCatalog
+import com.example.cnv.heatmap.HeatMapRouteLayout
+import com.example.cnv.heatmap.HeatMapZoneOverlay
+import com.example.cnv.replay.ReplayEngine
+import com.example.cnv.replay.ReplayEngineApi
+import com.example.cnv.replay.ReplayFrame
+import com.example.cnv.replay.ReplayLoadContext
+import com.example.cnv.replay.ReplayPlaybackState
+import com.example.cnv.replay.analysis.ReplayAnalysis
+import com.example.cnv.replay.analysis.ReplayAnalysisConfig
+import com.example.cnv.replay.analysis.ReplayFilter
+import com.example.cnv.replay.analysis.ReplayHighlightKind
+import com.example.cnv.replay.analysis.ReplayStatistics
+import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
+
+/**
+ * Replay Viewer ViewModel — Engine API only (STEP 16-2).
+ * No Room / Inspection Event cache access from Viewer.
+ */
+class ReplayViewModel(
+    private val catalog: FactoryCatalog = FactoryCatalog.get(),
+) : ViewModel() {
+
+    data class UiState(
+        val loading: Boolean = true,
+        val errorMessage: String? = null,
+        val sessionId: String? = null,
+        val drawingName: String = "—",
+        val playbackState: ReplayPlaybackState = ReplayPlaybackState.IDLE,
+        val frameIndex: Int = 0,
+        val frameCount: Int = 0,
+        val current: ReplayFrame? = null,
+        val highlight: ReplayHighlightKind = ReplayHighlightKind.NONE,
+        val statistics: ReplayStatistics = ReplayStatistics.EMPTY,
+        val markerLabel: String = "",
+        val routePolyline: List<Pair<Double, Double>> = emptyList(),
+        val zones: List<HeatMapZoneOverlay> = emptyList(),
+        val highlightedZoneId: String? = null,
+        val shockFrames: List<ReplayFrame> = emptyList(),
+        val lowConfidenceFrames: List<ReplayFrame> = emptyList(),
+        val filter: ReplayFilter = ReplayFilter.NONE,
+        val searchQuery: String = "",
+        val visibleCount: Int = 0,
+        val zoneOptions: List<Zone> = emptyList(),
+        val sessionStartNs: Long = 0L,
+        val playbackSpeed: Float = 1f,
+    )
+
+    private val _state = MutableLiveData(UiState())
+    val state: LiveData<UiState> = _state
+
+    private val engine: ReplayEngineApi = ReplayEngine()
+    private val analysis = ReplayAnalysis(engine, ReplayAnalysisConfig.DEFAULT)
+    private var zones: List<Zone> = emptyList()
+    private var routePolyline: List<Pair<Double, Double>> = emptyList()
+    private var zoneOverlays: List<HeatMapZoneOverlay> = emptyList()
+    private var drawingName: String = "—"
+
+    private val engineListener = ReplayEngineApi.Listener {
+        publish()
+    }
+
+    init {
+        engine.addListener(engineListener)
+    }
+
+    override fun onCleared() {
+        engine.removeListener(engineListener)
+        engine.clear()
+        super.onCleared()
+    }
+
+    fun load(sessionId: String, preferredDrawingId: String?) {
+        _state.value = UiState(loading = true)
+        val drawing = preferredDrawingId?.let { catalog.drawings.get(it) }
+            ?: catalog.drawings.current(CurrentContext.get())
+        drawingName = drawing?.name ?: "—"
+        val drawingId = preferredDrawingId ?: drawing?.id
+        zones = drawingId?.let { catalog.zones.forDrawing(it) }.orEmpty()
+        val route = catalog.routes.currentRoute()
+        val layout = route?.let { HeatMapRouteLayout.build(it) }
+        routePolyline = buildRoutePolyline(layout)
+        zoneOverlays = if (drawingId != null && route != null && layout != null) {
+            buildZoneOverlays(drawingId, route, layout)
+        } else {
+            emptyList()
+        }
+
+        engine.loadSession(
+            sessionId = sessionId,
+            context = ReplayLoadContext(
+                preferredDrawingId = preferredDrawingId,
+                route = route,
+                zones = zones,
+                layout = layout,
+            ),
+        ) { success, error ->
+            if (!success) {
+                _state.value = UiState(
+                    loading = false,
+                    errorMessage = error ?: "Load failed",
+                )
+                return@loadSession
+            }
+            publish()
+        }
+    }
+
+    fun play() = engine.play()
+    fun pause() = engine.pause()
+    fun stop() = engine.stop()
+    fun restart() = engine.restart()
+
+    fun jumpShockList(): List<ReplayAnalysis.JumpTarget> = analysis.shockTargets()
+
+    fun jumpLowConfidenceList(): List<ReplayAnalysis.JumpTarget> = analysis.lowConfidenceTargets()
+
+    fun jumpZoneList(): List<ReplayAnalysis.ZoneJumpTarget> = analysis.zoneTargets(zones)
+
+    fun selectShock(target: ReplayAnalysis.JumpTarget) {
+        analysis.jumpToShock(target)
+    }
+
+    fun selectZone(target: ReplayAnalysis.ZoneJumpTarget) {
+        analysis.jumpToZone(target)
+    }
+
+    fun selectLowConfidence(target: ReplayAnalysis.JumpTarget) {
+        analysis.jumpToLowConfidence(target)
+    }
+
+    fun jumpTimestampElapsedMs(elapsedMs: Long) {
+        analysis.jumpToTimestampMs(elapsedMs, treatAsElapsed = true)
+    }
+
+    fun jumpRoutePositionMm(mm: Float) {
+        analysis.jumpToRoutePositionMm(mm)
+    }
+
+    fun previousEvent() {
+        analysis.previousEvent()
+    }
+
+    fun nextEvent() {
+        analysis.nextEvent()
+    }
+
+    fun previousShock() {
+        analysis.previousShock()
+    }
+
+    fun nextShock() {
+        analysis.nextShock()
+    }
+
+    fun previousZone() {
+        analysis.previousZoneBoundary(zones)
+    }
+
+    fun nextZone() {
+        analysis.nextZoneBoundary(zones)
+    }
+
+    fun setFilter(filter: ReplayFilter) {
+        analysis.setFilter(filter)
+        publish()
+    }
+
+    fun setSearchQuery(query: String) {
+        analysis.setSearchQuery(query)
+        publish()
+    }
+
+    private fun publish() {
+        val frame = engine.currentEvent()
+        val stats = analysis.statistics()
+        val events = engine.events()
+        _state.value = UiState(
+            loading = engine.currentState() == ReplayPlaybackState.LOADING,
+            errorMessage = engine.errorMessage(),
+            sessionId = engine.sessionId(),
+            drawingName = drawingName,
+            playbackState = engine.currentState(),
+            frameIndex = engine.currentIndex(),
+            frameCount = engine.frameCount(),
+            current = frame,
+            highlight = analysis.currentHighlight(),
+            statistics = stats,
+            markerLabel = buildMarkerLabel(frame, stats),
+            routePolyline = routePolyline,
+            zones = zoneOverlays,
+            highlightedZoneId = analysis.highlightedZoneId(),
+            shockFrames = events.filter { it.hasShock },
+            lowConfidenceFrames = events.filter {
+                it.trackingConfidence in 0f..analysis.lowConfidenceThreshold()
+            },
+            filter = analysis.filter(),
+            searchQuery = analysis.searchQuery(),
+            visibleCount = analysis.visibleFrames().size,
+            zoneOptions = zones,
+            sessionStartNs = events.firstOrNull()?.timestampNs ?: 0L,
+            playbackSpeed = engine.playbackSpeed(),
+        )
+    }
+
+    private fun buildMarkerLabel(frame: ReplayFrame?, stats: ReplayStatistics): String {
+        if (frame == null) return "—"
+        val xy = if (frame.drawingX != null && frame.drawingY != null) {
+            "(${"%.1f".format(frame.drawingX)}, ${"%.1f".format(frame.drawingY)})"
+        } else {
+            "(—, —)"
+        }
+        return "t=${stats.elapsedMs}ms · route=${"%.1f".format(frame.routePositionMm)}mm · " +
+            "xy=$xy · dist=${"%.1f".format(frame.distanceMm)}mm · conf=${"%.2f".format(frame.trackingConfidence)}"
+    }
+
+    private fun buildRoutePolyline(layout: HeatMapRouteLayout.LayoutResult?): List<Pair<Double, Double>> {
+        if (layout == null) return emptyList()
+        val pts = ArrayList<Pair<Double, Double>>()
+        for (segId in layout.segmentStartMm.keys) {
+            val a = HeatMapRouteLayout.toDrawingCoordinate(layout, segId, 0f) ?: continue
+            val b = HeatMapRouteLayout.toDrawingCoordinate(layout, segId, 1f) ?: continue
+            if (pts.isEmpty()) pts.add(a.x to a.y)
+            pts.add(b.x to b.y)
+        }
+        return pts
+    }
+
+    private fun buildZoneOverlays(
+        drawingId: String,
+        route: com.example.cnv.map.Route,
+        layout: HeatMapRouteLayout.LayoutResult,
+    ): List<HeatMapZoneOverlay> {
+        return catalog.zones.forDrawing(drawingId).mapNotNull { zone ->
+            val segmentIds = RouteHighlightHelper.segmentIdsBetween(route, zone.start, zone.end)
+            if (segmentIds.isEmpty()) return@mapNotNull null
+            val pts = ArrayList<Pair<Double, Double>>()
+            for (segId in segmentIds) {
+                val a = HeatMapRouteLayout.toDrawingCoordinate(layout, segId, 0f) ?: continue
+                val b = HeatMapRouteLayout.toDrawingCoordinate(layout, segId, 1f) ?: continue
+                if (pts.isEmpty()) pts.add(a.x to a.y)
+                pts.add(b.x to b.y)
+            }
+            if (pts.isEmpty()) return@mapNotNull null
+            HeatMapZoneOverlay(
+                zoneId = zone.id,
+                name = zone.name,
+                colorArgb = zone.colorArgb,
+                points = pts,
+            )
+        }
+    }
+
+    class Factory : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(ReplayViewModel::class.java)) {
+                return ReplayViewModel() as T
+            }
+            error("Unknown ViewModel: ${modelClass.name}")
+        }
+    }
+}

@@ -71,10 +71,14 @@ class SessionDetailScreen : BaseScreen() {
                 ReplayMetadataRepository.ReplayMeta(
                     drawingId = drawingId,
                     sessionId = sessionId,
-                    label = "Replay pending · ${sessionId.take(8)}",
+                    label = "Replay · ${sessionId.take(8)}",
                 ),
             )
-            Toast.makeText(requireContext(), R.string.history_replay_future_toast, Toast.LENGTH_SHORT).show()
+            val args = Bundle().apply {
+                putString(NavArgs.DRAWING_ID, drawingId)
+                putString(NavArgs.SESSION_ID, sessionId)
+            }
+            nav().navigate(CnvDestination.REPLAY, args = args)
         }
         view.findViewById<MaterialButton>(R.id.button_detail_csv).setOnClickListener {
             catalog.csvMetadata.put(
