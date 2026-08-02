@@ -3,10 +3,13 @@ package com.example.cnv.factory.repository
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.inspection.InspectionRepository
 import com.example.cnv.inspection.InspectionResult
+import com.example.cnv.inspection.InspectionSessionSummary
+import com.example.cnv.inspection.PersistedInspectionSession
+import com.example.cnv.core.event.BaseEvent
 
 /**
- * Drawing-scoped inspection history index.
- * Does not alter InspectionSession algorithms — only associates results to Drawing.
+ * Drawing-scoped inspection history index + Room persistence facade (STEP 13).
+ * Does not alter InspectionSession algorithms.
  */
 class ZoneInspectionRepository(
     private val inspectionRepository: InspectionRepository = InspectionRepository(),
@@ -23,6 +26,59 @@ class ZoneInspectionRepository(
         index(drawingId, result.sessionId)
     }
 
+    /**
+     * Persist finished session + events to Room (Drawing-scoped).
+     */
+    fun finishSession(
+        drawingId: String,
+        result: InspectionResult,
+        events: List<BaseEvent>,
+        appVersion: String,
+        inspectionVersion: String = "1",
+    ): InspectionSessionSummary {
+        val summary = inspectionRepository.finishSession(
+            drawingId = drawingId,
+            result = result,
+            events = events,
+            appVersion = appVersion,
+            inspectionVersion = inspectionVersion,
+        )
+        index(drawingId, result.sessionId)
+        return summary
+    }
+
+    fun createSession(
+        drawingId: String,
+        sessionId: String,
+        startTimeMs: Long,
+        appVersion: String,
+        routeVersion: String = "",
+        calibrationVersion: Int = 0,
+    ) {
+        inspectionRepository.createSession(
+            sessionId = sessionId,
+            drawingId = drawingId,
+            startTimeMs = startTimeMs,
+            appVersion = appVersion,
+            routeVersion = routeVersion,
+            calibrationVersion = calibrationVersion,
+        )
+        index(drawingId, sessionId)
+    }
+
+    fun loadSession(sessionId: String): PersistedInspectionSession? =
+        inspectionRepository.loadSession(sessionId)
+
+    fun deleteSession(sessionId: String) {
+        inspectionRepository.deleteSession(sessionId)
+        synchronized(lock) {
+            drawingToSessionIds.values.forEach { q -> q.remove(sessionId) }
+        }
+    }
+
+    fun loadHistorySummaries(drawingId: String): List<InspectionSessionSummary> =
+        inspectionRepository.loadHistory(drawingId)
+
     /** Link an already-saved inspection result to a Drawing (no algorithm change). */
     fun index(drawingId: String, sessionId: String) {
         synchronized(lock) {
@@ -35,6 +91,8 @@ class ZoneInspectionRepository(
     }
 
     fun historyForDrawing(drawingId: String): List<InspectionResult> {
+        val fromRoom = inspectionRepository.historyAsResults(drawingId)
+        if (fromRoom.isNotEmpty()) return fromRoom
         val ids = synchronized(lock) { drawingToSessionIds[drawingId]?.toList().orEmpty() }
         if (ids.isEmpty()) return emptyList()
         val all = inspectionRepository.all().associateBy { it.sessionId }
@@ -51,7 +109,6 @@ class ZoneInspectionRepository(
 
     /** @deprecated Prefer [historyForDrawing]. Kept for gradual call-site migration. */
     fun historyForZone(zoneId: String): List<InspectionResult> {
-        // Zone-scoped lookups are no longer primary; return empty unless indexed under same key (legacy).
         return historyForDrawing(zoneId)
     }
 
@@ -59,11 +116,9 @@ class ZoneInspectionRepository(
         historyForCurrentDrawing(context)
 
     fun removeForDrawing(drawingId: String) {
+        inspectionRepository.deleteForDrawing(drawingId)
         synchronized(lock) {
-            val ids = drawingToSessionIds.remove(drawingId)?.toList().orEmpty()
-            ids.forEach { sessionId ->
-                // Leave underlying results; index only is Drawing-scoped for this phase.
-            }
+            drawingToSessionIds.remove(drawingId)
         }
     }
 

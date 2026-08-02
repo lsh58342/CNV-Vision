@@ -100,7 +100,7 @@ class InspectionPipeline(
         val versionName = runCatching {
             activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
         }.getOrNull().orEmpty().ifBlank { "1.0" }
-        inspectionManager.start(
+        val session = inspectionManager.start(
             InspectionManager.StartRequest(
                 route = route,
                 calibrationVersion = calData?.version ?: 0,
@@ -111,14 +111,37 @@ class InspectionPipeline(
                 routeQualityScore = quality,
             ),
         )
+        val drawingId = CurrentContext.get().drawingId
+        if (drawingId != null) {
+            catalog.inspections.createSession(
+                drawingId = drawingId,
+                sessionId = session.sessionId,
+                startTimeMs = session.startTimeMs,
+                appVersion = versionName,
+                routeVersion = session.freeze.routeVersion,
+                calibrationVersion = session.freeze.calibrationVersion,
+            )
+        }
         return true
     }
 
     fun stopSession(): InspectionResult? {
+        val active = inspectionManager.currentSession()
+        val events = active?.recorder()?.snapshot().orEmpty()
+        val appVersion = active?.freeze?.appVersion.orEmpty()
         val result = inspectionManager.stop()
         val drawingId = CurrentContext.get().drawingId
         if (result != null && drawingId != null) {
-            catalog.inspections.index(drawingId, result.sessionId)
+            catalog.inspections.finishSession(
+                drawingId = drawingId,
+                result = result,
+                events = events,
+                appVersion = appVersion.ifBlank {
+                    runCatching {
+                        activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
+                    }.getOrNull().orEmpty().ifBlank { "1.0" }
+                },
+            )
         }
         return result
     }

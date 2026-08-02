@@ -129,7 +129,7 @@
     <string name="inspection_no_route">No route — complete Commissioning first</string>
     <string name="result_summary_format">Summary\nSession: %1$s\nDistance: %2$.0f mm\nDuration: %3$d s\nShock Count: %4$d\nMax Shock: %5$.2f\nAvg Confidence: %6$.2f</string>
     <string name="result_summary_empty">No inspection result for current zone</string>
-    <string name="history_empty">No inspections for current zone</string>
+    <string name="history_empty">이 Drawing에 저장된 Inspection이 없습니다.</string>
     <string name="history_item_format">Session: %1$s\nDuration: %2$d s\nDistance: %3$.0f mm\nShock: %4$d\nMax Shock: %5$.2f</string>
     <string name="heatmap_session">Session</string>
     <string name="heatmap_timeline">Timeline</string>
@@ -410,6 +410,11 @@
     <string name="draw_overview_route_locked">Route Locked</string>
     <string name="draw_overview_needs_lock">Route Lock Required</string>
     <string name="draw_overview_go_commissioning">Commissioning 탭에서 다음 단계를 진행하세요.</string>
+    <string name="history_no_drawing">Drawing을 선택하세요.</string>
+    <string name="history_line_distance">Distance: %.1f mm</string>
+    <string name="history_line_shocks">Shocks: %1$d</string>
+    <string name="history_line_duration">Duration: %.1f s</string>
+    <string name="history_line_session">Session: %1$s</string>
 
     <string name="ws_confirm_pick">Confirm Pick</string>
     <string name="ws_save">Save</string>
