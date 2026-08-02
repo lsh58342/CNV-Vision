@@ -273,6 +273,10 @@
     <string name="setup_route_generated">Route가 생성되었습니다.</string>
     <string name="setup_route_failed">Route 생성 실패 — DWG 등록 후 다시 시도하세요.</string>
     <string name="setup_route_failed_layer">Route 생성 실패 — Layer \"%1$s\"에서 후보가 없습니다. Conveyor Layer를 선택하세요.</string>
+    <string name="dxf_import_diagnostics_title">DXF Import Diagnostics</string>
+    <string name="dxf_import_summary_title">Import Summary</string>
+    <string name="dxf_import_validation_title">Import Validation</string>
+    <string name="dxf_import_continue">계속</string>
     <string name="wiz_select_conveyor_layer">Conveyor Layer 선택</string>
     <string name="wiz_layer_list_title">DXF Layer 목록</string>
     <string name="wiz_layer_list_empty">등록된 DXF에서 Layer를 읽을 수 없습니다.</string>

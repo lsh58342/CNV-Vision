@@ -142,10 +142,12 @@ class FloorScreen : BaseScreen() {
                     siteVm.selectDrawing(created.id)
                     Toast.makeText(requireContext(), R.string.setup_dwg_registered, Toast.LENGTH_SHORT).show()
                     val layers = siteVm.listCadLayersForCurrentDrawing()
-                    if (layers.isNotEmpty()) {
-                        promptConveyorLayerAfterImport(layers)
-                    } else {
-                        nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+                    showImportDiagnosticsThen {
+                        if (layers.isNotEmpty()) {
+                            promptConveyorLayerAfterImport(layers)
+                        } else {
+                            nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+                        }
                     }
                 }
             }
@@ -294,6 +296,20 @@ class FloorScreen : BaseScreen() {
             .setOnCancelListener {
                 nav().navigate(CnvDestination.DRAWING_WORKSPACE)
             }
+            .show()
+    }
+
+    private fun showImportDiagnosticsThen(onContinue: () -> Unit) {
+        val report = siteVm.latestCadImportReport()
+        if (report == null) {
+            onContinue()
+            return
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.dxf_import_diagnostics_title)
+            .setMessage(report.userFacingMessage())
+            .setPositiveButton(R.string.dxf_import_continue) { _, _ -> onContinue() }
+            .setOnCancelListener { onContinue() }
             .show()
     }
 }

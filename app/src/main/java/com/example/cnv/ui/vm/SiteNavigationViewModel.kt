@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModel
 import com.example.cnv.dwg.CadReaderFactory
 import com.example.cnv.dwg.DWGConfig
 import com.example.cnv.dwg.DWGImporter
+import com.example.cnv.dwg.DxfImportAnalyzer
+import com.example.cnv.dwg.DxfImportDiagnosticsStore
+import com.example.cnv.dwg.DxfImportReport
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Building
@@ -77,6 +80,10 @@ class SiteNavigationViewModel : ViewModel() {
 
     private val _latestResult = MutableLiveData<InspectionResult?>(null)
     val latestResult: LiveData<InspectionResult?> = _latestResult
+
+    /** In-memory DXF import diagnostics (STEP 20-9). Not persisted. */
+    private val _cadImportReport = MutableLiveData<DxfImportReport?>(null)
+    val cadImportReport: LiveData<DxfImportReport?> = _cadImportReport
 
     private val _factoryName = MutableLiveData(LgesPolandSite.FACTORY_NAME)
     val factoryName: LiveData<String> = _factoryName
@@ -219,6 +226,13 @@ class SiteNavigationViewModel : ViewModel() {
         )
         catalog.drawings.upsert(drawing)
         loadDrawings()
+        if (!dwgUri.isNullOrBlank()) {
+            context.selectDrawing(drawing.id)
+            runCadImportDiagnostics(
+                sourcePath = dwgUri,
+                conveyorLayer = drawing.conveyorLayerName,
+            )
+        }
         return drawing
     }
 
@@ -237,6 +251,7 @@ class SiteNavigationViewModel : ViewModel() {
             ),
         )
         loadDrawingDashboard()
+        runCadImportDiagnostics(sourcePath = dwgUri, conveyorLayer = layer)
         return true
     }
 
@@ -262,6 +277,7 @@ class SiteNavigationViewModel : ViewModel() {
             ),
         )
         loadDrawingDashboard()
+        drawing.dwgUri?.let { runCadImportDiagnostics(sourcePath = it, conveyorLayer = trimmed) }
         return true
     }
 
@@ -271,6 +287,26 @@ class SiteNavigationViewModel : ViewModel() {
             ?: DWGConfig.DEFAULT_LAYER_FILTER
     }
 
+    /**
+     * Re-run DXF import diagnostics for the current Drawing (memory-only).
+     */
+    fun runCadImportDiagnostics(
+        sourcePath: String? = null,
+        conveyorLayer: String? = null,
+    ): DxfImportReport? {
+        val drawing = catalog.drawings.current(context)
+        val source = sourcePath ?: drawing?.dwgUri ?: return null
+        val layer = conveyorLayer
+            ?: drawing?.conveyorLayerName?.takeIf { it.isNotBlank() }
+            ?: DWGConfig.DEFAULT_LAYER_FILTER
+        val report = DxfImportAnalyzer.analyze(source, layer)
+        _cadImportReport.value = report
+        return report
+    }
+
+    fun latestCadImportReport(): DxfImportReport? =
+        _cadImportReport.value ?: DxfImportDiagnosticsStore.latest
+
     fun generateRouteForCurrentDrawing(): Boolean {
         val drawing = catalog.drawings.current(context) ?: return false
         if (drawing.routeLocked) return false
@@ -278,6 +314,7 @@ class SiteNavigationViewModel : ViewModel() {
         val routeRepo = catalog.routes.underlying()
         val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
         val layer = drawing.conveyorLayerName.ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
+        runCadImportDiagnostics(sourcePath = source, conveyorLayer = layer)
         val importer = DWGImporter(reader = CadReaderFactory.create(source))
         val generator = RouteGenerator(routeRepository = routeRepo)
         val dwgResult = importer.importFrom(source, layerName = layer)

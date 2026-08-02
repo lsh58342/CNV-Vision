@@ -17,6 +17,7 @@ import com.example.cnv.R
 import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADLayer
 import com.example.cnv.cad.CADView
+import com.example.cnv.dwg.DxfImportStatus
 import com.example.cnv.factory.model.RouteAnchor
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
@@ -404,6 +405,52 @@ class CommissioningWizardScreen : BaseScreen() {
 
     private fun bindConveyorLayerList(list: LinearLayout) {
         UiComponents.clearChildren(list)
+        val report = siteVm.latestCadImportReport()
+            ?: siteVm.runCadImportDiagnostics()
+        if (report != null) {
+            val s = report.summary
+            val statusLabel = when (report.status) {
+                DxfImportStatus.SUCCESS -> "Import Success"
+                DxfImportStatus.WARNING -> "Import Success (Warnings)"
+                DxfImportStatus.ERROR -> "Import Error"
+            }
+            list.addView(
+                UiComponents.inflateInfoCard(
+                    list,
+                    getString(R.string.dxf_import_summary_title),
+                    "$statusLabel\n" +
+                        "${s.fileName} · ${s.dxfVersion}\n" +
+                        "Layers ${s.layerCount} · Geometry ${s.geometryCount} · " +
+                        "Route ${s.routeCandidateCount}\n" +
+                        "Layer: ${s.selectedConveyorLayer}",
+                ),
+            )
+            report.validation.warnings.forEach { msg ->
+                list.addView(
+                    UiComponents.inflateStatusCard(
+                        list,
+                        getString(R.string.dxf_import_validation_title),
+                        "Warning: $msg",
+                        UiComponents.statusColor(requireContext(), "MISSING"),
+                    ),
+                )
+            }
+            report.validation.errors.forEach { msg ->
+                list.addView(
+                    UiComponents.inflateStatusCard(
+                        list,
+                        getString(R.string.dxf_import_validation_title),
+                        "Error: $msg",
+                        UiComponents.statusColor(requireContext(), "MISSING"),
+                    ),
+                )
+            }
+            report.validation.guidance.forEach { msg ->
+                list.addView(
+                    UiComponents.inflateInfoCard(list, "Next", msg),
+                )
+            }
+        }
         val layers = siteVm.listCadLayersForCurrentDrawing()
         val selected = siteVm.currentConveyorLayerName()
         list.addView(
