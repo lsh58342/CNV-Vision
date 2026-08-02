@@ -46,6 +46,12 @@ class DxfPilotVerificationTest {
                     "pts=${pl.points.size} closed=${pl.closed} length=${pl.length()}",
             )
         }
+        val blockDerived = bag.polylines.count { it.id.startsWith("blk-") } +
+            bag.lines.count { it.id.startsWith("blk-") } +
+            bag.arcs.count { it.id.startsWith("blk-") } +
+            bag.circles.count { it.id.startsWith("blk-") } +
+            bag.texts.count { it.id.startsWith("blk-") }
+        println("LOG[BLOCKS] block_derived_entities=$blockDerived")
         bag.lines.forEachIndexed { i, ln ->
             println(
                 "LOG[3_ENTITY][LINE][$i] layer=${ln.layerName} " +

@@ -141,7 +141,12 @@ class FloorScreen : BaseScreen() {
                 } else {
                     siteVm.selectDrawing(created.id)
                     Toast.makeText(requireContext(), R.string.setup_dwg_registered, Toast.LENGTH_SHORT).show()
-                    nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+                    val layers = siteVm.listCadLayersForCurrentDrawing()
+                    if (layers.isNotEmpty()) {
+                        promptConveyorLayerAfterImport(layers)
+                    } else {
+                        nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+                    }
                 }
             }
             .setNegativeButton(android.R.string.cancel) { _, _ -> pendingDwgUri = null }
@@ -268,5 +273,27 @@ class FloorScreen : BaseScreen() {
                     getString(R.string.draw_card_recent_inspection, lastDate)
             }
         }
+    }
+
+    private fun promptConveyorLayerAfterImport(layers: List<String>) {
+        val selected = siteVm.currentConveyorLayerName()
+        val checked = layers.indexOfFirst { it.equals(selected, ignoreCase = true) }
+            .takeIf { it >= 0 }
+            ?: layers.indexOfFirst { it.equals("0", ignoreCase = true) }.takeIf { it >= 0 }
+            ?: 0
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.wiz_select_conveyor_layer)
+            .setSingleChoiceItems(layers.toTypedArray(), checked) { dialog, which ->
+                siteVm.setConveyorLayerForCurrentDrawing(layers[which])
+                dialog.dismiss()
+                nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+            }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+            }
+            .setOnCancelListener {
+                nav().navigate(CnvDestination.DRAWING_WORKSPACE)
+            }
+            .show()
     }
 }

@@ -1,9 +1,11 @@
 package com.example.cnv.dwg
 
 import org.kabeja.dxf.DXFArc
+import org.kabeja.dxf.DXFBlock
 import org.kabeja.dxf.DXFCircle
 import org.kabeja.dxf.DXFConstants
 import org.kabeja.dxf.DXFDocument
+import org.kabeja.dxf.DXFEntity
 import org.kabeja.dxf.DXFLayer
 import org.kabeja.dxf.DXFLine
 import org.kabeja.dxf.DXFLWPolyline
@@ -17,7 +19,7 @@ import java.io.FileInputStream
 
 /**
  * Open-source DXF adapter — Kabeja → [DWGEntityBag].
- * Does not parse DXF itself; wraps [org.kabeja] only.
+ * Reads ENTITIES (via layers) and BLOCKS geometry (no block edit / INSERT explode).
  */
 class DxfReader : DWGReader {
 
@@ -38,109 +40,137 @@ class DxfReader : DWGReader {
 
     override fun readLayers(document: DWGDocument): List<DWGLayer> {
         val doc = requireDoc(document)
-        val out = ArrayList<DWGLayer>()
+        val names = LinkedHashSet<String>()
         val it = doc.getDXFLayerIterator()
         while (it.hasNext()) {
             val layer = it.next() as DXFLayer
             val name = layer.name?.takeIf { it.isNotBlank() } ?: DXFConstants.DEFAULT_LAYER
-            out.add(DWGLayer(name))
+            names.add(name)
         }
-        if (out.isEmpty()) {
-            out.add(DWGLayer(DXFConstants.DEFAULT_LAYER))
+        collectEntityBag(doc).let { bag ->
+            bag.polylines.forEach { names.add(it.layerName) }
+            bag.lines.forEach { names.add(it.layerName) }
+            bag.arcs.forEach { names.add(it.layerName) }
+            bag.circles.forEach { names.add(it.layerName) }
+            bag.texts.forEach { names.add(it.layerName) }
         }
-        return out
+        if (names.isEmpty()) {
+            names.add(DXFConstants.DEFAULT_LAYER)
+        }
+        return names.map { DWGLayer(it) }
     }
 
     override fun readEntities(document: DWGDocument): DWGEntityBag {
-        val doc = requireDoc(document)
+        return collectEntityBag(requireDoc(document))
+    }
+
+    private fun collectEntityBag(doc: DXFDocument): DWGEntityBag {
         val polylines = ArrayList<PolylineModel>()
         val lines = ArrayList<LineModel>()
         val arcs = ArrayList<ArcModel>()
         val circles = ArrayList<CircleModel>()
         val texts = ArrayList<TextModel>()
         var seq = 0
+        fun nextId(prefix: String): String = "$prefix-${seq++}"
 
         val layerIt = doc.getDXFLayerIterator()
         while (layerIt.hasNext()) {
             val layer = layerIt.next() as DXFLayer
             val layerFallback = layer.name?.takeIf { it.isNotBlank() } ?: DXFConstants.DEFAULT_LAYER
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_LINE,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+            )
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_LWPOLYLINE,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+            )
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_POLYLINE,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+                skipLwPolyline = true,
+            )
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_ARC,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+            )
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_CIRCLE,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+            )
+            appendTypedEntities(
+                layer = layer,
+                type = DXFConstants.ENTITY_TYPE_TEXT,
+                layerFallback = layerFallback,
+                idHint = null,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = ::nextId,
+            )
+        }
 
-            @Suppress("UNCHECKED_CAST")
-            val lineEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_LINE) as? List<*>
-            lineEntities.orEmpty().forEach { entity ->
-                val line = entity as? DXFLine ?: return@forEach
-                val start = line.startPoint ?: return@forEach
-                val end = line.endPoint ?: return@forEach
-                lines.add(
-                    LineModel(
-                        id = "ln-${seq++}",
-                        layerName = line.layerName?.takeIf { it.isNotBlank() } ?: layerFallback,
-                        start = Point2d(start.x, start.y),
-                        end = Point2d(end.x, end.y),
-                    ),
-                )
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val lwEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_LWPOLYLINE) as? List<*>
-            lwEntities.orEmpty().forEach { entity ->
-                val pl = entity as? DXFLWPolyline ?: return@forEach
-                toPolylineModel(pl, "lwpl-${seq++}", layerFallback)?.let { polylines.add(it) }
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val plEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_POLYLINE) as? List<*>
-            plEntities.orEmpty().forEach { entity ->
-                if (entity is DXFLWPolyline) return@forEach
-                val pl = entity as? DXFPolyline ?: return@forEach
-                toPolylineModel(pl, "pl-${seq++}", layerFallback)?.let { polylines.add(it) }
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val arcEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_ARC) as? List<*>
-            arcEntities.orEmpty().forEach { entity ->
-                val arc = entity as? DXFArc ?: return@forEach
-                val center = arc.centerPoint ?: return@forEach
-                arcs.add(
-                    ArcModel(
-                        id = "arc-${seq++}",
-                        layerName = arc.layerName?.takeIf { it.isNotBlank() } ?: layerFallback,
-                        center = Point2d(center.x, center.y),
-                        radius = arc.radius,
-                        startAngleDeg = arc.startAngle,
-                        endAngleDeg = arc.endAngle,
-                    ),
-                )
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val circleEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_CIRCLE) as? List<*>
-            circleEntities.orEmpty().forEach { entity ->
-                val circle = entity as? DXFCircle ?: return@forEach
-                val center = circle.centerPoint ?: return@forEach
-                circles.add(
-                    CircleModel(
-                        id = "cir-${seq++}",
-                        layerName = circle.layerName?.takeIf { it.isNotBlank() } ?: layerFallback,
-                        center = Point2d(center.x, center.y),
-                        radius = circle.radius,
-                    ),
-                )
-            }
-
-            @Suppress("UNCHECKED_CAST")
-            val textEntities = layer.getDXFEntities(DXFConstants.ENTITY_TYPE_TEXT) as? List<*>
-            textEntities.orEmpty().forEach { entity ->
-                val text = entity as? DXFText ?: return@forEach
-                val insert = text.insertPoint ?: return@forEach
-                texts.add(
-                    TextModel(
-                        id = "txt-${seq++}",
-                        layerName = text.layerName?.takeIf { it.isNotBlank() } ?: layerFallback,
-                        position = Point2d(insert.x, insert.y),
-                        content = text.text.orEmpty(),
-                        height = text.height.takeIf { it > 0.0 } ?: 1.0,
-                    ),
+        val blockIt = doc.getDXFBlockIterator()
+        while (blockIt.hasNext()) {
+            val block = blockIt.next() as DXFBlock
+            val blockName = block.name.orEmpty()
+            if (shouldSkipBlock(blockName)) continue
+            val entityIt = block.getDXFEntitiesIterator() ?: continue
+            while (entityIt.hasNext()) {
+                val entity = entityIt.next() as? DXFEntity ?: continue
+                appendOneEntity(
+                    entity = entity,
+                    layerFallback = entity.layerName?.takeIf { it.isNotBlank() }
+                        ?: DXFConstants.DEFAULT_LAYER,
+                    idHint = blockName,
+                    polylines = polylines,
+                    lines = lines,
+                    arcs = arcs,
+                    circles = circles,
+                    texts = texts,
+                    nextId = ::nextId,
                 )
             }
         }
@@ -153,6 +183,124 @@ class DxfReader : DWGReader {
             texts = texts,
             blocks = emptyList(),
         )
+    }
+
+    private fun appendTypedEntities(
+        layer: DXFLayer,
+        type: String,
+        layerFallback: String,
+        idHint: String?,
+        polylines: MutableList<PolylineModel>,
+        lines: MutableList<LineModel>,
+        arcs: MutableList<ArcModel>,
+        circles: MutableList<CircleModel>,
+        texts: MutableList<TextModel>,
+        nextId: (String) -> String,
+        skipLwPolyline: Boolean = false,
+    ) {
+        @Suppress("UNCHECKED_CAST")
+        val list = layer.getDXFEntities(type) as? List<*> ?: return
+        list.forEach { raw ->
+            if (skipLwPolyline && raw is DXFLWPolyline) return@forEach
+            val entity = raw as? DXFEntity ?: return@forEach
+            appendOneEntity(
+                entity = entity,
+                layerFallback = layerFallback,
+                idHint = idHint,
+                polylines = polylines,
+                lines = lines,
+                arcs = arcs,
+                circles = circles,
+                texts = texts,
+                nextId = nextId,
+            )
+        }
+    }
+
+    private fun appendOneEntity(
+        entity: DXFEntity,
+        layerFallback: String,
+        idHint: String?,
+        polylines: MutableList<PolylineModel>,
+        lines: MutableList<LineModel>,
+        arcs: MutableList<ArcModel>,
+        circles: MutableList<CircleModel>,
+        texts: MutableList<TextModel>,
+        nextId: (String) -> String,
+    ) {
+        val layerName = entity.layerName?.takeIf { it.isNotBlank() } ?: layerFallback
+        val hint = idHint?.takeIf { it.isNotBlank() }?.replace(Regex("[^A-Za-z0-9_-]"), "_")
+        when (entity) {
+            is DXFLine -> {
+                val start = entity.startPoint ?: return
+                val end = entity.endPoint ?: return
+                val prefix = if (hint != null) "blk-$hint-ln" else "ln"
+                lines.add(
+                    LineModel(
+                        id = nextId(prefix),
+                        layerName = layerName,
+                        start = Point2d(start.x, start.y),
+                        end = Point2d(end.x, end.y),
+                    ),
+                )
+            }
+            is DXFLWPolyline, is DXFPolyline -> {
+                val pl = entity as DXFPolyline
+                val prefix = if (hint != null) {
+                    if (entity is DXFLWPolyline) "blk-$hint-lwpl" else "blk-$hint-pl"
+                } else {
+                    if (entity is DXFLWPolyline) "lwpl" else "pl"
+                }
+                toPolylineModel(pl, nextId(prefix), layerName)?.let { polylines.add(it) }
+            }
+            is DXFArc -> {
+                val center = entity.centerPoint ?: return
+                val prefix = if (hint != null) "blk-$hint-arc" else "arc"
+                arcs.add(
+                    ArcModel(
+                        id = nextId(prefix),
+                        layerName = layerName,
+                        center = Point2d(center.x, center.y),
+                        radius = entity.radius,
+                        startAngleDeg = entity.startAngle,
+                        endAngleDeg = entity.endAngle,
+                    ),
+                )
+            }
+            is DXFCircle -> {
+                val center = entity.centerPoint ?: return
+                val prefix = if (hint != null) "blk-$hint-cir" else "cir"
+                circles.add(
+                    CircleModel(
+                        id = nextId(prefix),
+                        layerName = layerName,
+                        center = Point2d(center.x, center.y),
+                        radius = entity.radius,
+                    ),
+                )
+            }
+            is DXFText -> {
+                val insert = entity.insertPoint ?: return
+                val prefix = if (hint != null) "blk-$hint-txt" else "txt"
+                texts.add(
+                    TextModel(
+                        id = nextId(prefix),
+                        layerName = layerName,
+                        position = Point2d(insert.x, insert.y),
+                        content = entity.text.orEmpty(),
+                        height = entity.height.takeIf { it > 0.0 } ?: 1.0,
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun shouldSkipBlock(name: String): Boolean {
+        val n = name.trim()
+        if (n.isEmpty()) return true
+        if (n.equals("*Model_Space", ignoreCase = true)) return true
+        if (n.startsWith("*Paper_Space", ignoreCase = true)) return true
+        return false
     }
 
     private fun toPolylineModel(

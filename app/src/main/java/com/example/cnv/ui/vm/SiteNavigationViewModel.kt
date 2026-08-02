@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.cnv.dwg.CadReaderFactory
+import com.example.cnv.dwg.DWGConfig
 import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
@@ -208,6 +209,11 @@ class SiteNavigationViewModel : ViewModel() {
             dwgUri = dwgUri,
             registeredAtMs = now,
             dwgRegistered = !dwgUri.isNullOrBlank(),
+            conveyorLayerName = if (!dwgUri.isNullOrBlank()) {
+                resolveInitialConveyorLayer(peekCadLayers(dwgUri))
+            } else {
+                DWGConfig.DEFAULT_LAYER_FILTER
+            },
             createdAtMs = now,
             updatedAtMs = now,
         )
@@ -219,16 +225,91 @@ class SiteNavigationViewModel : ViewModel() {
     fun registerDwgForCurrentDrawing(dwgUri: String): Boolean {
         val drawing = catalog.drawings.current(context) ?: return false
         if (drawing.routeLocked) return false
+        val layers = peekCadLayers(dwgUri)
+        val layer = resolveInitialConveyorLayer(layers)
         catalog.drawings.upsert(
             drawing.copy(
                 dwgUri = dwgUri,
                 dwgRegistered = true,
+                conveyorLayerName = layer,
                 registeredAtMs = System.currentTimeMillis(),
                 updatedAtMs = System.currentTimeMillis(),
             ),
         )
         loadDrawingDashboard()
         return true
+    }
+
+    /**
+     * Layers available in the current Drawing CAD source (DXF/Stub).
+     * Empty when no source is registered.
+     */
+    fun listCadLayersForCurrentDrawing(): List<String> {
+        val drawing = catalog.drawings.current(context) ?: return emptyList()
+        val source = drawing.dwgUri ?: return emptyList()
+        return peekCadLayers(source)
+    }
+
+    fun setConveyorLayerForCurrentDrawing(layerName: String): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        val trimmed = layerName.trim()
+        if (trimmed.isEmpty()) return false
+        catalog.drawings.upsert(
+            drawing.copy(
+                conveyorLayerName = trimmed,
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    fun currentConveyorLayerName(): String {
+        val drawing = catalog.drawings.current(context)
+        return drawing?.conveyorLayerName?.takeIf { it.isNotBlank() }
+            ?: DWGConfig.DEFAULT_LAYER_FILTER
+    }
+
+    fun generateRouteForCurrentDrawing(): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        if (drawing.routeLocked) return false
+        if (!drawing.dwgRegistered || !drawing.originSet) return false
+        val routeRepo = catalog.routes.underlying()
+        val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
+        val layer = drawing.conveyorLayerName.ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
+        val importer = DWGImporter(reader = CadReaderFactory.create(source))
+        val generator = RouteGenerator(routeRepository = routeRepo)
+        val dwgResult = importer.importFrom(source, layerName = layer)
+        if (dwgResult.candidates.isEmpty()) return false
+        generator.generate(candidates = dwgResult.candidates)
+        val route = routeRepo.current() ?: return false
+        catalog.routes.setRoute(route)
+        catalog.drawings.upsert(
+            drawing.copy(
+                routeId = route.id,
+                updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    private fun peekCadLayers(sourcePath: String): List<String> {
+        return runCatching {
+            val reader = CadReaderFactory.create(sourcePath)
+            val doc = reader.open(sourcePath)
+            reader.readLayers(doc).map { it.name }.distinct()
+        }.getOrDefault(emptyList())
+    }
+
+    private fun resolveInitialConveyorLayer(layers: List<String>): String {
+        if (layers.any { it.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true) }) {
+            return layers.first { it.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true) }
+        }
+        // Keep CONVEYOR as the declared initial default even when absent;
+        // user selects a real layer in Commissioning Route step.
+        return DWGConfig.DEFAULT_LAYER_FILTER
     }
 
     fun setOriginForCurrentDrawing(x: Float, y: Float): Boolean {
@@ -281,28 +362,6 @@ class SiteNavigationViewModel : ViewModel() {
         )
         catalog.drawings.upsert(
             drawing.copy(calibrationReady = true, updatedAtMs = System.currentTimeMillis()),
-        )
-        loadDrawingDashboard()
-        return true
-    }
-
-    fun generateRouteForCurrentDrawing(): Boolean {
-        val drawing = catalog.drawings.current(context) ?: return false
-        if (drawing.routeLocked) return false
-        if (!drawing.dwgRegistered || !drawing.originSet) return false
-        val routeRepo = catalog.routes.underlying()
-        val importer = DWGImporter(reader = CadReaderFactory.create(drawing.dwgUri.orEmpty()))
-        val generator = RouteGenerator(routeRepository = routeRepo)
-        val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
-        val dwgResult = importer.importFrom(source)
-        generator.generate(candidates = dwgResult.candidates)
-        val route = routeRepo.current() ?: return false
-        catalog.routes.setRoute(route)
-        catalog.drawings.upsert(
-            drawing.copy(
-                routeId = route.id,
-                updatedAtMs = System.currentTimeMillis(),
-            ),
         )
         loadDrawingDashboard()
         return true

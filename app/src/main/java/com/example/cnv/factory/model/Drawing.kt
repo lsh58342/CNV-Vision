@@ -12,6 +12,12 @@ data class Drawing(
     val description: String = "",
     val registeredAtMs: Long = System.currentTimeMillis(),
     val dwgRegistered: Boolean = false,
+    /**
+     * Conveyor layer used by Route extraction.
+     * Default initial value is [com.example.cnv.dwg.DWGConfig.DEFAULT_LAYER_FILTER];
+     * user may override after DXF import.
+     */
+    val conveyorLayerName: String = com.example.cnv.dwg.DWGConfig.DEFAULT_LAYER_FILTER,
     /** Conveyor start / Route Origin — set once after DWG registration. */
     val originSet: Boolean = false,
     val originX: Float? = null,

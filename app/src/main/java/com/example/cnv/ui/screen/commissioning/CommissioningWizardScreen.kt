@@ -201,18 +201,28 @@ class CommissioningWizardScreen : BaseScreen() {
             }
             CommissioningWizardProgress.Step.ROUTE -> {
                 action.setText(R.string.setup_generate_route)
+                action2.isVisible = true
+                action2.setText(R.string.wiz_select_conveyor_layer)
+                validationList.isVisible = true
+                bindConveyorLayerList(validationList)
+                val selected = siteVm.currentConveyorLayerName()
                 status.text = if (snap.routeOk) {
                     getString(R.string.wiz_status_route_ok)
                 } else {
-                    getString(R.string.wiz_status_need_route)
+                    getString(R.string.wiz_status_need_route_layer, selected)
                 }
+                action2.setOnClickListener { promptConveyorLayerSelection() }
                 action.setOnClickListener {
                     if (siteVm.generateRouteForCurrentDrawing()) {
                         Toast.makeText(requireContext(), R.string.setup_route_generated, Toast.LENGTH_SHORT).show()
                         refresh()
                         showStep(requireView())
                     } else {
-                        Toast.makeText(requireContext(), R.string.setup_route_failed, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.setup_route_failed_layer, siteVm.currentConveyorLayerName()),
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
                 }
             }
@@ -387,6 +397,69 @@ class CommissioningWizardScreen : BaseScreen() {
                     refresh()
                     showStep(requireView())
                 }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun bindConveyorLayerList(list: LinearLayout) {
+        UiComponents.clearChildren(list)
+        val layers = siteVm.listCadLayersForCurrentDrawing()
+        val selected = siteVm.currentConveyorLayerName()
+        list.addView(
+            UiComponents.inflateInfoCard(
+                list,
+                getString(R.string.wiz_layer_list_title),
+                if (layers.isEmpty()) {
+                    getString(R.string.wiz_layer_list_empty)
+                } else {
+                    getString(R.string.wiz_layer_list_selected, selected, layers.size)
+                },
+            ),
+        )
+        layers.forEach { name ->
+            val mark = if (name == selected) "●" else "○"
+            list.addView(
+                UiComponents.inflateStatusCard(
+                    list,
+                    "$mark $name",
+                    if (name == selected) {
+                        getString(R.string.wiz_layer_selected)
+                    } else {
+                        getString(R.string.wiz_layer_available)
+                    },
+                    UiComponents.statusColor(
+                        requireContext(),
+                        if (name == selected) "OK" else "MISSING",
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun promptConveyorLayerSelection() {
+        val layers = siteVm.listCadLayersForCurrentDrawing()
+        if (layers.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.wiz_layer_list_empty, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val selected = siteVm.currentConveyorLayerName()
+        val checked = layers.indexOfFirst { it.equals(selected, ignoreCase = true) }
+            .takeIf { it >= 0 } ?: 0
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.wiz_select_conveyor_layer)
+            .setSingleChoiceItems(layers.toTypedArray(), checked) { dialog, which ->
+                val name = layers[which]
+                if (siteVm.setConveyorLayerForCurrentDrawing(name)) {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.wiz_layer_set_ok, name),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                    refresh()
+                    view?.let { showStep(it) }
+                }
+                dialog.dismiss()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
