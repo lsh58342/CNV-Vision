@@ -3,6 +3,9 @@ package com.example.cnv.inspection
 import com.example.cnv.core.event.BaseEvent
 import com.example.cnv.core.event.FusionEvent
 import com.example.cnv.core.event.PositionEvent
+import com.example.cnv.factory.model.ConveyorDirection
+import com.example.cnv.factory.model.ConveyorMotionProfile
+import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.inspection.db.CnvInspectionDatabase
 import com.example.cnv.inspection.db.InspectionEventEntity
 import com.example.cnv.inspection.db.InspectionSessionEntity
@@ -48,6 +51,7 @@ class InspectionRepository(
         inspectionVersion: String = "1",
         routeVersion: String = "",
         calibrationVersion: Int = 0,
+        conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
     ) {
         val db = database() ?: return
         db.sessionDao().insertSession(
@@ -60,6 +64,10 @@ class InspectionRepository(
                 routeVersion = routeVersion,
                 calibrationVersion = calibrationVersion,
                 finished = false,
+                profileNominalSpeedMPerMin = conveyorProfile.nominalSpeedMPerMin,
+                profileDirection = conveyorProfile.direction.name,
+                profileExpectedFps = conveyorProfile.expectedFps,
+                profileMotionProfile = conveyorProfile.motionProfile.name,
             ),
         )
     }
@@ -108,8 +116,10 @@ class InspectionRepository(
             appVersion = appVersion,
         )
         val db = database()
+        var profileSnap = ConveyorProfileSnapshot.empty()
         if (db != null) {
             val existing = db.sessionDao().getSession(result.sessionId)
+            profileSnap = existing?.toProfileSnapshot() ?: ConveyorProfileSnapshot.empty()
             db.sessionDao().insertSession(
                 InspectionSessionEntity(
                     sessionId = result.sessionId,
@@ -127,6 +137,11 @@ class InspectionRepository(
                     routeVersion = result.routeVersion,
                     calibrationVersion = result.calibrationVersion,
                     finished = true,
+                    // Preserve Conveyor Profile snapshot from session start.
+                    profileNominalSpeedMPerMin = existing?.profileNominalSpeedMPerMin,
+                    profileDirection = existing?.profileDirection.orEmpty(),
+                    profileExpectedFps = existing?.profileExpectedFps ?: 0f,
+                    profileMotionProfile = existing?.profileMotionProfile.orEmpty(),
                 ),
             )
             if (events.isNotEmpty()) {
@@ -134,7 +149,7 @@ class InspectionRepository(
             }
         }
         save(result)
-        return summary
+        return summary.copy(conveyorProfile = profileSnap)
     }
 
     fun loadSession(sessionId: String): PersistedInspectionSession? {
@@ -220,6 +235,16 @@ class InspectionRepository(
         coverage = coverage,
         inspectionVersion = inspectionVersion,
         appVersion = appVersion,
+        conveyorProfile = toProfileSnapshot(),
+    )
+
+    private fun InspectionSessionEntity.toProfileSnapshot() = ConveyorProfileSnapshot(
+        nominalSpeedMPerMin = profileNominalSpeedMPerMin,
+        direction = runCatching { ConveyorDirection.valueOf(profileDirection) }
+            .getOrDefault(ConveyorDirection.FORWARD),
+        expectedFps = profileExpectedFps,
+        motionProfile = runCatching { ConveyorMotionProfile.valueOf(profileMotionProfile) }
+            .getOrDefault(ConveyorMotionProfile.CONSTANT),
     )
 
     private fun InspectionSessionEntity.toInspectionResult() = InspectionResult(

@@ -63,6 +63,31 @@
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/conveyor_profile_section"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/overview_conveyor_profile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:fontFamily="monospace"
+            android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_overview_edit_profile"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/conveyor_profile_edit" />
+
+        <TextView
             android:id="@+id/overview_wizard_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

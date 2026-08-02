@@ -2,6 +2,7 @@ package com.example.cnv.factory.model
 
 /**
  * DWG drawing under a Floor. All Route / Zone / Inspection / HeatMap data belongs to a Drawing.
+ * Hierarchy: Drawing → Drawing Info → Conveyor Profile → Calibration → Route → Zone → History.
  */
 data class Drawing(
     val id: String,
@@ -15,6 +16,8 @@ data class Drawing(
     val originSet: Boolean = false,
     val originX: Float? = null,
     val originY: Float? = null,
+    /** Drawing metadata: conveyor speed / direction / FPS (STEP 15-1). */
+    val conveyorProfile: ConveyorProfile = ConveyorProfile.fromConfig(),
     /** One Route per Drawing. */
     val routeId: String? = null,
     val routeLocked: Boolean = false,

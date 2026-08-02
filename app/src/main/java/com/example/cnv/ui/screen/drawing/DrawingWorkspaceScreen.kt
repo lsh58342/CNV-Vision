@@ -4,12 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.cnv.R
+import com.example.cnv.factory.model.ConveyorDirection
+import com.example.cnv.factory.model.ConveyorMotionProfile
+import com.example.cnv.factory.model.ConveyorProfile
+import com.example.cnv.factory.model.ConveyorProfileConfig
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
@@ -18,6 +24,7 @@ import com.example.cnv.ui.screen.commissioning.CommissioningWizardProgress
 import com.example.cnv.ui.screen.commissioning.CommissioningWizardScreen
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.textfield.TextInputEditText
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -186,6 +193,11 @@ class DrawingWorkspaceScreen : BaseScreen() {
         content.findViewById<TextView>(R.id.overview_updated).text =
             getString(R.string.draw_card_updated, updated)
 
+        bindConveyorProfile(content, drawing?.conveyorProfile)
+        content.findViewById<MaterialButton>(R.id.button_overview_edit_profile).setOnClickListener {
+            showEditConveyorProfileDialog(drawing?.conveyorProfile ?: ConveyorProfile.fromConfig())
+        }
+
         val statusContainer = content.findViewById<LinearLayout>(R.id.overview_status_container)
         statusContainer.removeAllViews()
         val inspectionReady = state.canStartInspection()
@@ -245,6 +257,84 @@ class DrawingWorkspaceScreen : BaseScreen() {
         content.findViewById<MaterialButton>(R.id.button_overview_back).setOnClickListener {
             nav().navigateClearTo(CnvDestination.FLOOR_SELECT)
         }
+    }
+
+    private fun bindConveyorProfile(content: View, profile: ConveyorProfile?) {
+        val p = profile ?: ConveyorProfile.fromConfig()
+        val speed = p.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
+            ?: getString(R.string.conveyor_nominal_unset)
+        val lastUpdated = if (p.lastUpdatedMs > 0L) {
+            SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(p.lastUpdatedMs))
+        } else {
+            "—"
+        }
+        content.findViewById<TextView>(R.id.overview_conveyor_profile).text = getString(
+            R.string.conveyor_profile_overview,
+            speed,
+            p.speedTolerancePercent,
+            p.direction.name,
+            p.expectedFps,
+            p.motionProfile.name,
+            lastUpdated,
+        )
+    }
+
+    private fun showEditConveyorProfileDialog(current: ConveyorProfile) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_conveyor_profile, null)
+        val speedInput = dialogView.findViewById<TextInputEditText>(R.id.input_nominal_speed)
+        val toleranceInput = dialogView.findViewById<TextInputEditText>(R.id.input_speed_tolerance)
+        val fpsInput = dialogView.findViewById<TextInputEditText>(R.id.input_expected_fps)
+        val directionSpinner = dialogView.findViewById<Spinner>(R.id.spinner_direction)
+        val motionSpinner = dialogView.findViewById<Spinner>(R.id.spinner_motion)
+
+        val directions = ConveyorDirection.entries
+        val motions = ConveyorMotionProfile.entries
+        directionSpinner.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            directions.map { it.name },
+        )
+        motionSpinner.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            motions.map { it.name },
+        )
+
+        speedInput.setText(current.nominalSpeedMPerMin?.toString().orEmpty())
+        toleranceInput.setText(current.speedTolerancePercent.toString())
+        fpsInput.setText(current.expectedFps.toString())
+        directionSpinner.setSelection(directions.indexOf(current.direction).coerceAtLeast(0))
+        motionSpinner.setSelection(motions.indexOf(current.motionProfile).coerceAtLeast(0))
+
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.conveyor_profile_edit)
+            .setView(dialogView)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                val defaults = ConveyorProfileConfig.DEFAULT
+                val speedText = speedInput.text?.toString()?.trim().orEmpty()
+                val nominal = speedText.toFloatOrNull()
+                if (speedText.isNotEmpty() && nominal == null) {
+                    Toast.makeText(requireContext(), R.string.conveyor_invalid_speed, Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val tolerance = toleranceInput.text?.toString()?.toFloatOrNull()
+                    ?: defaults.defaultSpeedTolerancePercent
+                val fps = fpsInput.text?.toString()?.toFloatOrNull()
+                    ?: defaults.defaultExpectedFps
+                val updated = ConveyorProfile(
+                    nominalSpeedMPerMin = nominal,
+                    speedTolerancePercent = tolerance,
+                    direction = directions[directionSpinner.selectedItemPosition],
+                    expectedFps = fps,
+                    motionProfile = motions[motionSpinner.selectedItemPosition],
+                    lastUpdatedMs = System.currentTimeMillis(),
+                )
+                if (siteVm.updateConveyorProfileForCurrentDrawing(updated)) {
+                    showOverview()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     companion object {

@@ -1,6 +1,7 @@
 package com.example.cnv.factory.repository
 
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.inspection.InspectionRepository
 import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.inspection.InspectionSessionSummary
@@ -54,6 +55,7 @@ class ZoneInspectionRepository(
         appVersion: String,
         routeVersion: String = "",
         calibrationVersion: Int = 0,
+        conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
     ) {
         inspectionRepository.createSession(
             sessionId = sessionId,
@@ -62,6 +64,7 @@ class ZoneInspectionRepository(
             appVersion = appVersion,
             routeVersion = routeVersion,
             calibrationVersion = calibrationVersion,
+            conveyorProfile = conveyorProfile,
         )
         index(drawingId, sessionId)
     }

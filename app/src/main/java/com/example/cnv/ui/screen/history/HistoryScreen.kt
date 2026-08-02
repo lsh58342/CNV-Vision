@@ -54,6 +54,9 @@ class HistoryScreen : BaseScreen() {
         }
         val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         body.text = summaries.joinToString("\n\n") { s ->
+            val profile = s.conveyorProfile
+            val speed = profile.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
+                ?: getString(R.string.conveyor_nominal_unset)
             buildString {
                 append(dateFmt.format(Date(s.endTimeMs)))
                 append("\n")
@@ -64,6 +67,16 @@ class HistoryScreen : BaseScreen() {
                 append(getString(R.string.history_line_duration, s.durationMs / 1000f))
                 append("\n")
                 append(getString(R.string.history_line_session, s.sessionId.take(8)))
+                append("\n")
+                append(
+                    getString(
+                        R.string.history_line_profile,
+                        speed,
+                        profile.direction.name,
+                        profile.expectedFps,
+                        profile.motionProfile.name,
+                    ),
+                )
             }
         }
     }

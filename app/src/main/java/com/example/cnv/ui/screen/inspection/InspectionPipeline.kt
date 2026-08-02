@@ -12,6 +12,7 @@ import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.debug.RouteDebugController
 import com.example.cnv.debug.RouteDebugView
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.fusion.FusionEngine
 import com.example.cnv.imu.IMUManager
@@ -113,6 +114,9 @@ class InspectionPipeline(
         )
         val drawingId = CurrentContext.get().drawingId
         if (drawingId != null) {
+            val drawing = catalog.drawings.get(drawingId)
+            val profileSnap = drawing?.conveyorProfile?.let { ConveyorProfileSnapshot.from(it) }
+                ?: ConveyorProfileSnapshot.empty()
             catalog.inspections.createSession(
                 drawingId = drawingId,
                 sessionId = session.sessionId,
@@ -120,6 +124,7 @@ class InspectionPipeline(
                 appVersion = versionName,
                 routeVersion = session.freeze.routeVersion,
                 calibrationVersion = session.freeze.calibrationVersion,
+                conveyorProfile = profileSnap,
             )
         }
         return true

@@ -433,6 +433,17 @@
     <string name="history_line_shocks">Shocks: %1$d</string>
     <string name="history_line_duration">Duration: %.1f s</string>
     <string name="history_line_session">Session: %1$s</string>
+    <string name="history_line_profile">Profile: %1$s · %2$s · %3$.0f fps · %4$s</string>
+    <string name="conveyor_profile_section">Conveyor Profile</string>
+    <string name="conveyor_profile_edit">Edit Conveyor Profile</string>
+    <string name="conveyor_nominal_unset">Not set</string>
+    <string name="conveyor_nominal_speed_hint">Nominal Speed (m/min)</string>
+    <string name="conveyor_tolerance_hint">Speed Tolerance (%)</string>
+    <string name="conveyor_expected_fps_hint">Expected FPS</string>
+    <string name="conveyor_direction_label">Direction</string>
+    <string name="conveyor_motion_label">Motion Profile</string>
+    <string name="conveyor_invalid_speed">Invalid nominal speed</string>
+    <string name="conveyor_profile_overview">Nominal Speed: %1$s\nTolerance: ±%2$.1f%%\nDirection: %3$s\nExpected FPS: %4$.0f\nMotion: %5$s\nLast Updated: %6$s</string>
 
     <string name="ws_confirm_pick">Confirm Pick</string>
     <string name="ws_save">Save</string>

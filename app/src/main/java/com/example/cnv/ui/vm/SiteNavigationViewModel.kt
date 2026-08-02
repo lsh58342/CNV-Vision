@@ -10,6 +10,7 @@ import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.context.canAccessCommissioning
 import com.example.cnv.factory.model.Building
+import com.example.cnv.factory.model.ConveyorProfile
 import com.example.cnv.factory.model.Drawing
 import com.example.cnv.factory.model.Floor
 import com.example.cnv.factory.model.Zone
@@ -240,6 +241,23 @@ class SiteNavigationViewModel : ViewModel() {
                 originX = x,
                 originY = y,
                 updatedAtMs = System.currentTimeMillis(),
+            ),
+        )
+        loadDrawingDashboard()
+        return true
+    }
+
+    /**
+     * Update Drawing Conveyor Profile metadata (editable after Commissioning).
+     * Does not affect active Inspection Session snapshots.
+     */
+    fun updateConveyorProfileForCurrentDrawing(profile: ConveyorProfile): Boolean {
+        val drawing = catalog.drawings.current(context) ?: return false
+        val now = System.currentTimeMillis()
+        catalog.drawings.upsert(
+            drawing.copy(
+                conveyorProfile = profile.copy(lastUpdatedMs = now),
+                updatedAtMs = now,
             ),
         )
         loadDrawingDashboard()
