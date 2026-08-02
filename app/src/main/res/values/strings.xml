@@ -452,7 +452,7 @@
     <string name="history_card_date">Inspection Date: %1$s</string>
     <string name="history_card_body">Start: %1$s\nDuration: %2$s\nDistance: %3$.1f mm\nShock Count: %4$d\nCoverage: %5$.1f%%\nAverage Speed: %6$.2f m/min\nValidation Score: %7$.2f\nInspection Version: %8$s</string>
     <string name="history_session_detail_title">Session Detail</string>
-    <string name="history_statistics_section">Statistics</string>
+    <string name="history_statistics_section">Analysis Result</string>
     <string name="history_open_heatmap">Open HeatMap</string>
     <string name="history_replay_future">Replay Analysis</string>
     <string name="history_replay_future_toast">Replay engine not implemented yet — session marked for Replay</string>
@@ -498,6 +498,7 @@
     <string name="history_detail_summary">Session: %1$s\nStart: %2$s\nEnd: %3$s\nDuration: %4$s\nDistance: %5$.1f mm\nShock Count: %6$d\nCoverage: %7$.1f%%\nAverage Speed: %8$.2f m/min\nValidation Score: %9$.2f\nInspection Version: %10$s\nApp Version: %11$s</string>
     <string name="history_detail_profile">Nominal Speed: %1$s\nTolerance: ±%2$.1f%%\nDirection: %3$s\nExpected FPS: %4$.0f\nMotion: %5$s</string>
     <string name="history_detail_statistics">Maximum Shock: %1$.2f\nAvg Expected Speed: %2$.2f m/min\nAvg Measured Speed: %3$.2f m/min\nMax Difference: %4$.2f mm\nAvg Difference: %5$.2f mm\nValidation Score: %6$.2f</string>
+    <string name="history_analysis_statistics">Distance total: %1$.1f mm\nDistance avg Δ: %2$.2f mm (max %3$.2f / min %4$.2f)\nSpeed avg: %5$.1f mm/s (max %6$.1f / min %7$.1f)\nNominal: %8$.2f m/min · Δspeed: %9$.1f mm/s\nTracking avg conf: %10$.2f (min %11$.2f)\nLow conf: %12$d · Loss: %13$d\nShocks: %14$d (max %15$.2f / avg %16$.2f / density %17$.2f /m)\nCoverage drawing: %18$.1f%% · route: %19$.1f%% · ratio: %20$.1f%%\nValidation Score: %21$.2f\nZones analyzed: %22$d</string>
     <string name="speed_mismatch_warning">Conveyor Speed Mismatch</string>
     <string name="speed_validation_developer_idle">Speed Validation\nOpen Inspection to start live overlay.\nShows Expected / Measured / Difference / Confidence / Nominal Speed.</string>
     <string name="conveyor_profile_section">Conveyor Profile</string>

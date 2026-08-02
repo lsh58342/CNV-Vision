@@ -55,7 +55,39 @@ class SessionDetailScreen : BaseScreen() {
             }
             bindDetail(view, summary)
             bindActions(view, drawingId, sessionId)
+            catalog.analysis.getOrAnalyzeAsync(sessionId, drawingId) { analysis ->
+                if (!isAdded || analysis == null) return@getOrAnalyzeAsync
+                bindAnalysis(view, analysis)
+            }
         }
+    }
+
+    private fun bindAnalysis(view: View, a: com.example.cnv.analysis.InspectionAnalysisResult) {
+        view.findViewById<TextView>(R.id.detail_statistics).text = getString(
+            R.string.history_analysis_statistics,
+            a.distance.totalDistanceMm,
+            a.distance.averageDistanceMm,
+            a.distance.maximumDeltaMm,
+            a.distance.minimumDeltaMm,
+            a.speed.averageSpeedMmPerSec,
+            a.speed.maximumSpeedMmPerSec,
+            a.speed.minimumSpeedMmPerSec,
+            a.speed.nominalSpeedMPerMin ?: -1f,
+            a.speed.speedDifferenceMmPerSec,
+            a.tracking.averageConfidence,
+            a.tracking.minimumConfidence,
+            a.tracking.lowConfidenceCount,
+            a.tracking.trackingLossCount,
+            a.shock.shockCount,
+            a.shock.maximumShock,
+            a.shock.averageShock,
+            a.shock.shockDensityPerMeter,
+            a.coverage.drawingCoverage * 100f,
+            a.coverage.routeCoverage * 100f,
+            a.coverage.inspectionRatio * 100f,
+            a.validationScore,
+            a.zones.size,
+        )
     }
 
     private fun bindActions(view: View, drawingId: String, sessionId: String) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.cnv.analysis.InspectionAnalysisResult
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Zone
 import com.example.cnv.factory.repository.FactoryCatalog
@@ -23,8 +24,8 @@ import com.example.cnv.replay.analysis.ReplayStatistics
 import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
 
 /**
- * Replay Viewer ViewModel — depends on [ReplayEngine] interface only (STEP 16-3).
- * Playback / seek are Engine-owned; Analysis is read-only.
+ * Replay Viewer ViewModel — Engine API + Analysis Repository (STEP 16-3 / 17).
+ * Does not re-analyze Inspection Events; session stats come from Analysis Result.
  */
 class ReplayViewModel(
     private val engine: ReplayEngine,
@@ -66,6 +67,7 @@ class ReplayViewModel(
     private var routePolyline: List<Pair<Double, Double>> = emptyList()
     private var zoneOverlays: List<HeatMapZoneOverlay> = emptyList()
     private var drawingName: String = "—"
+    private var sessionAnalysis: InspectionAnalysisResult? = null
 
     private val engineListener = ReplayEngine.Listener { publish() }
 
@@ -110,6 +112,10 @@ class ReplayViewModel(
                     errorMessage = error ?: "Load failed",
                 )
                 return@loadSession
+            }
+            catalog.analysis.getOrAnalyzeAsync(sessionId, preferredDrawingId) { result ->
+                sessionAnalysis = result
+                publish()
             }
             publish()
         }
@@ -190,8 +196,28 @@ class ReplayViewModel(
 
     private fun publish() {
         val frame = engine.currentEvent()
-        val engineStats = engine.currentStatistics()
-        val stats = analysis.statistics()
+        val live = engine.currentStatistics()
+        val analyzed = sessionAnalysis
+        // Session-level stats from Analysis Repository; frame cursor stays Engine-owned.
+        val engineStats = if (analyzed != null) {
+            live.copy(
+                shockCount = analyzed.shock.shockCount,
+                coverage = analyzed.coverage.routeCoverage,
+                validationScore = analyzed.validationScore,
+                currentSpeedMmPerSec = live.currentSpeedMmPerSec.takeIf { it > 0f }
+                    ?: analyzed.speed.averageSpeedMmPerSec,
+            )
+        } else {
+            live
+        }
+        val stats = analysis.statistics().let { s ->
+            if (analyzed == null) s
+            else s.copy(
+                validationScore = analyzed.validationScore,
+                distanceMm = live.currentDistanceMm.takeIf { it > 0f }
+                    ?: analyzed.distance.totalDistanceMm,
+            )
+        }
         val events = engine.events()
         _state.value = UiState(
             loading = engine.currentState() == ReplayPlaybackState.LOADING,

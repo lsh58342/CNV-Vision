@@ -1,5 +1,6 @@
 package com.example.cnv.factory.repository
 
+import com.example.cnv.analysis.InspectionAnalysisRepository
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Building
 import com.example.cnv.factory.model.Floor
@@ -22,6 +23,9 @@ class FactoryCatalog(
     val replayMetadata: ReplayMetadataRepository = ReplayMetadataRepository(),
     val conveyorProfiles: ConveyorProfileRepository = ConveyorProfileRepository(),
 ) {
+    /** Lazy to avoid catalog construction recursion. */
+    val analysis: InspectionAnalysisRepository by lazy { InspectionAnalysisRepository(this) }
+
     /**
      * Cascade-delete Drawing and all Drawing-owned artifacts.
      */
@@ -33,6 +37,7 @@ class FactoryCatalog(
         csvMetadata.removeForDrawing(drawingId)
         replayMetadata.removeForDrawing(drawingId)
         conveyorProfiles.deleteAsync(drawingId)
+        analysis.invalidateDrawing(drawingId)
         InspectionDbGate.execute {
             inspections.removeForDrawing(drawingId)
         }
@@ -60,6 +65,7 @@ class FactoryCatalog(
                 heatMaps.removeSessionFromLayer(drawingId, sessionId)
                 csvMetadata.removeForSession(drawingId, sessionId)
                 replayMetadata.removeForSession(drawingId, sessionId)
+                analysis.invalidate(sessionId)
             },
             onMain = { onDone?.invoke() },
         )
