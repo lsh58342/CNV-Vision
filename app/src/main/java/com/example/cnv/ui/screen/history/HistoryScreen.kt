@@ -77,6 +77,17 @@ class HistoryScreen : BaseScreen() {
                         profile.motionProfile.name,
                     ),
                 )
+                append("\n")
+                append(
+                    getString(
+                        R.string.history_line_speed_validation,
+                        s.speedValidation.averageExpectedSpeedMPerMin,
+                        s.speedValidation.averageMeasuredSpeedMPerMin,
+                        s.speedValidation.maximumDifferenceMm,
+                        s.speedValidation.averageDifferenceMm,
+                        s.speedValidation.validationScore,
+                    ),
+                )
             }
         }
     }

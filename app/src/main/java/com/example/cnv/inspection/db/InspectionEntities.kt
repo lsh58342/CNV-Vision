@@ -33,6 +33,12 @@ data class InspectionSessionEntity(
     val profileDirection: String = "",
     val profileExpectedFps: Float = 0f,
     val profileMotionProfile: String = "",
+    /** Speed Validation session aggregates (STEP 15-2) — for AI / History. */
+    val avgExpectedSpeedMPerMin: Float = 0f,
+    val avgMeasuredSpeedMPerMin: Float = 0f,
+    val maxSpeedDifferenceMm: Float = 0f,
+    val avgSpeedDifferenceMm: Float = 0f,
+    val speedValidationScore: Float = 0f,
 )
 
 /**

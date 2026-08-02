@@ -71,6 +71,7 @@ data class ConveyorProfileSnapshot(
     val direction: ConveyorDirection,
     val expectedFps: Float,
     val motionProfile: ConveyorMotionProfile,
+    val speedTolerancePercent: Float = ConveyorProfileConfig.DEFAULT_SPEED_TOLERANCE_PERCENT,
 ) {
     companion object {
         fun from(profile: ConveyorProfile) = ConveyorProfileSnapshot(
@@ -78,6 +79,7 @@ data class ConveyorProfileSnapshot(
             direction = profile.direction,
             expectedFps = profile.expectedFps,
             motionProfile = profile.motionProfile,
+            speedTolerancePercent = profile.speedTolerancePercent,
         )
 
         fun empty(config: ConveyorProfileConfig = ConveyorProfileConfig.DEFAULT) =
@@ -86,6 +88,17 @@ data class ConveyorProfileSnapshot(
                 direction = config.defaultDirection,
                 expectedFps = config.defaultExpectedFps,
                 motionProfile = config.defaultMotionProfile,
+                speedTolerancePercent = config.defaultSpeedTolerancePercent,
+            )
+
+        fun toProfile(snapshot: ConveyorProfileSnapshot): ConveyorProfile =
+            ConveyorProfile(
+                nominalSpeedMPerMin = snapshot.nominalSpeedMPerMin,
+                speedTolerancePercent = snapshot.speedTolerancePercent,
+                direction = snapshot.direction,
+                expectedFps = snapshot.expectedFps,
+                motionProfile = snapshot.motionProfile,
+                lastUpdatedMs = 0L,
             )
     }
 }

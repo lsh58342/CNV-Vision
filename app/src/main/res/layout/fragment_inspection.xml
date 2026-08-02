@@ -27,6 +27,17 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <TextView
+            android:id="@+id/inspection_speed_warning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/speed_mismatch_warning"
+            android:textColor="#FF5252"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            android:textStyle="bold"
+            android:visibility="gone" />
     </LinearLayout>
 
     <androidx.camera.view.PreviewView

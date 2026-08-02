@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [InspectionSessionEntity::class, InspectionEventEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {

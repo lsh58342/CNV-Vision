@@ -1,12 +1,12 @@
 package com.example.cnv.inspection
 
-import com.example.cnv.factory.model.ConveyorDirection
-import com.example.cnv.factory.model.ConveyorMotionProfile
 import com.example.cnv.factory.model.ConveyorProfileSnapshot
+import com.example.cnv.speed.SpeedValidationSummary
 
 /**
  * Session summary for History (Drawing-scoped). Built at finish time (STEP 13).
  * Includes Conveyor Profile snapshot from session start (STEP 15-1).
+ * Includes Speed Validation aggregates (STEP 15-2).
  */
 data class InspectionSessionSummary(
     val sessionId: String,
@@ -22,6 +22,7 @@ data class InspectionSessionSummary(
     val inspectionVersion: String,
     val appVersion: String,
     val conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
+    val speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
 )
 
 /**

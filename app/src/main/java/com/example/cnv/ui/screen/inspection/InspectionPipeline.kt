@@ -23,10 +23,12 @@ import com.example.cnv.inspection.RouteQualityScore
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.opencv.OpenCVManager
 import com.example.cnv.route.RouteGenerator
+import com.example.cnv.speed.SpeedValidatorEngine
 
 /**
  * Inspection UI bridge — wires existing Camera / OpenCV / Fusion / Inspection engines.
  * Does not change domain algorithms (UI Rebuild Phase 3).
+ * STEP 15-2: SpeedValidatorEngine validates Nominal Speed vs Measured Distance only.
  */
 class InspectionPipeline(
     private val activity: AppCompatActivity,
@@ -43,6 +45,9 @@ class InspectionPipeline(
     private val fusionEngine = FusionEngine(
         initialCalibrated = CalibrationManager.getInstance(activity).isCalibrated(),
     )
+    private val speedValidatorEngine = SpeedValidatorEngine(
+        profileProvider = { catalog.drawings.current()?.conveyorProfile },
+    ).also { SpeedValidatorEngine.bindShared(it) }
     private val routeRepository = catalog.routes.underlying()
     private val routeGenerator = RouteGenerator(routeRepository = routeRepository)
     private val mapMatchingEngine: MapMatchingEngine
@@ -67,6 +72,8 @@ class InspectionPipeline(
             mapperProvider = { routeGenerator.latestResult()?.mapper },
         )
     }
+
+    fun speedValidator(): SpeedValidatorEngine = speedValidatorEngine
 
     fun attachPreview(preview: PreviewView) {
         detached = false
@@ -113,8 +120,10 @@ class InspectionPipeline(
             ),
         )
         val drawingId = CurrentContext.get().drawingId
+        val drawing = drawingId?.let { catalog.drawings.get(it) }
+        // Freeze Conveyor Profile for Speed Validation (session-scoped snapshot).
+        speedValidatorEngine.beginSession(drawing?.conveyorProfile)
         if (drawingId != null) {
-            val drawing = catalog.drawings.get(drawingId)
             val profileSnap = drawing?.conveyorProfile?.let { ConveyorProfileSnapshot.from(it) }
                 ?: ConveyorProfileSnapshot.empty()
             catalog.inspections.createSession(
@@ -134,6 +143,7 @@ class InspectionPipeline(
         val active = inspectionManager.currentSession()
         val events = active?.recorder()?.snapshot().orEmpty()
         val appVersion = active?.freeze?.appVersion.orEmpty()
+        val speedSummary = speedValidatorEngine.endSession()
         val result = inspectionManager.stop()
         val drawingId = CurrentContext.get().drawingId
         if (result != null && drawingId != null) {
@@ -146,6 +156,7 @@ class InspectionPipeline(
                         activity.packageManager.getPackageInfo(activity.packageName, 0).versionName
                     }.getOrNull().orEmpty().ifBlank { "1.0" }
                 },
+                speedValidation = speedSummary,
             )
             // STEP 14: regenerate Drawing Heat Layer from persisted sessions (no Viewer calc).
             val route = routeRepository.current()
@@ -197,6 +208,7 @@ class InspectionPipeline(
         } else {
             0.0
         }
+        val sample = speedValidatorEngine.latest()
         return InspectionUiStatus(
             trackingLabel = tracking,
             distanceMm = distance,
@@ -204,12 +216,16 @@ class InspectionPipeline(
             elapsedSec = elapsedSec,
             sessionState = state.name,
             running = state == InspectionState.RUNNING,
+            speedMismatchWarning = speedValidatorEngine.mismatchWarning(),
+            speedValidationConfidence = sample?.confidence,
+            validatedFusionConfidence = sample?.validatedFusionConfidence,
         )
     }
 
     private fun startSensors() {
         if (sensorsRunning) return
         fusionEngine.start()
+        speedValidatorEngine.start()
         mapMatchingEngine.start()
         imuManager.start()
         routeDebugController.start()
@@ -221,6 +237,7 @@ class InspectionPipeline(
         routeDebugController.stop()
         imuManager.stop()
         mapMatchingEngine.stop()
+        speedValidatorEngine.stop()
         fusionEngine.stop()
         sensorsRunning = false
     }

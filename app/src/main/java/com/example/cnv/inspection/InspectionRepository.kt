@@ -9,6 +9,7 @@ import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.inspection.db.CnvInspectionDatabase
 import com.example.cnv.inspection.db.InspectionEventEntity
 import com.example.cnv.inspection.db.InspectionSessionEntity
+import com.example.cnv.speed.SpeedValidationSummary
 
 /**
  * Inspection session store — in-memory cache + Room persistence (STEP 13).
@@ -97,6 +98,7 @@ class InspectionRepository(
         events: List<BaseEvent>,
         appVersion: String,
         inspectionVersion: String = "1",
+        speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
     ): InspectionSessionSummary {
         val durationSec = (result.durationMs / 1000f).coerceAtLeast(0.001f)
         val averageSpeed = result.statistics.totalDistanceMm / durationSec
@@ -114,6 +116,7 @@ class InspectionRepository(
             coverage = coverage,
             inspectionVersion = inspectionVersion,
             appVersion = appVersion,
+            speedValidation = speedValidation,
         )
         val db = database()
         var profileSnap = ConveyorProfileSnapshot.empty()
@@ -142,6 +145,11 @@ class InspectionRepository(
                     profileDirection = existing?.profileDirection.orEmpty(),
                     profileExpectedFps = existing?.profileExpectedFps ?: 0f,
                     profileMotionProfile = existing?.profileMotionProfile.orEmpty(),
+                    avgExpectedSpeedMPerMin = speedValidation.averageExpectedSpeedMPerMin,
+                    avgMeasuredSpeedMPerMin = speedValidation.averageMeasuredSpeedMPerMin,
+                    maxSpeedDifferenceMm = speedValidation.maximumDifferenceMm,
+                    avgSpeedDifferenceMm = speedValidation.averageDifferenceMm,
+                    speedValidationScore = speedValidation.validationScore,
                 ),
             )
             if (events.isNotEmpty()) {
@@ -236,6 +244,14 @@ class InspectionRepository(
         inspectionVersion = inspectionVersion,
         appVersion = appVersion,
         conveyorProfile = toProfileSnapshot(),
+        speedValidation = SpeedValidationSummary(
+            sampleCount = 0,
+            averageExpectedSpeedMPerMin = avgExpectedSpeedMPerMin,
+            averageMeasuredSpeedMPerMin = avgMeasuredSpeedMPerMin,
+            maximumDifferenceMm = maxSpeedDifferenceMm,
+            averageDifferenceMm = avgSpeedDifferenceMm,
+            validationScore = speedValidationScore,
+        ),
     )
 
     private fun InspectionSessionEntity.toProfileSnapshot() = ConveyorProfileSnapshot(

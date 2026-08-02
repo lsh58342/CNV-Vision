@@ -7,6 +7,7 @@ import com.example.cnv.inspection.InspectionResult
 import com.example.cnv.inspection.InspectionSessionSummary
 import com.example.cnv.inspection.PersistedInspectionSession
 import com.example.cnv.core.event.BaseEvent
+import com.example.cnv.speed.SpeedValidationSummary
 
 /**
  * Drawing-scoped inspection history index + Room persistence facade (STEP 13).
@@ -36,6 +37,7 @@ class ZoneInspectionRepository(
         events: List<BaseEvent>,
         appVersion: String,
         inspectionVersion: String = "1",
+        speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
     ): InspectionSessionSummary {
         val summary = inspectionRepository.finishSession(
             drawingId = drawingId,
@@ -43,6 +45,7 @@ class ZoneInspectionRepository(
             events = events,
             appVersion = appVersion,
             inspectionVersion = inspectionVersion,
+            speedValidation = speedValidation,
         )
         index(drawingId, result.sessionId)
         return summary

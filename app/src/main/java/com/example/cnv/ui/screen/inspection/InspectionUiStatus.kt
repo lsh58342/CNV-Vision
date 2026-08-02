@@ -10,4 +10,8 @@ data class InspectionUiStatus(
     val elapsedSec: Double = 0.0,
     val sessionState: String = "IDLE",
     val running: Boolean = false,
+    /** Continuous Nominal vs Measured mismatch (STEP 15-2). */
+    val speedMismatchWarning: Boolean = false,
+    val speedValidationConfidence: Float? = null,
+    val validatedFusionConfidence: Float? = null,
 )

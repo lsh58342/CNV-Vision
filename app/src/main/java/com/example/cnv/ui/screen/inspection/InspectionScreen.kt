@@ -88,6 +88,8 @@ class InspectionScreen : BaseScreen() {
             distanceCardValue.text = getString(R.string.insp_distance_value, status.distanceMm)
             shockCardValue.text = getString(R.string.insp_shock_value, status.shockCount)
             elapsedCardValue.text = getString(R.string.insp_elapsed_value, status.elapsedSec)
+            val warning = view.findViewById<TextView>(R.id.inspection_speed_warning)
+            warning.visibility = if (status.speedMismatchWarning) View.VISIBLE else View.GONE
         }
 
         view.findViewById<MaterialButton>(R.id.button_inspection_start).setOnClickListener {

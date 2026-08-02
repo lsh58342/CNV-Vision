@@ -434,6 +434,9 @@
     <string name="history_line_duration">Duration: %.1f s</string>
     <string name="history_line_session">Session: %1$s</string>
     <string name="history_line_profile">Profile: %1$s · %2$s · %3$.0f fps · %4$s</string>
+    <string name="history_line_speed_validation">Speed Val: exp %.2f / meas %.2f m/min · maxΔ %.2f mm · avgΔ %.2f mm · score %.2f</string>
+    <string name="speed_mismatch_warning">Conveyor Speed Mismatch</string>
+    <string name="speed_validation_developer_idle">Speed Validation\nOpen Inspection to start live overlay.\nShows Expected / Measured / Difference / Confidence / Nominal Speed.</string>
     <string name="conveyor_profile_section">Conveyor Profile</string>
     <string name="conveyor_profile_edit">Edit Conveyor Profile</string>
     <string name="conveyor_nominal_unset">Not set</string>
