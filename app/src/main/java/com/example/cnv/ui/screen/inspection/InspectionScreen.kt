@@ -84,10 +84,15 @@ class InspectionScreen : BaseScreen() {
         elapsedCardValue = elapsed.findViewById(R.id.status_card_value)
 
         val preview = view.findViewById<PreviewView>(R.id.inspection_preview)
+        val liveRouteViewer = view.findViewById<LiveRouteViewer>(R.id.inspection_live_route)
         viewModel.attachPreview(preview)
 
         viewModel.dashboard.observe(viewLifecycleOwner) { dash ->
             dashboardBinder?.bind(dash)
+        }
+
+        viewModel.liveRoute.observe(viewLifecycleOwner) { overlay ->
+            liveRouteViewer.bind(overlay)
         }
 
         viewModel.status.observe(viewLifecycleOwner) { status ->

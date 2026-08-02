@@ -13,7 +13,7 @@ import com.example.cnv.inspection.InspectionResult
 /**
  * Inspection Screen ViewModel — UI state only.
  * Delegates start/stop / status reads to [InspectionPipeline] (existing engines).
- * STEP 20-1: Live Dashboard polled at low rate (no engine impact).
+ * STEP 20-1 / 20-16: Live Dashboard + Live Route overlay polled (no engine mutation).
  */
 class InspectionViewModel(
     private val pipeline: InspectionPipeline,
@@ -25,12 +25,16 @@ class InspectionViewModel(
     private val _dashboard = MutableLiveData(LiveInspectionDashboardState())
     val dashboard: LiveData<LiveInspectionDashboardState> = _dashboard
 
+    private val _liveRoute = MutableLiveData(LiveRouteOverlayState())
+    val liveRoute: LiveData<LiveRouteOverlayState> = _liveRoute
+
     private val handler = Handler(Looper.getMainLooper())
     private val pollRunnable = object : Runnable {
         override fun run() {
             val live = pipeline.readLiveDashboard()
             _dashboard.value = live
             _status.value = live.toUiStatus()
+            _liveRoute.value = pipeline.readLiveRouteOverlay()
             handler.postDelayed(this, POLL_INTERVAL_MS)
         }
     }
@@ -49,17 +53,13 @@ class InspectionViewModel(
 
     /** Calls existing InspectionManager.start — no algorithm change. */
     fun startInspection(): Boolean = pipeline.startSession().also {
-        val live = pipeline.readLiveDashboard()
-        _dashboard.value = live
-        _status.value = live.toUiStatus()
+        refreshSnapshots()
     }
 
     /** Calls existing InspectionManager.stop — no algorithm change. */
     fun stopInspection(): InspectionResult? {
         val result = pipeline.stopSession()
-        val live = pipeline.readLiveDashboard()
-        _dashboard.value = live
-        _status.value = live.toUiStatus()
+        refreshSnapshots()
         return result
     }
 
@@ -67,6 +67,13 @@ class InspectionViewModel(
         stopPolling()
         pipeline.detach()
         super.onCleared()
+    }
+
+    private fun refreshSnapshots() {
+        val live = pipeline.readLiveDashboard()
+        _dashboard.value = live
+        _status.value = live.toUiStatus()
+        _liveRoute.value = pipeline.readLiveRouteOverlay()
     }
 
     private fun startPolling() {
@@ -93,7 +100,7 @@ class InspectionViewModel(
     }
 
     companion object {
-        /** Throttled UI refresh — avoids impacting Inspection pipeline. */
-        private const val POLL_INTERVAL_MS = 500L
+        /** 150ms — matches LiveRouteViewer marker animation window. */
+        private const val POLL_INTERVAL_MS = 150L
     }
 }

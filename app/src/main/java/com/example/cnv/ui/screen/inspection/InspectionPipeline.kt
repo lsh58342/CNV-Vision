@@ -28,9 +28,12 @@ import com.example.cnv.production.ProductionMetrics
 import com.example.cnv.route.RouteGenerator
 import com.example.cnv.rule.RuleSeverity
 import com.example.cnv.speed.SpeedValidatorEngine
+import com.example.cnv.zone.editor.ZonePolylineResolver
+import com.example.cnv.core.model.RouteDirection
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.atan2
 
 /**
  * Inspection UI bridge — wires existing Camera / OpenCV / Fusion / Inspection engines.
@@ -78,6 +81,13 @@ class InspectionPipeline(
     private var liveShockCount: Int = 0
     private var liveDistanceMm: Float = 0f
     private var lastFusionTimestampNs: Long = 0L
+
+    /** Segments fully passed during the active / last session (UI overlay only). */
+    private val traversedSegmentIds = linkedSetOf<String>()
+    private var lastMarkerSegmentId: String? = null
+    private var lastDirectionRad: Float = 0f
+    private var lastOverlayMarkerX: Double? = null
+    private var lastOverlayMarkerY: Double? = null
 
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
@@ -188,6 +198,8 @@ class InspectionPipeline(
             ?: ConveyorProfileSnapshot.empty()
         sessionConveyorSnapshot = profileSnap
         resetLiveAggregates()
+        traversedSegmentIds.clear()
+        lastMarkerSegmentId = null
         ensureDashboardLayout()
         if (drawingId != null) {
             val conveyorLive = drawing?.conveyorProfile
@@ -313,6 +325,131 @@ class InspectionPipeline(
             }
         }
         return result
+    }
+
+    /**
+     * Live Route overlay snapshot — same drawing coordinates as Dashboard.
+     * Reads RouteRepository / MapMatching / CurrentContext only (no engine mutation).
+     */
+    fun readLiveRouteOverlay(): LiveRouteOverlayState {
+        val route = routeRepository.current()
+        val layout = ensureDashboardLayout()
+        val position = mapMatchingEngine.latestPosition()
+        val running = inspectionManager.state() == InspectionState.RUNNING
+        val tracking = when {
+            !running && position == null && lastOverlayMarkerX == null -> LiveTrackingVisual.STOPPED
+            !running -> LiveTrackingVisual.STOPPED
+            position == null -> LiveTrackingVisual.SEARCHING
+            position.confidence < 0.25f -> LiveTrackingVisual.LOST
+            else -> LiveTrackingVisual.GOOD
+        }
+
+        if (route == null || layout == null) {
+            return LiveRouteOverlayState(
+                markerX = lastOverlayMarkerX,
+                markerY = lastOverlayMarkerY,
+                directionRad = lastDirectionRad,
+                tracking = tracking,
+            )
+        }
+
+        val ordered = layout.segmentStartMm.entries.sortedBy { it.value }.map { it.key }
+        val segments = ordered.mapNotNull { id ->
+            val start = HeatMapRouteLayout.toDrawingCoordinate(layout, id, 0f) ?: return@mapNotNull null
+            val end = HeatMapRouteLayout.toDrawingCoordinate(layout, id, 1f) ?: return@mapNotNull null
+            LiveRouteSegmentDraw(id, start.x, start.y, end.x, end.y)
+        }
+
+        if (position != null) {
+            val prevId = lastMarkerSegmentId
+            if (prevId != null && prevId != position.segmentId) {
+                traversedSegmentIds.add(prevId)
+            }
+            lastMarkerSegmentId = position.segmentId
+            val world = HeatMapRouteLayout.toDrawingCoordinate(
+                layout,
+                position.segmentId,
+                position.progress,
+            )
+            if (world != null) {
+                val prevX = lastOverlayMarkerX
+                val prevY = lastOverlayMarkerY
+                if (prevX != null && prevY != null) {
+                    val dx = world.x - prevX
+                    val dy = world.y - prevY
+                    if (dx * dx + dy * dy > 1e-6) {
+                        lastDirectionRad = atan2(dy, dx).toFloat()
+                    }
+                } else {
+                    val seg = segments.firstOrNull { it.id == position.segmentId }
+                    if (seg != null) {
+                        val dx = seg.endX - seg.startX
+                        val dy = seg.endY - seg.startY
+                        var rad = atan2(dy, dx).toFloat()
+                        if (position.direction == RouteDirection.BACKWARD) {
+                            rad += Math.PI.toFloat()
+                        }
+                        lastDirectionRad = rad
+                    }
+                }
+                lastOverlayMarkerX = world.x
+                lastOverlayMarkerY = world.y
+            }
+        }
+
+        val ctx = CurrentContext.get()
+        val drawing = ctx.drawingId?.let { catalog.drawings.get(it) } ?: catalog.drawings.current(ctx)
+        var originX: Double? = null
+        var originY: Double? = null
+        if (drawing?.originSet == true) {
+            val progress = (drawing.originX ?: 0f).coerceIn(0f, 1f)
+            val startSeg = route.startSegmentId ?: ordered.firstOrNull()
+            if (startSeg != null) {
+                val o = HeatMapRouteLayout.toDrawingCoordinate(layout, startSeg, progress)
+                originX = o?.x
+                originY = o?.y
+            }
+        }
+
+        val zone = catalog.zones.current(ctx)
+            ?: drawing?.id?.let { did ->
+                catalog.zones.forDrawing(did).firstOrNull { z ->
+                    z.name.equals(
+                        resolveZoneName(
+                            if (position != null) {
+                                HeatMapRouteLayout.absoluteRouteMm(
+                                    layout,
+                                    position.segmentId,
+                                    position.progress,
+                                ) ?: 0f
+                            } else {
+                                0f
+                            },
+                            layout,
+                        ),
+                        ignoreCase = true,
+                    )
+                }
+            }
+        val zoneIds = if (zone != null) {
+            ZonePolylineResolver.resolvedIds(zone, route).toSet()
+        } else {
+            emptySet()
+        }
+
+        return LiveRouteOverlayState(
+            segments = segments,
+            traversedSegmentIds = traversedSegmentIds.toSet(),
+            currentSegmentId = position?.segmentId ?: lastMarkerSegmentId,
+            currentProgress = position?.progress ?: 0f,
+            markerX = lastOverlayMarkerX,
+            markerY = lastOverlayMarkerY,
+            directionRad = lastDirectionRad,
+            originX = originX,
+            originY = originY,
+            zoneSegmentIds = zoneIds,
+            tracking = tracking,
+        )
     }
 
     fun readStatus(): InspectionUiStatus = readLiveDashboard().toUiStatus()

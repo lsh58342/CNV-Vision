@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  STEP 20-16: Stable Inspection layout.
+  Toolbar → Camera 220dp → Live Route 220dp → Scroll(Dashboard only) → Start/Stop.
+  Preview / Route Viewer are never inside ScrollView and never use weight for height.
+-->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -12,7 +17,7 @@
         android:background="@color/cnv_surface"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="12dp">
+        android:paddingVertical="10dp">
 
         <TextView
             android:id="@+id/inspection_zone_name"
@@ -43,15 +48,22 @@
     <androidx.camera.view.PreviewView
         android:id="@+id/inspection_preview"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="4dp"
-        android:layout_weight="5" />
+        android:layout_height="220dp"
+        android:layout_marginTop="4dp" />
 
+    <com.example.cnv.ui.screen.inspection.LiveRouteViewer
+        android:id="@+id/inspection_live_route"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_marginTop="4dp"
+        android:background="#FF1A1A1A" />
+
+    <!-- Only Dashboard scrolls; Preview + Route stay fixed above. -->
     <ScrollView
         android:id="@+id/inspection_dashboard_scroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="5"
+        android:layout_weight="1"
         android:fillViewport="true"
         android:paddingHorizontal="12dp"
         android:paddingTop="4dp">
@@ -59,7 +71,8 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="8dp">
 
             <include
                 android:id="@+id/live_inspection_dashboard"
