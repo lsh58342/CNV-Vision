@@ -5,10 +5,10 @@ import com.example.cnv.imu.ShockUnits
 /**
  * Heat intensity bands for Drawing Heat Points — shock strength in **g**.
  *
- * 1.10–1.30 Green (LOW)
- * 1.30–1.70 Yellow (MEDIUM)
- * 1.70–2.20 Orange (HIGH)
- * ≥2.20 Red (CRITICAL)
+ * 1.03–1.06 Green (Record / LOW)
+ * 1.06–1.13 Yellow (Warning / MEDIUM)
+ * 1.13–1.20 Orange (HIGH)
+ * ≥1.20 Red (Critical)
  */
 enum class HeatIntensity {
     LOW,
@@ -55,10 +55,10 @@ data class HeatMapIntensityConfig(
 
     companion object {
         val DEFAULT = HeatMapIntensityConfig()
-        const val DEFAULT_RECORD = ShockUnits.RECORDING_THRESHOLD_G // 1.10g
-        const val DEFAULT_MEDIUM = ShockUnits.BAND_GREEN_MAX_G // 1.30g
-        const val DEFAULT_HIGH = ShockUnits.BAND_YELLOW_MAX_G // 1.70g
-        const val DEFAULT_CRITICAL = ShockUnits.BAND_ORANGE_MAX_G // 2.20g
+        const val DEFAULT_RECORD = ShockUnits.RECORDING_THRESHOLD_G // 1.03g
+        const val DEFAULT_MEDIUM = ShockUnits.WARNING_THRESHOLD_G // 1.06g
+        const val DEFAULT_HIGH = ShockUnits.HIGH_THRESHOLD_G // 1.13g
+        const val DEFAULT_CRITICAL = ShockUnits.CRITICAL_THRESHOLD_G // 1.20g
         const val DEFAULT_BASE_NO_SHOCK = 0f
         const val NORMALIZED_LOW = 0.25f
         const val NORMALIZED_MEDIUM = 0.50f

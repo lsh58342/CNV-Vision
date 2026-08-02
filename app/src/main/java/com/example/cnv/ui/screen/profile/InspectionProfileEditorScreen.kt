@@ -197,8 +197,10 @@ class InspectionProfileEditorScreen : BaseScreen() {
                 .text?.toString()?.toFloatOrNull() ?: sensorDefaults.minimumShockThreshold,
             peakIntervalNs = root.findViewById<TextInputEditText>(R.id.input_peak_interval)
                 .text?.toString()?.toLongOrNull() ?: sensorDefaults.peakIntervalNs,
-            movingAverageWindow = root.findViewById<TextInputEditText>(R.id.input_moving_avg)
-                .text?.toString()?.toIntOrNull() ?: sensorDefaults.movingAverageWindow,
+            movingAverageWindow = com.example.cnv.imu.ShockUnits.clampMovingAverageWindow(
+                root.findViewById<TextInputEditText>(R.id.input_moving_avg)
+                    .text?.toString()?.toIntOrNull() ?: sensorDefaults.movingAverageWindow,
+            ),
             trackingConfidenceThreshold = root.findViewById<TextInputEditText>(R.id.input_tracking_threshold)
                 .text?.toString()?.toFloatOrNull() ?: sensorDefaults.trackingConfidenceThreshold,
         )

@@ -13,13 +13,17 @@ import com.example.cnv.rule.RuleSeverity
 data class SensorProfile(
     val gravityFilterAlpha: Float = IMUConfig.DEFAULT_LOW_PASS_ALPHA,
     val highPassAlpha: Float = IMUConfig.DEFAULT_HIGH_PASS_ALPHA,
+    /** Shock Record Threshold in m/s² (default = 1.03 g). */
     val minimumShockThreshold: Float = IMUConfig.DEFAULT_SHOCK_ACCEL_THRESHOLD,
+    /** Minimum Event Duration (ns); default 20 ms. */
     val peakIntervalNs: Long = IMUConfig.DEFAULT_PEAK_DURATION_NS,
+    /** Moving Average Window (samples), clamped to 5–10. */
     val movingAverageWindow: Int = DEFAULT_MOVING_AVERAGE_WINDOW,
     val trackingConfidenceThreshold: Float = ReplayAnalysisConfig.DEFAULT_LOW_CONFIDENCE_THRESHOLD,
 ) {
     companion object {
-        const val DEFAULT_MOVING_AVERAGE_WINDOW = 5
+        val DEFAULT_MOVING_AVERAGE_WINDOW =
+            com.example.cnv.imu.ShockUnits.MOVING_AVERAGE_WINDOW_DEFAULT
         val DEFAULT = SensorProfile()
     }
 }

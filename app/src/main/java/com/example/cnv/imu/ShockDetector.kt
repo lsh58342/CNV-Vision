@@ -4,7 +4,8 @@ import com.example.cnv.core.config.IMUConfig
 
 /**
  * Rule-based shock peak detector. No AI.
- * Peaks ≥ [ShockUnits.RECORDING_THRESHOLD_G] are always emitted.
+ * Peaks ≥ [ShockUnits.RECORDING_THRESHOLD_G] (1.03g) are always emitted.
+ * Peaks within [IMUConfig.eventMergeWindowNs] (100 ms) are merged (keep max).
  */
 class ShockDetector(
     private val config: IMUConfig,
@@ -14,6 +15,9 @@ class ShockDetector(
     private var peakStartNs = 0L
     private var peakAccel = 0f
     private var peakGyro = 0f
+
+    private var lastEmittedNs = 0L
+    private var lastEmittedPeakAccel = 0f
 
     /**
      * @return [IMUEvent] when a shock peak completes above confidence threshold; otherwise null.
@@ -58,6 +62,8 @@ class ShockDetector(
         peakStartNs = 0L
         peakAccel = 0f
         peakGyro = 0f
+        lastEmittedNs = 0L
+        lastEmittedPeakAccel = 0f
     }
 
     private fun closePeakIfNeeded(timestampNs: Long): IMUEvent? {
@@ -74,25 +80,52 @@ class ShockDetector(
         val confidence = computeConfidence(peakAccel, peakGyro, duration)
         val peakG = ShockUnits.ms2ToG(peakAccel)
         val recordable = ShockUnits.isRecordableG(peakG) || confidence >= config.confidenceThreshold
-        val event = if (recordable) {
-            println(
-                "LOG[ShockDetector][PEAK] peakMs2=%.3f peakG=%.3f conf=%.2f durationNs=%d"
-                    .format(peakAccel, peakG, confidence, duration),
-            )
-            IMUEvent(
-                timestampNs = timestampNs,
-                peakAcceleration = peakAccel,
-                peakGyroscope = peakGyro,
-                durationNs = duration,
-                confidence = if (ShockUnits.isRecordableG(peakG)) {
-                    confidence.coerceAtLeast(config.confidenceThreshold)
-                } else {
-                    confidence
-                },
-            )
-        } else {
-            null
+        if (!recordable) {
+            peakAccel = 0f
+            peakGyro = 0f
+            return null
         }
+
+        // Event Merge Window: suppress weaker peaks inside merge window; keep stronger as new event.
+        if (lastEmittedNs > 0L &&
+            timestampNs - lastEmittedNs < config.eventMergeWindowNs &&
+            peakAccel <= lastEmittedPeakAccel
+        ) {
+            println(
+                "LOG[ShockDetector][MERGE] suppressed peakG=%.3f within mergeWindowMs=%.0f"
+                    .format(peakG, config.eventMergeWindowNs / 1_000_000f),
+            )
+            peakAccel = 0f
+            peakGyro = 0f
+            return null
+        }
+
+        println(
+            "LOG[ShockDetector][PEAK] peakMs2=%.3f peakG=%.3f conf=%.2f durationMs=%.1f " +
+                "record=%.2fg warn=%b crit=%b"
+                    .format(
+                        peakAccel,
+                        peakG,
+                        confidence,
+                        duration / 1_000_000f,
+                        ShockUnits.RECORDING_THRESHOLD_G,
+                        ShockUnits.isWarningG(peakG),
+                        ShockUnits.isCriticalG(peakG),
+                    ),
+        )
+        lastEmittedNs = timestampNs
+        lastEmittedPeakAccel = peakAccel
+        val event = IMUEvent(
+            timestampNs = timestampNs,
+            peakAcceleration = peakAccel,
+            peakGyroscope = peakGyro,
+            durationNs = duration,
+            confidence = if (ShockUnits.isRecordableG(peakG)) {
+                confidence.coerceAtLeast(config.confidenceThreshold)
+            } else {
+                confidence
+            },
+        )
         peakAccel = 0f
         peakGyro = 0f
         return event

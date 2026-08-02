@@ -37,7 +37,8 @@ class InspectionRepository(
     private var lastTimestampNs: Long = 0L
     private var lastSpeedMmPerSec: Float = 0f
     private val recentShockG = ArrayDeque<Float>()
-    private val movingAvgWindow: Int = 5
+    private val movingAvgWindow: Int =
+        com.example.cnv.imu.ShockUnits.MOVING_AVERAGE_WINDOW_DEFAULT
 
     fun save(result: InspectionResult) {
         synchronized(lock) {
@@ -320,7 +321,11 @@ class InspectionRepository(
                 val recordable = com.example.cnv.imu.ShockUnits.isRecordableG(shockG)
                 val avgG = if (recordable) {
                     recentShockG.addLast(shockG)
-                    while (recentShockG.size > movingAvgWindow) recentShockG.removeFirst()
+                    while (recentShockG.size >
+                        com.example.cnv.imu.ShockUnits.clampMovingAverageWindow(movingAvgWindow)
+                    ) {
+                        recentShockG.removeFirst()
+                    }
                     recentShockG.average().toFloat()
                 } else {
                     recentShockG.average().toFloat().takeIf { recentShockG.isNotEmpty() } ?: 0f
