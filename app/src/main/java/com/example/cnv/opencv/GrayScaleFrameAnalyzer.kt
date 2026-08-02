@@ -6,6 +6,8 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.example.cnv.core.common.TimeBase
 import com.example.cnv.core.debug.PipelinePerfMonitor
+import com.example.cnv.production.ProductionLog
+import com.example.cnv.production.ProductionMetrics
 import org.opencv.android.Utils
 import org.opencv.core.Mat
 import java.util.concurrent.atomic.AtomicBoolean
@@ -13,6 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * CameraX analyzer: ImageProxy → gray → DistanceEstimator pipeline → Bitmap.
  * Uses a double-buffer Bitmap pool for conversion; UI receives an owned copy.
+ * STEP 20: Mat pool recycle, analyzer timing, isolated exceptions.
  */
 class GrayScaleFrameAnalyzer(
     private val distanceEstimator: DistanceEstimator,
@@ -32,14 +35,17 @@ class GrayScaleFrameAnalyzer(
     }
 
     override fun analyze(imageProxy: ImageProxy) {
+        ProductionMetrics.analyzerJobBegin()
         if (released.get() || !active.get()) {
             PipelinePerfMonitor.recordDropped(1)
+            ProductionMetrics.analyzerJobEnd()
             imageProxy.close()
             return
         }
 
         var grayMat: Mat? = null
         var overlayMat: Mat? = null
+        var grayFromPool = false
         val frameTimestampNs = imageProxy.imageInfo.timestamp
         val startNs = TimeBase.nowNs()
         try {
@@ -49,6 +55,8 @@ class GrayScaleFrameAnalyzer(
             }
             val gray = ImageProxyMatConverter.toGrayMat(imageProxy)
             grayMat = gray
+            // Pooled when contiguous Y plane; cloned mats are released normally.
+            grayFromPool = imageProxy.planes[0].rowStride == imageProxy.width
             val keypoints = orbFeatureDetector.detect(gray)
             val estimate = distanceEstimator.estimate(gray, keypoints, frameTimestampNs)
             val overlay = estimate.first
@@ -79,10 +87,20 @@ class GrayScaleFrameAnalyzer(
 
             val durationMs = (TimeBase.nowNs() - startNs) / 1_000_000.0
             PipelinePerfMonitor.recordFrameProcessed(durationMs, frameTimestampNs)
+            ProductionMetrics.recordAnalyzerTime(durationMs)
+            ProductionMetrics.markCameraFrame()
+        } catch (t: Throwable) {
+            PipelinePerfMonitor.recordDropped(1)
+            ProductionLog.error("CNV.Analyzer", "Frame analyze failed", t)
         } finally {
-            grayMat?.release()
+            if (grayFromPool) {
+                ImageProxyMatConverter.recycleIfPooled(grayMat)
+            } else {
+                grayMat?.release()
+            }
             overlayMat?.release()
             imageProxy.close()
+            ProductionMetrics.analyzerJobEnd()
         }
     }
 
@@ -124,5 +142,6 @@ class GrayScaleFrameAnalyzer(
         displayBitmap?.recycle()
         writeBitmap = null
         displayBitmap = null
+        GrayMatPool.releaseAll()
     }
 }

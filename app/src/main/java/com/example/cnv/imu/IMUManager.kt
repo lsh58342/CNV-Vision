@@ -6,10 +6,12 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import com.example.cnv.core.config.IMUConfig
+import com.example.cnv.production.ProductionMetrics
 
 /**
  * Registers accelerometer / gyroscope and forwards samples to [IMUProcessor].
  * Does not reference Camera or OpenCV packages.
+ * STEP 20: event-rate / drop monitoring only — processing algorithm unchanged.
  */
 class IMUManager(
     context: Context,
@@ -28,6 +30,8 @@ class IMUManager(
 
     @Volatile
     private var running = false
+
+    private var lastAccelNs: Long = 0L
 
     fun start() {
         if (running) {
@@ -59,6 +63,17 @@ class IMUManager(
             return
         }
         val timestampNs = event.timestamp
+        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            if (lastAccelNs > 0L) {
+                val gap = timestampNs - lastAccelNs
+                val nominalNs = config.samplingPeriodUs * 1_000L
+                if (gap > nominalNs * 3) {
+                    ProductionMetrics.recordSensorDropped((gap / nominalNs) - 1)
+                }
+            }
+            lastAccelNs = timestampNs
+        }
+        ProductionMetrics.markSensorEvent()
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
                 processor.onAccelerometer(

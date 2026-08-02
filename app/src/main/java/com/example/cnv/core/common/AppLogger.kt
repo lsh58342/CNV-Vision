@@ -3,11 +3,13 @@ package com.example.cnv.core.common
 import android.util.Log
 
 /**
- * Thin logger facade (replaceable later).
+ * Thin logger facade (STEP 20: prefer ProductionLog for Error/Warning/Performance).
  */
 object AppLogger {
     fun d(tag: String, message: String) {
-        Log.d(tag, message)
+        if (com.example.cnv.core.config.DebugConfig.DEFAULT.showOpenCvOverlay) {
+            Log.d(tag, message)
+        }
     }
 
     fun i(tag: String, message: String) {

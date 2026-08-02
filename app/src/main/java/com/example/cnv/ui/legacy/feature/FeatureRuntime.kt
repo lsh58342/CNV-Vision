@@ -166,6 +166,7 @@ class FeatureRuntime(
             cameraManager.start(analyzer)
             cameraRunning = true
         }
+        bindProductionReliability(camera = true, sensor = true)
         statusHandler.removeCallbacks(statusRunnable)
         statusHandler.post(statusRunnable)
         inspectionHudRunning = true
@@ -179,6 +180,7 @@ class FeatureRuntime(
             cameraManager.stop()
             openCvManager.release()
             cameraRunning = false
+            unbindProductionReliability(camera = true)
         }
         stopCoreSensorsIfIdle()
     }
@@ -477,5 +479,42 @@ class FeatureRuntime(
             root.findViewById<View>(R.id.heatmap_filter_panel)?.visibility = View.VISIBLE
         }
         refreshTimelineLabel()
+    }
+
+    private fun bindProductionReliability(camera: Boolean, sensor: Boolean) {
+        val watchdog = com.example.cnv.production.ProductionWatchdog.shared()
+        com.example.cnv.production.RecoveryCoordinator.registerCameraReinit {
+            if (cameraRunning) {
+                cameraManager.reinitialize()
+            }
+        }
+        watchdog.setListener(
+            object : com.example.cnv.production.ProductionWatchdog.Listener {
+                override fun onCameraStall() {
+                    com.example.cnv.production.RecoveryCoordinator.recoverCamera("stall")
+                }
+                override fun onSensorStall() = Unit
+                override fun onReplayStall() = Unit
+                override fun onFrameProcessingStall() {
+                    com.example.cnv.production.RecoveryCoordinator.recoverCamera("process_stall")
+                }
+            },
+        )
+        if (camera) watchdog.setCameraExpected(true)
+        if (sensor) watchdog.setSensorExpected(true)
+        watchdog.start()
+    }
+
+    private fun unbindProductionReliability(camera: Boolean) {
+        val watchdog = com.example.cnv.production.ProductionWatchdog.shared()
+        if (camera) {
+            watchdog.setCameraExpected(false)
+            com.example.cnv.production.RecoveryCoordinator.registerCameraReinit(null)
+        }
+        if (!inspectionHudRunning && !developerHudRunning && !cameraRunning) {
+            watchdog.setSensorExpected(false)
+            watchdog.setListener(null)
+            watchdog.stop()
+        }
     }
 }

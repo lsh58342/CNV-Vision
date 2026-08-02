@@ -37,8 +37,11 @@ class HeatMapOverlay @JvmOverloads constructor(
     }
 
     fun setShockHeatData(cells: List<HeatCell>, statistics: HeatStatistics) {
+        // Skip redundant invalidate when overlay data is unchanged (STEP 20).
+        if (this.cells === cells && this.stats === statistics) return
         this.cells = cells
         this.stats = statistics
+        com.example.cnv.production.ProductionMetrics.setHeatOverlayCells(cells.size)
         invalidate()
     }
 

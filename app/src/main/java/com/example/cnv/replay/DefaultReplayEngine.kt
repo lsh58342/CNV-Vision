@@ -2,6 +2,7 @@ package com.example.cnv.replay
 
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.inspection.InspectionSessionSummary
+import com.example.cnv.production.ProductionMetrics
 import com.example.cnv.replay.internal.ReplayEventCache
 import com.example.cnv.replay.internal.ReplayPlaybackController
 import com.example.cnv.replay.internal.ReplaySessionLoader
@@ -32,6 +33,12 @@ class DefaultReplayEngine(
     @Volatile
     private var lastError: String? = null
 
+    @Volatile
+    private var lastSessionId: String? = null
+
+    @Volatile
+    private var lastLoadContext: ReplayLoadContext = ReplayLoadContext()
+
     override fun loadSession(
         sessionId: String,
         context: ReplayLoadContext,
@@ -40,6 +47,8 @@ class DefaultReplayEngine(
         playback.stop()
         stateMachine.toLoading()
         lastError = null
+        lastSessionId = sessionId
+        lastLoadContext = context
         notifyListeners()
         loader.loadAsync(sessionId, context) { result ->
             result.fold(
@@ -48,6 +57,7 @@ class DefaultReplayEngine(
                     timeline.bind(loaded.frames, config.defaultIndex)
                     stateMachine.toReady()
                     lastError = null
+                    ProductionMetrics.markReplayActivity()
                     notifyListeners()
                     onDone?.invoke(true, null)
                 },
@@ -61,6 +71,17 @@ class DefaultReplayEngine(
                 },
             )
         }
+    }
+
+    /** STEP 20 recovery — reload last session from memory cache miss / error. */
+    fun reloadLastSession(onDone: ((Boolean, String?) -> Unit)? = null) {
+        val sid = lastSessionId
+        if (sid.isNullOrBlank()) {
+            onDone?.invoke(false, "No session to reload")
+            return
+        }
+        ProductionMetrics.recordReplayRecovery()
+        loadSession(sid, lastLoadContext, onDone)
     }
 
     override fun play() {
@@ -104,6 +125,7 @@ class DefaultReplayEngine(
     override fun seek(frameIndex: Int) {
         if (cache.isEmpty()) return
         timeline.seek(cache.frames(), frameIndex)
+        ProductionMetrics.markReplayActivity()
         if (stateMachine.state() == ReplayPlaybackState.COMPLETED) {
             stateMachine.toReady()
         }
@@ -212,6 +234,7 @@ class DefaultReplayEngine(
             return
         }
         timeline.seek(cache.frames(), cur + 1)
+        ProductionMetrics.markReplayActivity()
         notifyListeners()
         schedulePlayback()
     }

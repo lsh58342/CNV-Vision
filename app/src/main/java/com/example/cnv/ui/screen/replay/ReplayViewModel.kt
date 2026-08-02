@@ -78,6 +78,8 @@ class ReplayViewModel(
 
     override fun onCleared() {
         engine.removeListener(engineListener)
+        com.example.cnv.production.ProductionWatchdog.shared().setReplayExpected(false)
+        com.example.cnv.production.RecoveryCoordinator.registerReplayReload(null)
         engine.clear()
         super.onCleared()
     }
@@ -98,14 +100,32 @@ class ReplayViewModel(
             emptyList()
         }
 
+        val loadContext = ReplayLoadContext(
+            preferredDrawingId = preferredDrawingId,
+            route = route,
+            zones = zones,
+            layout = layout,
+        )
+        com.example.cnv.production.RecoveryCoordinator.registerReplayReload {
+            (engine as? com.example.cnv.replay.DefaultReplayEngine)?.reloadLastSession()
+        }
+        val watchdog = com.example.cnv.production.ProductionWatchdog.shared()
+        watchdog.setListener(
+            object : com.example.cnv.production.ProductionWatchdog.Listener {
+                override fun onCameraStall() = Unit
+                override fun onSensorStall() = Unit
+                override fun onReplayStall() {
+                    com.example.cnv.production.RecoveryCoordinator.recoverReplay("stall")
+                }
+                override fun onFrameProcessingStall() = Unit
+            },
+        )
+        watchdog.setReplayExpected(true)
+        watchdog.start()
+
         engine.loadSession(
             sessionId = sessionId,
-            context = ReplayLoadContext(
-                preferredDrawingId = preferredDrawingId,
-                route = route,
-                zones = zones,
-                layout = layout,
-            ),
+            context = loadContext,
         ) { success, error ->
             if (!success) {
                 _state.value = UiState(

@@ -46,6 +46,15 @@ class CameraManager(
         viewModel.unbind()
     }
 
+    /** Recovery: rebind CameraX without recreating managers. */
+    fun reinitialize() {
+        if (hasCameraPermission()) {
+            viewModel.rebindIfPossible(activity)
+        } else {
+            startPreview()
+        }
+    }
+
     private fun hasCameraPermission(): Boolean =
         ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED
