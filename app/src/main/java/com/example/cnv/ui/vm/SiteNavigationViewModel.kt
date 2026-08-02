@@ -3,8 +3,8 @@ package com.example.cnv.ui.vm
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.cnv.dwg.CadReaderFactory
 import com.example.cnv.dwg.DWGImporter
-import com.example.cnv.dwg.StubDWGReader
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Building
@@ -291,7 +291,7 @@ class SiteNavigationViewModel : ViewModel() {
         if (drawing.routeLocked) return false
         if (!drawing.dwgRegistered || !drawing.originSet) return false
         val routeRepo = catalog.routes.underlying()
-        val importer = DWGImporter(reader = StubDWGReader())
+        val importer = DWGImporter(reader = CadReaderFactory.create(drawing.dwgUri.orEmpty()))
         val generator = RouteGenerator(routeRepository = routeRepo)
         val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
         val dwgResult = importer.importFrom(source)

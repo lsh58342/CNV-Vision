@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import com.example.cnv.R
+import com.example.cnv.dwg.CadFileStore
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Drawing
 import com.example.cnv.factory.model.Floor
@@ -43,7 +44,12 @@ class FloorScreen : BaseScreen() {
             Toast.makeText(requireContext(), R.string.setup_dwg_cancelled, Toast.LENGTH_SHORT).show()
             return@registerForActivityResult
         }
-        pendingDwgUri = uri.toString()
+        try {
+            pendingDwgUri = CadFileStore.persistPickedFile(requireContext(), uri)
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), R.string.setup_dwg_cancelled, Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
         promptDrawingNameAndSave()
     }
 

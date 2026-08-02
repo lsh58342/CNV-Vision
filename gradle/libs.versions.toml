@@ -14,6 +14,7 @@ fragment = "1.8.9"
 opencv = "4.10.0"
 room = "2.7.2"
 ksp = "2.1.21-2.0.1"
+kabeja = "0.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +36,7 @@ opencv = { group = "org.opencv", name = "opencv", version.ref = "opencv" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+kabeja = { group = "org.kabeja", name = "kabeja", version.ref = "kabeja" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

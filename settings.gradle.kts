@@ -19,6 +19,13 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Kabeja DXF reader (not on Maven Central)
+        maven {
+            url = uri("https://logicaldoc.sourceforge.net/maven")
+            content {
+                includeGroup("org.kabeja")
+            }
+        }
     }
 }
 
