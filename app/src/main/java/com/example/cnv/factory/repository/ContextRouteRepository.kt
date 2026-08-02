@@ -10,11 +10,29 @@ import com.example.cnv.map.RouteRepository
  */
 class ContextRouteRepository(
     private val routeRepository: RouteRepository = RouteRepository(),
+    private val drawingRoutes: DrawingRouteRepository = DrawingRouteRepository(),
 ) {
 
-    fun setRoute(route: Route) {
+    fun drawingRoutes(): DrawingRouteRepository = drawingRoutes
+
+    fun setRoute(route: Route, drawingId: String? = CurrentContext.get().drawingId) {
         routeRepository.setRoute(route)
         CurrentContext.get().selectRoute(route.id)
+        if (drawingId != null) {
+            drawingRoutes.put(drawingId, route)
+            SitePersistenceRepository.saveDrawingRouteAsync(drawingId, route)
+        }
+    }
+
+    fun activateForDrawing(drawingId: String): Boolean {
+        val route = drawingRoutes.get(drawingId) ?: return false
+        routeRepository.setRoute(route)
+        CurrentContext.get().selectRoute(route.id)
+        return true
+    }
+
+    fun clearActive() {
+        routeRepository.clear()
     }
 
     fun currentRoute(): Route? = routeRepository.current()

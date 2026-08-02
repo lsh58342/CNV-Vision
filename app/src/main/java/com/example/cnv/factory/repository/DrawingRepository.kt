@@ -11,13 +11,25 @@ class DrawingRepository {
     private val lock = Any()
     private val items = LinkedHashMap<String, Drawing>()
 
-    fun upsert(drawing: Drawing) {
+    fun upsert(drawing: Drawing, persist: Boolean = true) {
         synchronized(lock) { items[drawing.id] = drawing }
+        if (persist) SitePersistenceRepository.saveDrawingAsync(drawing)
+    }
+
+    fun replaceAll(list: List<Drawing>) {
+        synchronized(lock) {
+            items.clear()
+            list.forEach { items[it.id] = it }
+        }
     }
 
     fun get(id: String): Drawing? = synchronized(lock) { items[id] }
 
-    fun delete(id: String): Boolean = synchronized(lock) { items.remove(id) != null }
+    fun delete(id: String, persist: Boolean = true): Boolean {
+        val removed = synchronized(lock) { items.remove(id) != null }
+        if (removed && persist) SitePersistenceRepository.deleteDrawingCascadeAsync(id)
+        return removed
+    }
 
     fun forFloor(floorId: String): List<Drawing> =
         synchronized(lock) { items.values.filter { it.floorId == floorId } }

@@ -11,8 +11,16 @@ class FactoryRepository {
     private val lock = Any()
     private val items = LinkedHashMap<String, Factory>()
 
-    fun upsert(factory: Factory) {
+    fun upsert(factory: Factory, persist: Boolean = true) {
         synchronized(lock) { items[factory.id] = factory }
+        if (persist) SitePersistenceRepository.saveFactoryAsync(factory)
+    }
+
+    fun replaceAll(list: List<Factory>) {
+        synchronized(lock) {
+            items.clear()
+            list.forEach { items[it.id] = it }
+        }
     }
 
     fun get(id: String): Factory? = synchronized(lock) { items[id] }

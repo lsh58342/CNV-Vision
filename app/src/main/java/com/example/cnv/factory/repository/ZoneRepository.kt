@@ -11,13 +11,25 @@ class ZoneRepository {
     private val lock = Any()
     private val items = LinkedHashMap<String, Zone>()
 
-    fun upsert(zone: Zone) {
+    fun upsert(zone: Zone, persist: Boolean = true) {
         synchronized(lock) { items[zone.id] = zone }
+        if (persist) SitePersistenceRepository.saveZoneAsync(zone)
+    }
+
+    fun replaceAll(list: List<Zone>) {
+        synchronized(lock) {
+            items.clear()
+            list.forEach { items[it.id] = it }
+        }
     }
 
     fun get(id: String): Zone? = synchronized(lock) { items[id] }
 
-    fun delete(id: String): Boolean = synchronized(lock) { items.remove(id) != null }
+    fun delete(id: String, persist: Boolean = true): Boolean {
+        val removed = synchronized(lock) { items.remove(id) != null }
+        if (removed && persist) SitePersistenceRepository.deleteZoneAsync(id)
+        return removed
+    }
 
     fun forDrawing(drawingId: String): List<Zone> =
         synchronized(lock) { items.values.filter { it.drawingId == drawingId } }

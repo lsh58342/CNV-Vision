@@ -19,8 +19,16 @@ class CalibrationRepository {
     private val lock = Any()
     private val byDrawing = LinkedHashMap<String, CalibrationRef>()
 
-    fun put(ref: CalibrationRef) {
+    fun put(ref: CalibrationRef, persist: Boolean = true) {
         synchronized(lock) { byDrawing[ref.drawingId] = ref }
+        if (persist) SitePersistenceRepository.saveCalibrationAsync(ref)
+    }
+
+    fun replaceAll(list: List<CalibrationRef>) {
+        synchronized(lock) {
+            byDrawing.clear()
+            list.forEach { byDrawing[it.drawingId] = it }
+        }
     }
 
     fun get(drawingId: String): CalibrationRef? = synchronized(lock) { byDrawing[drawingId] }
@@ -30,8 +38,9 @@ class CalibrationRepository {
         return get(drawingId)
     }
 
-    fun removeForDrawing(drawingId: String) {
+    fun removeForDrawing(drawingId: String, persist: Boolean = true) {
         synchronized(lock) { byDrawing.remove(drawingId) }
+        // Drawing cascade deletes calibration row from Room.
     }
 
     fun clear() {

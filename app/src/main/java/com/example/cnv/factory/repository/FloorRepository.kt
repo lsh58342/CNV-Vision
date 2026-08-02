@@ -11,13 +11,25 @@ class FloorRepository {
     private val lock = Any()
     private val items = LinkedHashMap<String, Floor>()
 
-    fun upsert(floor: Floor) {
+    fun upsert(floor: Floor, persist: Boolean = true) {
         synchronized(lock) { items[floor.id] = floor }
+        if (persist) SitePersistenceRepository.saveFloorAsync(floor)
+    }
+
+    fun replaceAll(list: List<Floor>) {
+        synchronized(lock) {
+            items.clear()
+            list.forEach { items[it.id] = it }
+        }
     }
 
     fun get(id: String): Floor? = synchronized(lock) { items[id] }
 
-    fun delete(id: String): Boolean = synchronized(lock) { items.remove(id) != null }
+    fun delete(id: String, persist: Boolean = true): Boolean {
+        val removed = synchronized(lock) { items.remove(id) != null }
+        if (removed && persist) SitePersistenceRepository.deleteFloorAsync(id)
+        return removed
+    }
 
     fun forBuilding(buildingId: String): List<Floor> =
         synchronized(lock) { items.values.filter { it.buildingId == buildingId } }

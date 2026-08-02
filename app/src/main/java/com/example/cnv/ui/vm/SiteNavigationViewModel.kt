@@ -11,6 +11,7 @@ import com.example.cnv.dwg.DxfImportDiagnosticsStore
 import com.example.cnv.dwg.DxfImportReport
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.context.CurrentContextPrefs
 import com.example.cnv.factory.model.Building
 import com.example.cnv.factory.model.ConveyorProfile
 import com.example.cnv.factory.model.Drawing
@@ -54,6 +55,7 @@ class SiteNavigationViewModel : ViewModel() {
     private val catalog: FactoryCatalog = FactoryCatalog.get()
     private val context: CurrentContext = CurrentContext.get()
     private var conveyorProfilesHydrated = false
+    private var siteHierarchyHydrated = false
 
     /** Mapper from last RouteGenerator run (Commissioning CAD wiring). */
     @Volatile
@@ -98,14 +100,36 @@ class SiteNavigationViewModel : ViewModel() {
     fun bootstrap() {
         LgesPolandSite.ensure(catalog)
         _factoryName.value = LgesPolandSite.FACTORY_NAME
-        if (!conveyorProfilesHydrated) {
-            conveyorProfilesHydrated = true
-            catalog.hydrateConveyorProfilesAsync {
-                // Refresh drawing-bound UI once Room profiles are applied.
-                if (context.drawingId != null) {
-                    loadDrawingDashboard()
+        if (!siteHierarchyHydrated) {
+            siteHierarchyHydrated = true
+            catalog.hydrateSiteHierarchyAsync {
+                CurrentContextPrefs.restore(context)
+                context.drawingId?.let { catalog.activateRouteForDrawing(it) }
+                if (!conveyorProfilesHydrated) {
+                    conveyorProfilesHydrated = true
+                    catalog.hydrateConveyorProfilesAsync {
+                        refreshAfterHydrate()
+                    }
+                } else {
+                    refreshAfterHydrate()
                 }
             }
+        } else if (!conveyorProfilesHydrated) {
+            conveyorProfilesHydrated = true
+            catalog.hydrateConveyorProfilesAsync {
+                refreshAfterHydrate()
+            }
+        }
+        refreshSummary()
+    }
+
+    private fun refreshAfterHydrate() {
+        _buildings.value = catalog.buildings.listForCurrentFactory(context)
+        _floors.value = catalog.floors.listForCurrentBuilding(context)
+        _drawings.value = catalog.drawings.listForCurrentFloor(context)
+        _zones.value = catalog.zones.listForCurrentDrawing(context)
+        if (context.drawingId != null) {
+            loadDrawingDashboard()
         }
         refreshSummary()
     }
@@ -120,6 +144,7 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun selectBuilding(id: String) {
         context.selectBuilding(id)
+        CurrentContextPrefs.save(context)
         refreshSummary()
     }
 
@@ -133,6 +158,8 @@ class SiteNavigationViewModel : ViewModel() {
             name = trimmed,
         )
         catalog.buildings.upsert(building)
+        context.selectBuilding(building.id)
+        CurrentContextPrefs.save(context)
         loadBuildings()
         return building
     }
@@ -162,6 +189,7 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun selectFloor(id: String) {
         context.selectFloor(id)
+        CurrentContextPrefs.save(context)
         refreshSummary()
     }
 
@@ -176,6 +204,8 @@ class SiteNavigationViewModel : ViewModel() {
             name = trimmed,
         )
         catalog.floors.upsert(floor)
+        context.selectFloor(floor.id)
+        CurrentContextPrefs.save(context)
         loadFloors()
         return floor
     }
@@ -205,8 +235,11 @@ class SiteNavigationViewModel : ViewModel() {
 
     fun selectDrawing(id: String) {
         context.selectDrawing(id)
+        catalog.activateRouteForDrawing(id)
         catalog.drawings.get(id)?.routeId?.let { context.selectRoute(it) }
+        CurrentContextPrefs.save(context)
         refreshSummary()
+        loadDrawingDashboard()
     }
 
     fun addDrawing(name: String, description: String, dwgUri: String?): Drawing? {
@@ -232,9 +265,10 @@ class SiteNavigationViewModel : ViewModel() {
             updatedAtMs = now,
         )
         catalog.drawings.upsert(drawing)
+        context.selectDrawing(drawing.id)
+        CurrentContextPrefs.save(context)
         loadDrawings()
         if (!dwgUri.isNullOrBlank()) {
-            context.selectDrawing(drawing.id)
             runCadImportDiagnostics(
                 sourcePath = dwgUri,
                 conveyorLayer = drawing.conveyorLayerName,

@@ -5,6 +5,7 @@ import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.Building
 import com.example.cnv.factory.model.Floor
 import com.example.cnv.inspection.db.InspectionDbGate
+import com.example.cnv.map.Route
 import com.example.cnv.report.MaintenanceReportRepository
 import com.example.cnv.report.WorkOrderRepository
 import com.example.cnv.report.excel.ExcelArchiveRepository
@@ -45,7 +46,7 @@ class FactoryCatalog(
     fun deleteDrawingCascade(drawingId: String): Boolean {
         val drawing = drawings.get(drawingId) ?: return false
         zones.removeForDrawing(drawingId)
-        calibrations.removeForDrawing(drawingId)
+        calibrations.removeForDrawing(drawingId, persist = false)
         heatMaps.removeForDrawing(drawingId)
         csvMetadata.removeForDrawing(drawingId)
         replayMetadata.removeForDrawing(drawingId)
@@ -56,17 +57,18 @@ class FactoryCatalog(
         reports.invalidateDrawing(drawingId)
         workOrders.removeForDrawing(drawingId)
         excelArchives.removeForDrawing(drawingId)
+        routes.drawingRoutes().remove(drawingId)
         InspectionDbGate.execute {
             inspections.removeForDrawing(drawingId)
         }
         val ctx = CurrentContext.get()
         if (drawing.routeId != null && (ctx.routeId == drawing.routeId || routes.currentRoute()?.id == drawing.routeId)) {
-            routes.underlying().clear()
+            routes.clearActive()
         }
         if (ctx.drawingId == drawingId) {
             ctx.clearDrawing()
         }
-        return drawings.delete(drawingId)
+        return drawings.delete(drawingId, persist = true)
     }
 
     /**
@@ -93,12 +95,44 @@ class FactoryCatalog(
         )
     }
 
+    /**
+     * Restore Building/Floor/Drawing/Zone/Origin/Calibration/Route from Room into memory.
+     * Call before [hydrateConveyorProfilesAsync].
+     */
+    fun hydrateSiteHierarchyAsync(onDone: (() -> Unit)? = null) {
+        SitePersistenceRepository.loadAllAsync { snap ->
+            if (snap.factories.isNotEmpty()) {
+                factories.replaceAll(snap.factories)
+            }
+            buildings.replaceAll(snap.buildings)
+            floors.replaceAll(snap.floors)
+            drawings.replaceAll(snap.drawings)
+            zones.replaceAll(snap.zones)
+            calibrations.replaceAll(snap.calibrations)
+            val routeMap = LinkedHashMap<String, Route>()
+            snap.routesByDrawingId.forEach { (drawingId, json) ->
+                SitePersistenceRepository.decodeRoute(json)?.let { routeMap[drawingId] = it }
+            }
+            routes.drawingRoutes().replaceAll(routeMap)
+            onDone?.invoke()
+        }
+    }
+
+    fun activateRouteForDrawing(drawingId: String): Boolean {
+        val drawing = drawings.get(drawingId) ?: return false
+        val ok = routes.activateForDrawing(drawingId)
+        if (ok && drawing.routeId != null) {
+            CurrentContext.get().selectRoute(drawing.routeId)
+        }
+        return ok
+    }
+
     /** Hydrate in-memory Drawing.conveyorProfile from Room (STEP 15-4). */
     fun hydrateConveyorProfilesAsync(onDone: (() -> Unit)? = null) {
         conveyorProfiles.loadAllAsync { map ->
             map.forEach { (drawingId, profile) ->
                 val drawing = drawings.get(drawingId) ?: return@forEach
-                drawings.upsert(drawing.copy(conveyorProfile = profile))
+                drawings.upsert(drawing.copy(conveyorProfile = profile), persist = true)
             }
             onDone?.invoke()
         }
@@ -108,7 +142,7 @@ class FactoryCatalog(
         drawings.forFloor(floorId).map { it.id }.forEach { deleteDrawingCascade(it) }
         val ctx = CurrentContext.get()
         val buildingId = ctx.buildingId
-        val removed = floors.delete(floorId)
+        val removed = floors.delete(floorId, persist = true)
         if (removed && ctx.floorId == floorId && buildingId != null) {
             ctx.selectBuilding(buildingId)
         }
@@ -119,7 +153,7 @@ class FactoryCatalog(
         floors.forBuilding(buildingId).map { it.id }.forEach { deleteFloorCascade(it) }
         val ctx = CurrentContext.get()
         val factoryId = ctx.factoryId
-        val removed = buildings.delete(buildingId)
+        val removed = buildings.delete(buildingId, persist = true)
         if (removed && ctx.buildingId == buildingId && factoryId != null) {
             ctx.selectFactory(factoryId)
         }
