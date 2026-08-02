@@ -7,9 +7,10 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
 import com.example.cnv.ui.components.UiComponents
@@ -18,8 +19,7 @@ import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
 /**
- * Inspection Screen — Camera preview + START/STOP + Live Dashboard.
- * Dashboard reads Repository / Engine snapshots only (STEP 20-1).
+ * Inspection Screen — Camera preview + START/STOP + Live Dashboard + Shock Graph.
  */
 class InspectionScreen : BaseScreen() {
 
@@ -85,6 +85,8 @@ class InspectionScreen : BaseScreen() {
 
         val preview = view.findViewById<PreviewView>(R.id.inspection_preview)
         val liveRouteViewer = view.findViewById<LiveRouteViewer>(R.id.inspection_live_route)
+        val shockGraph = view.findViewById<ShockGraphView>(R.id.inspection_shock_graph)
+        val preflightBanner = view.findViewById<TextView>(R.id.inspection_preflight_banner)
         viewModel.attachPreview(preview)
 
         viewModel.dashboard.observe(viewLifecycleOwner) { dash ->
@@ -93,6 +95,22 @@ class InspectionScreen : BaseScreen() {
 
         viewModel.liveRoute.observe(viewLifecycleOwner) { overlay ->
             liveRouteViewer.bind(overlay)
+        }
+
+        viewModel.shockGraph.observe(viewLifecycleOwner) { graph ->
+            shockGraph.bind(graph)
+        }
+
+        viewModel.preflight.observe(viewLifecycleOwner) { gate ->
+            if (gate.ok) {
+                preflightBanner.isVisible = false
+            } else {
+                preflightBanner.isVisible = true
+                preflightBanner.text = getString(
+                    R.string.insp_preflight_banner,
+                    gate.blockers.joinToString("\n• ", prefix = "• "),
+                )
+            }
         }
 
         viewModel.status.observe(viewLifecycleOwner) { status ->
@@ -107,14 +125,30 @@ class InspectionScreen : BaseScreen() {
         }
 
         view.findViewById<MaterialButton>(R.id.button_inspection_start).setOnClickListener {
-            if (!viewModel.startInspection()) {
-                Toast.makeText(requireContext(), R.string.inspection_no_route, Toast.LENGTH_SHORT).show()
+            val result = viewModel.startInspection()
+            if (!result.started) {
+                showPreflightBlocked(result.preflight)
             }
         }
         view.findViewById<MaterialButton>(R.id.button_inspection_stop).setOnClickListener {
             viewModel.stopInspection()
             nav().navigate(CnvDestination.INSPECTION_RESULT)
         }
+
+        viewModel.evaluatePreflight()
+    }
+
+    private fun showPreflightBlocked(preflight: InspectionPreflight) {
+        val body = if (preflight.blockers.isEmpty()) {
+            getString(R.string.insp_preflight_unknown)
+        } else {
+            preflight.blockers.joinToString("\n") { "• $it" }
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.insp_preflight_title)
+            .setMessage(body)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     override fun onDestroyView() {

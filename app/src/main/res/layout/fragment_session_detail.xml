@@ -47,6 +47,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:text="@string/insp_shock_graph_title"
+            android:textAppearance="@style/TextAppearance.CNV.Body"
+            android:textStyle="bold" />
+
+        <com.example.cnv.ui.screen.inspection.ShockGraphView
+            android:id="@+id/detail_shock_graph"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:minHeight="160dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@string/history_statistics_section"
             android:textAppearance="@style/TextAppearance.CNV.Body"
             android:textStyle="bold" />
@@ -60,11 +75,20 @@
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_detail_heatmap"
+            android:id="@+id/button_detail_excel"
             style="@style/Widget.CNV.Button.Action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:minHeight="52dp"
+            android:text="@string/result_export_excel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_detail_heatmap"
+            style="@style/Widget.CNV.Button.Action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:minHeight="52dp"
             android:text="@string/history_open_heatmap" />
 

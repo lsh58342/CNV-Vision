@@ -13,7 +13,6 @@ import com.example.cnv.inspection.InspectionResult
 /**
  * Inspection Screen ViewModel — UI state only.
  * Delegates start/stop / status reads to [InspectionPipeline] (existing engines).
- * STEP 20-1 / 20-16: Live Dashboard + Live Route overlay polled (no engine mutation).
  */
 class InspectionViewModel(
     private val pipeline: InspectionPipeline,
@@ -28,13 +27,16 @@ class InspectionViewModel(
     private val _liveRoute = MutableLiveData(LiveRouteOverlayState())
     val liveRoute: LiveData<LiveRouteOverlayState> = _liveRoute
 
+    private val _shockGraph = MutableLiveData(ShockGraphState())
+    val shockGraph: LiveData<ShockGraphState> = _shockGraph
+
+    private val _preflight = MutableLiveData(InspectionPreflight.ready())
+    val preflight: LiveData<InspectionPreflight> = _preflight
+
     private val handler = Handler(Looper.getMainLooper())
     private val pollRunnable = object : Runnable {
         override fun run() {
-            val live = pipeline.readLiveDashboard()
-            _dashboard.value = live
-            _status.value = live.toUiStatus()
-            _liveRoute.value = pipeline.readLiveRouteOverlay()
+            refreshSnapshots()
             handler.postDelayed(this, POLL_INTERVAL_MS)
         }
     }
@@ -43,6 +45,7 @@ class InspectionViewModel(
 
     fun attachPreview(preview: PreviewView) {
         pipeline.attachPreview(preview)
+        _preflight.value = pipeline.evaluatePreflight()
         startPolling()
     }
 
@@ -51,16 +54,24 @@ class InspectionViewModel(
         pipeline.detach()
     }
 
-    /** Calls existing InspectionManager.start — no algorithm change. */
-    fun startInspection(): Boolean = pipeline.startSession().also {
+    fun startInspection(): InspectionStartResult {
+        val result = pipeline.startSession()
+        _preflight.value = result.preflight
         refreshSnapshots()
+        return result
     }
 
-    /** Calls existing InspectionManager.stop — no algorithm change. */
     fun stopInspection(): InspectionResult? {
         val result = pipeline.stopSession()
         refreshSnapshots()
+        _preflight.value = pipeline.evaluatePreflight()
         return result
+    }
+
+    fun evaluatePreflight(): InspectionPreflight {
+        val p = pipeline.evaluatePreflight()
+        _preflight.value = p
+        return p
     }
 
     override fun onCleared() {
@@ -74,6 +85,7 @@ class InspectionViewModel(
         _dashboard.value = live
         _status.value = live.toUiStatus()
         _liveRoute.value = pipeline.readLiveRouteOverlay()
+        _shockGraph.value = pipeline.readShockGraph()
     }
 
     private fun startPolling() {
@@ -100,7 +112,6 @@ class InspectionViewModel(
     }
 
     companion object {
-        /** 150ms — matches LiveRouteViewer marker animation window. */
         private const val POLL_INTERVAL_MS = 150L
     }
 }

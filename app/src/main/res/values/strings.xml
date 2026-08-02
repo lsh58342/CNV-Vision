@@ -226,6 +226,20 @@
 
     <string name="insp_status_section">Live Status</string>
     <string name="insp_session_status">Status: %1$s</string>
+    <string name="insp_shock_graph_title">Shock Graph</string>
+    <string name="insp_preflight_title">Cannot start Inspection</string>
+    <string name="insp_preflight_banner">Missing requirements:\n%1$s</string>
+    <string name="insp_preflight_unknown">Inspection cannot start — check Commissioning.</string>
+    <string name="insp_preflight_no_context">Current Context / Drawing is not set</string>
+    <string name="insp_preflight_no_drawing">Drawing not found</string>
+    <string name="insp_preflight_no_route">Route is missing — generate Route in Commissioning</string>
+    <string name="insp_preflight_no_origin">Origin is not set</string>
+    <string name="insp_preflight_no_zone">Zone is missing — create at least one Zone</string>
+    <string name="insp_preflight_no_camera">Camera permission is required</string>
+    <string name="result_export_excel">Export Excel</string>
+    <string name="csv_exporting">Generating CSV…</string>
+    <string name="csv_export_ok">CSV saved: %1$s</string>
+    <string name="csv_export_fail">CSV export failed</string>
     <string name="insp_tracking">Tracking</string>
     <string name="insp_distance">Distance</string>
     <string name="insp_shock">Shock Count</string>

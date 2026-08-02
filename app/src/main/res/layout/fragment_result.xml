@@ -74,6 +74,12 @@
             android:layout_marginTop="8dp" />
 
         <FrameLayout
+            android:id="@+id/result_excel_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
             android:id="@+id/result_finish_slot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

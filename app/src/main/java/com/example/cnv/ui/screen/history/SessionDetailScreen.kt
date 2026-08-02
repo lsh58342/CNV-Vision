@@ -6,28 +6,97 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import com.example.cnv.R
-import com.example.cnv.factory.repository.CsvMetadataRepository
+import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.inspection.InspectionSessionSummary
+import com.example.cnv.inspection.PersistedInspectionEvent
+import com.example.cnv.report.excel.ExcelExportUi
+import com.example.cnv.report.excel.InspectionCsvExportService
+import com.example.cnv.report.excel.InspectionExcelExportService
+import com.example.cnv.report.excel.InspectionExcelReportGenerator
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
+import com.example.cnv.ui.screen.inspection.ShockGraphState
+import com.example.cnv.ui.screen.inspection.ShockGraphView
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * Inspection Session Detail — summary / profile / actions (STEP 15-3 / 15-4).
- * Session ids arrive via [NavArgs]; detail uses Session Snapshot only (not live Drawing profile).
+ * Inspection Session Detail — summary / profile / shock history / export (STEP 20-18).
  */
 class SessionDetailScreen : BaseScreen() {
 
     private val catalog = FactoryCatalog.get()
+    private val csvExport = InspectionCsvExportService(catalog)
+    private val excelExport = InspectionExcelExportService(catalog)
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+
+    private var sessionId: String? = null
+    private var drawingId: String? = null
+    private var pendingCsvName = "inspection.csv"
+    private var pendingExcelName = InspectionExcelReportGenerator.defaultFileName()
+
+    private val createCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val sid = sessionId ?: return@registerForActivityResult
+        val did = drawingId ?: return@registerForActivityResult
+        Toast.makeText(requireContext(), R.string.csv_exporting, Toast.LENGTH_SHORT).show()
+        csvExport.exportAsync(
+            sessionId = sid,
+            drawingId = did,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingCsvName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.csv_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.csv_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
+    private val createExcelLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val sid = sessionId ?: return@registerForActivityResult
+        val did = drawingId ?: return@registerForActivityResult
+        ExcelExportUi.takePersistablePermission(requireContext(), uri)
+        Toast.makeText(requireContext(), R.string.excel_exporting, Toast.LENGTH_SHORT).show()
+        excelExport.exportAsync(
+            sessionId = sid,
+            drawingId = did,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingExcelName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.excel_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.excel_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,29 +106,62 @@ class SessionDetailScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val sessionId = arguments?.getString(NavArgs.SESSION_ID)
-        val drawingId = arguments?.getString(NavArgs.DRAWING_ID)
-        if (sessionId.isNullOrBlank() || drawingId.isNullOrBlank()) {
+        sessionId = arguments?.getString(NavArgs.SESSION_ID)
+        drawingId = arguments?.getString(NavArgs.DRAWING_ID)
+        val sid = sessionId
+        val did = drawingId
+        if (sid.isNullOrBlank() || did.isNullOrBlank()) {
             Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
             nav().navigateBack()
             return
         }
 
-        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+        catalog.inspections.loadSessionAsync(sid) { persisted ->
             if (!isAdded) return@loadSessionAsync
-            val summary = persisted?.summary?.takeIf { it.drawingId == drawingId }
+            val summary = persisted?.summary?.takeIf { it.drawingId == did }
             if (summary == null) {
                 Toast.makeText(requireContext(), R.string.history_session_missing, Toast.LENGTH_SHORT).show()
                 nav().navigateBack()
                 return@loadSessionAsync
             }
             bindDetail(view, summary)
-            bindActions(view, drawingId, sessionId)
-            catalog.analysis.getOrAnalyzeAsync(sessionId, drawingId) { analysis ->
+            bindShockGraph(view, persisted.events, summary)
+            bindActions(view, did, sid)
+            catalog.analysis.getOrAnalyzeAsync(sid, did) { analysis ->
                 if (!isAdded || analysis == null) return@getOrAnalyzeAsync
                 bindAnalysis(view, analysis)
             }
         }
+    }
+
+    private fun bindShockGraph(
+        view: View,
+        events: List<PersistedInspectionEvent>,
+        summary: InspectionSessionSummary,
+    ) {
+        val samples = if (events.isEmpty()) {
+            emptyList()
+        } else {
+            events.map { if (it.hasShock) it.shockStrength else 0f }
+        }
+        val snap = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
+            summary.inspectionProfileJson,
+        )
+        val thr = snap.sensor.minimumShockThreshold.takeIf { it > 0f }
+            ?: IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
+        view.findViewById<ShockGraphView>(R.id.detail_shock_graph).bind(
+            ShockGraphState.fromSamples(
+                samples = samples,
+                threshold = thr,
+                current = samples.lastOrNull() ?: 0f,
+                average = summary.let {
+                    if (samples.isEmpty()) 0f else samples.average().toFloat()
+                },
+                maximum = summary.maximumShock.takeIf { it > 0f }
+                    ?: samples.maxOrNull()
+                    ?: 0f,
+            ),
+        )
     }
 
     private fun bindAnalysis(view: View, a: com.example.cnv.analysis.InspectionAnalysisResult) {
@@ -91,6 +193,10 @@ class SessionDetailScreen : BaseScreen() {
     }
 
     private fun bindActions(view: View, drawingId: String, sessionId: String) {
+        view.findViewById<MaterialButton>(R.id.button_detail_excel).setOnClickListener {
+            pendingExcelName = InspectionExcelReportGenerator.defaultFileName()
+            createExcelLauncher.launch(ExcelExportUi.createDocumentIntent(pendingExcelName))
+        }
         view.findViewById<MaterialButton>(R.id.button_detail_heatmap).setOnClickListener {
             val args = Bundle().apply {
                 putString(NavArgs.DRAWING_ID, drawingId)
@@ -113,13 +219,8 @@ class SessionDetailScreen : BaseScreen() {
             nav().navigate(CnvDestination.REPLAY, args = args)
         }
         view.findViewById<MaterialButton>(R.id.button_detail_csv).setOnClickListener {
-            catalog.csvMetadata.put(
-                CsvMetadataRepository.CsvMeta(
-                    drawingId = drawingId,
-                    label = "CSV export pending · $sessionId",
-                ),
-            )
-            Toast.makeText(requireContext(), R.string.history_csv_export_toast, Toast.LENGTH_SHORT).show()
+            pendingCsvName = InspectionCsvExportService.defaultFileName(sessionId)
+            createCsvLauncher.launch(ExcelExportUi.createCsvDocumentIntent(pendingCsvName))
         }
         view.findViewById<MaterialButton>(R.id.button_detail_delete).setOnClickListener {
             confirmDelete(drawingId, sessionId)
@@ -146,7 +247,6 @@ class SessionDetailScreen : BaseScreen() {
             s.appVersion,
         )
 
-        // Always Session Snapshot — never live Drawing profile.
         val conveyor = s.conveyorProfile
         val speed = conveyor.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
             ?: getString(R.string.conveyor_nominal_unset)

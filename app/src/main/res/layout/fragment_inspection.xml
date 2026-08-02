@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  STEP 20-16: Stable Inspection layout.
-  Toolbar → Camera 220dp → Live Route 220dp → Scroll(Dashboard only) → Start/Stop.
-  Preview / Route Viewer are never inside ScrollView and never use weight for height.
+  STEP 20-18: Camera fixed → Live Route (minHeight) → Scroll(Shock Graph + Dashboard).
+  Never use weight=0 crush for Preview / Route / Graph.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -34,6 +33,17 @@
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
         <TextView
+            android:id="@+id/inspection_preflight_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="#33FF5252"
+            android:padding="8dp"
+            android:textAppearance="@style/TextAppearance.CNV.Caption"
+            android:textColor="#FF5252"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/inspection_speed_warning"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -48,17 +58,18 @@
     <androidx.camera.view.PreviewView
         android:id="@+id/inspection_preview"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:layout_marginTop="4dp" />
+        android:layout_height="200dp"
+        android:layout_marginTop="4dp"
+        android:minHeight="160dp" />
 
     <com.example.cnv.ui.screen.inspection.LiveRouteViewer
         android:id="@+id/inspection_live_route"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="200dp"
         android:layout_marginTop="4dp"
-        android:background="#FF1A1A1A" />
+        android:background="#FF1A1A1A"
+        android:minHeight="160dp" />
 
-    <!-- Only Dashboard scrolls; Preview + Route stay fixed above. -->
     <ScrollView
         android:id="@+id/inspection_dashboard_scroll"
         android:layout_width="match_parent"
@@ -73,6 +84,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingBottom="8dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/insp_shock_graph_title"
+                android:textAppearance="@style/TextAppearance.CNV.Caption"
+                android:textStyle="bold" />
+
+            <com.example.cnv.ui.screen.inspection.ShockGraphView
+                android:id="@+id/inspection_shock_graph"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:minHeight="160dp" />
 
             <include
                 android:id="@+id/live_inspection_dashboard"

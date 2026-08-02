@@ -63,7 +63,7 @@ class CameraManager(
         }
     }
 
-    private fun hasCameraPermission(): Boolean =
+    fun hasCameraPermission(): Boolean =
         ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED
 

@@ -89,6 +89,10 @@ class InspectionPipeline(
     private var lastOverlayMarkerX: Double? = null
     private var lastOverlayMarkerY: Double? = null
 
+    /** Ring buffer for live shock graph (Fusion shockLevel samples). */
+    private val shockSeries = ArrayDeque<Float>(SHOCK_SERIES_CAP)
+    private val shockThreshold: Float = IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
+
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
         mapMatchingEngine = MapMatchingEngine(routeRepository = routeRepository)
@@ -171,8 +175,55 @@ class InspectionPipeline(
 
     private fun watchdogHasOtherClients(): Boolean = false
 
-    fun startSession(): Boolean {
-        val route = routeRepository.current() ?: return false
+    /**
+     * Validates Route / Origin / Zone / Camera / Context before START.
+     * Does not mutate engines.
+     */
+    fun evaluatePreflight(): InspectionPreflight {
+        val blockers = ArrayList<String>()
+        val ctx = CurrentContext.get()
+        val drawingId = ctx.drawingId
+        if (drawingId.isNullOrBlank()) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_context))
+        }
+        val drawing = drawingId?.let { catalog.drawings.get(it) } ?: catalog.drawings.current(ctx)
+        if (drawing == null) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_drawing))
+        }
+        val route = routeRepository.current()
+        if (route == null) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_route))
+        }
+        if (drawing != null && !drawing.originSet) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_origin))
+        }
+        val zoneCount = drawing?.id?.let { catalog.zones.forDrawing(it).size }
+            ?: catalog.zones.listForCurrentDrawing().size
+        if (zoneCount <= 0) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_zone))
+        }
+        if (!cameraManager.hasCameraPermission()) {
+            blockers.add(activity.getString(com.example.cnv.R.string.insp_preflight_no_camera))
+        }
+        return if (blockers.isEmpty()) {
+            InspectionPreflight.ready()
+        } else {
+            InspectionPreflight(ok = false, blockers = blockers)
+        }
+    }
+
+    fun startSession(): InspectionStartResult {
+        val preflight = evaluatePreflight()
+        if (!preflight.ok) {
+            return InspectionStartResult(started = false, preflight = preflight)
+        }
+        val route = routeRepository.current()
+            ?: return InspectionStartResult(
+                started = false,
+                preflight = InspectionPreflight.blocked(
+                    activity.getString(com.example.cnv.R.string.insp_preflight_no_route),
+                ),
+            )
         val calibration = CalibrationManager.getInstance(activity)
         val calData = calibration.getCalibrationData()
         val quality = RouteQualityScore.from(routeDebugController.latestValidation())
@@ -248,7 +299,7 @@ class InspectionPipeline(
                 catalog.inspectionProfiles.saveSync(drawingId, profile)
             }
         }
-        return true
+        return InspectionStartResult(started = true, preflight = InspectionPreflight.ready())
     }
 
     fun stopSession(): InspectionResult? {
@@ -442,6 +493,17 @@ class InspectionPipeline(
             traversedSegmentIds = traversedSegmentIds.toSet(),
             currentSegmentId = position?.segmentId ?: lastMarkerSegmentId,
             currentProgress = position?.progress ?: 0f,
+            routeProgressPercent = when {
+                layout.totalLengthMm > 0f && position != null -> {
+                    val mm = HeatMapRouteLayout.absoluteRouteMm(
+                        layout,
+                        position.segmentId,
+                        position.progress,
+                    ) ?: 0f
+                    (mm / layout.totalLengthMm).coerceIn(0f, 1f)
+                }
+                else -> 0f
+            },
             markerX = lastOverlayMarkerX,
             markerY = lastOverlayMarkerY,
             directionRad = lastDirectionRad,
@@ -449,6 +511,17 @@ class InspectionPipeline(
             originY = originY,
             zoneSegmentIds = zoneIds,
             tracking = tracking,
+        )
+    }
+
+    fun readShockGraph(): ShockGraphState {
+        val fusion = fusionEngine.repository.latest()
+        return ShockGraphState.fromSamples(
+            samples = shockSeries.toList(),
+            threshold = shockThreshold,
+            current = fusion?.shockLevel ?: shockSeries.lastOrNull() ?: 0f,
+            average = if (liveShockSamples > 0) liveShockSum / liveShockSamples else 0f,
+            maximum = liveMaxShock,
         )
     }
 
@@ -471,6 +544,7 @@ class InspectionPipeline(
         if (fusion != null && fusion.timestampNs != lastFusionTimestampNs) {
             lastFusionTimestampNs = fusion.timestampNs
             liveDistanceMm += kotlin.math.abs(fusion.distance)
+            appendShockSample(fusion.shockLevel)
             if (fusion.shockLevel > 0f) {
                 liveShockCount++
                 liveShockSum += fusion.shockLevel
@@ -661,6 +735,14 @@ class InspectionPipeline(
         liveShockCount = 0
         liveDistanceMm = 0f
         lastFusionTimestampNs = 0L
+        shockSeries.clear()
+    }
+
+    private fun appendShockSample(level: Float) {
+        if (shockSeries.size >= SHOCK_SERIES_CAP) {
+            shockSeries.removeFirst()
+        }
+        shockSeries.addLast(level)
     }
 
     private fun startSensors() {
@@ -684,5 +766,9 @@ class InspectionPipeline(
         sensorsRunning = false
         dashboardLayout = null
         resetLiveAggregates()
+    }
+
+    companion object {
+        private const val SHOCK_SERIES_CAP = 240
     }
 }

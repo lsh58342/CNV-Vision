@@ -67,13 +67,23 @@ class InspectionExcelExportService(
         val profileSnapshot = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
             persisted.summary.inspectionProfileJson,
         )
+        val dateFmt = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+        val startLabel = if (persisted.summary.startTimeMs > 0L) {
+            dateFmt.format(java.util.Date(persisted.summary.startTimeMs))
+        } else {
+            ""
+        }
+        val baseCtx = buildContext(drawingId, profileSnapshot)
         val input = InspectionExcelReportGenerator.Input(
             analysis = analysis,
             rules = rules,
             events = persisted.events,
             heatPoints = heatPoints,
             profileSnapshot = profileSnapshot,
-            context = buildContext(drawingId),
+            context = baseCtx.copy(
+                timestampLabel = startLabel,
+                inspectionTimeLabel = startLabel,
+            ),
         )
 
         contentResolver.openOutputStream(targetUri)?.use { out ->
@@ -97,16 +107,32 @@ class InspectionExcelExportService(
         )
     }
 
-    private fun buildContext(drawingId: String): InspectionExcelReportGenerator.Context {
+    private fun buildContext(
+        drawingId: String,
+        profile: com.example.cnv.profile.InspectionProfileSnapshot? = null,
+    ): InspectionExcelReportGenerator.Context {
         val current = CurrentContext.get()
         val drawing = catalog.drawings.get(drawingId) ?: catalog.drawings.current(current)
         val floor = drawing?.floorId?.let { catalog.floors.get(it) }
         val building = floor?.buildingId?.let { catalog.buildings.get(it) }
             ?: current.buildingId?.let { catalog.buildings.get(it) }
+        val cal = catalog.calibrations.get(drawingId)
+        val zones = catalog.zones.forDrawing(drawingId)
+        val routeLen = catalog.routes.currentRoute()?.segments?.sumOf { it.lengthMm.toDouble() }?.toFloat()
+            ?: 0f
+        val thr = profile?.sensor?.minimumShockThreshold?.takeIf { it > 0f }
+            ?: com.example.cnv.core.config.IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
         return InspectionExcelReportGenerator.Context(
             buildingName = building?.name.orEmpty(),
             floorName = floor?.name.orEmpty(),
             drawingName = drawing?.name.orEmpty(),
+            zoneName = zones.firstOrNull()?.name.orEmpty(),
+            routeLengthMm = routeLen,
+            mmPerPixel = cal?.mmPerPixel,
+            originSet = drawing?.originSet == true,
+            originX = drawing?.originX,
+            originY = drawing?.originY,
+            shockThreshold = thr,
         )
     }
 }

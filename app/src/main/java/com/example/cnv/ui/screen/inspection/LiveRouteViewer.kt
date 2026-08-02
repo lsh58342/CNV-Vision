@@ -33,6 +33,12 @@ class LiveRouteViewer @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
         color = 0xFF2196F3.toInt()
     }
+    private val currentSegPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 14f
+        strokeCap = Paint.Cap.ROUND
+        color = 0xFFFF9800.toInt()
+    }
     private val zonePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeWidth = 12f
@@ -41,6 +47,7 @@ class LiveRouteViewer @JvmOverloads constructor(
     }
     private val markerFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
+        color = MARKER_RED
     }
     private val markerStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -53,6 +60,13 @@ class LiveRouteViewer @JvmOverloads constructor(
     }
     private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
+        color = MARKER_RED
+    }
+    private val progressPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0xFFFFFFFF.toInt()
+        textSize = 36f
+        isFakeBoldText = true
     }
     private val arrowPath = Path()
 
@@ -108,7 +122,10 @@ class LiveRouteViewer @JvmOverloads constructor(
         super.onDraw(canvas)
         canvas.drawColor(0xFF121212.toInt())
         val segs = state.segments
-        if (segs.isEmpty()) return
+        if (segs.isEmpty()) {
+            canvas.drawText("No route", 24f, 48f, progressPaint)
+            return
+        }
 
         // Full route — gray
         routePaint.color = 0xFF9E9E9E.toInt()
@@ -131,6 +148,18 @@ class LiveRouteViewer @JvmOverloads constructor(
                 worldToViewX(seg.endX),
                 worldToViewY(seg.endY),
                 zonePaint,
+            )
+        }
+
+        // Current segment emphasis — orange underlay
+        state.currentSegmentId?.let { curId ->
+            val seg = segs.firstOrNull { it.id == curId } ?: return@let
+            canvas.drawLine(
+                worldToViewX(seg.startX),
+                worldToViewY(seg.startY),
+                worldToViewX(seg.endX),
+                worldToViewY(seg.endY),
+                currentSegPaint,
             )
         }
 
@@ -170,19 +199,21 @@ class LiveRouteViewer @JvmOverloads constructor(
             canvas.drawCircle(worldToViewX(ox), worldToViewY(oy), 10f, markerStroke)
         }
 
-        // Current marker + direction
+        // Current marker — red circle + direction (tracking color kept on stroke ring via status)
         val mx = displayX ?: state.markerX
         val my = displayY ?: state.markerY
         if (mx != null && my != null) {
-            val color = trackingColor(state.tracking)
-            markerFill.color = color
-            arrowPaint.color = color
             val vx = worldToViewX(mx)
             val vy = worldToViewY(my)
             canvas.drawCircle(vx, vy, 12f, markerFill)
+            markerStroke.color = trackingRingColor(state.tracking)
             canvas.drawCircle(vx, vy, 12f, markerStroke)
+            markerStroke.color = 0xFFFFFFFF.toInt()
             drawArrow(canvas, vx, vy, state.directionRad)
         }
+
+        val pct = (state.routeProgressPercent * 100f).coerceIn(0f, 100f)
+        canvas.drawText("%.0f%%".format(pct), 16f, 40f, progressPaint)
     }
 
     private fun drawArrow(canvas: Canvas, cx: Float, cy: Float, rad: Float) {
@@ -200,7 +231,7 @@ class LiveRouteViewer @JvmOverloads constructor(
         canvas.drawPath(arrowPath, arrowPaint)
     }
 
-    private fun trackingColor(tracking: LiveTrackingVisual): Int = when (tracking) {
+    private fun trackingRingColor(tracking: LiveTrackingVisual): Int = when (tracking) {
         LiveTrackingVisual.GOOD -> 0xFF4CAF50.toInt()
         LiveTrackingVisual.SEARCHING -> 0xFFFFEB3B.toInt()
         LiveTrackingVisual.LOST -> 0xFFF44336.toInt()
@@ -241,5 +272,6 @@ class LiveRouteViewer @JvmOverloads constructor(
 
     companion object {
         private const val MARKER_ANIM_MS = 150L
+        private const val MARKER_RED = 0xFFF44336.toInt()
     }
 }

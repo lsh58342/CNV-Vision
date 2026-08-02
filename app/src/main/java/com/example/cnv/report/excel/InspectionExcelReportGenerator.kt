@@ -22,6 +22,15 @@ class InspectionExcelReportGenerator {
         val buildingName: String = "",
         val floorName: String = "",
         val drawingName: String = "",
+        val zoneName: String = "",
+        val timestampLabel: String = "",
+        val inspectionTimeLabel: String = "",
+        val routeLengthMm: Float = 0f,
+        val mmPerPixel: Float? = null,
+        val originSet: Boolean = false,
+        val originX: Float? = null,
+        val originY: Float? = null,
+        val shockThreshold: Float = 0f,
     )
 
     data class Input(
@@ -235,30 +244,40 @@ class InspectionExcelReportGenerator {
     private fun buildSummary(input: Input): List<List<Any?>> {
         val a = input.analysis
         val profile = a.conveyorProfile
+        val c = input.context
         val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val start = a.summary.startTimeMs
+        val startLabel = if (start > 0L) dateFmt.format(Date(start)) else ""
         return listOf(
             listOf("Field", "Value"),
+            listOf("Inspection Summary", "P0"),
             listOf("Session ID", a.sessionId),
-            listOf("Inspection Date", if (start > 0L) dateFmt.format(Date(start)) else ""),
-            listOf("Building", input.context.buildingName),
-            listOf("Floor", input.context.floorName),
-            listOf("Drawing", input.context.drawingName.ifBlank { a.drawingId }),
-            listOf("Conveyor Profile", profile.motionProfile.name),
-            listOf("Nominal Speed", profile.nominalSpeedMPerMin ?: ""),
-            listOf("Inspection Time", if (start > 0L) dateFmt.format(Date(start)) else ""),
+            listOf("Timestamp", c.timestampLabel.ifBlank { startLabel }),
+            listOf("Building", c.buildingName),
+            listOf("Floor", c.floorName),
+            listOf("Drawing", c.drawingName.ifBlank { a.drawingId }),
+            listOf("Zone", c.zoneName),
+            listOf("Inspection Time", c.inspectionTimeLabel.ifBlank { startLabel }),
+            listOf("Inspection Date", startLabel),
             listOf("Duration (ms)", a.summary.durationMs),
+            listOf("Route Length (mm)", c.routeLengthMm.takeIf { it > 0f } ?: a.distance.totalDistanceMm),
             listOf("Distance (mm)", a.distance.totalDistanceMm),
             listOf("Coverage", maxOf(a.coverage.drawingCoverage, a.coverage.routeCoverage)),
             listOf("Validation Score", a.validationScore),
             listOf("Average Speed (mm/s)", a.speed.averageSpeedMmPerSec),
             listOf("Maximum Speed (mm/s)", a.speed.maximumSpeedMmPerSec),
             listOf("Minimum Speed (mm/s)", a.speed.minimumSpeedMmPerSec),
-            listOf("Nominal Speed (snapshot)", profile.nominalSpeedMPerMin ?: ""),
-            listOf("Speed Difference", a.speed.speedDifferenceMmPerSec),
-            listOf("Maximum Shock", a.shock.maximumShock),
             listOf("Average Shock", a.shock.averageShock),
-            listOf("Shock Count", a.shock.shockCount),
+            listOf("Maximum Shock", a.shock.maximumShock),
+            listOf("Shock Events", a.shock.shockCount),
+            listOf("Threshold", c.shockThreshold),
+            listOf("Calibration (mmPerPixel)", c.mmPerPixel ?: ""),
+            listOf("Origin Set", c.originSet),
+            listOf("Origin X", c.originX ?: ""),
+            listOf("Origin Y", c.originY ?: ""),
+            listOf("Conveyor Profile", profile.motionProfile.name),
+            listOf("Nominal Speed", profile.nominalSpeedMPerMin ?: ""),
+            listOf("Speed Difference", a.speed.speedDifferenceMmPerSec),
             listOf("Tracking Confidence", a.tracking.averageConfidence),
             listOf("Min Tracking Confidence", a.tracking.minimumConfidence),
             listOf("Tracking Loss Count", a.tracking.trackingLossCount),

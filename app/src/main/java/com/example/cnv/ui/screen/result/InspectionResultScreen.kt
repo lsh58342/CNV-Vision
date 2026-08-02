@@ -8,20 +8,89 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.factory.repository.FactoryCatalog
+import com.example.cnv.report.excel.ExcelExportUi
+import com.example.cnv.report.excel.InspectionCsvExportService
+import com.example.cnv.report.excel.InspectionExcelExportService
+import com.example.cnv.report.excel.InspectionExcelReportGenerator
 import com.example.cnv.ui.components.UiComponents
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 
 /**
- * Inspection Result Screen — displays existing InspectionResult summary only.
+ * Inspection Result Screen — summary + CSV / Excel export.
  */
 class InspectionResultScreen : BaseScreen() {
 
     private val viewModel: ResultViewModel by viewModels()
+    private val catalog = FactoryCatalog.get()
+    private val csvExport = InspectionCsvExportService(catalog)
+    private val excelExport = InspectionExcelExportService(catalog)
+
+    private var pendingCsvName: String = "inspection.csv"
+    private var pendingExcelName: String = InspectionExcelReportGenerator.defaultFileName()
+
+    private val createCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val summary = viewModel.summary.value ?: return@registerForActivityResult
+        val drawingId = CurrentContext.get().drawingId ?: return@registerForActivityResult
+        if (summary.empty) return@registerForActivityResult
+        Toast.makeText(requireContext(), R.string.csv_exporting, Toast.LENGTH_SHORT).show()
+        csvExport.exportAsync(
+            sessionId = summary.sessionId,
+            drawingId = drawingId,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingCsvName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.csv_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.csv_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
+    private val createExcelLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val summary = viewModel.summary.value ?: return@registerForActivityResult
+        val drawingId = CurrentContext.get().drawingId ?: return@registerForActivityResult
+        if (summary.empty) return@registerForActivityResult
+        ExcelExportUi.takePersistablePermission(requireContext(), uri)
+        Toast.makeText(requireContext(), R.string.excel_exporting, Toast.LENGTH_SHORT).show()
+        excelExport.exportAsync(
+            sessionId = summary.sessionId,
+            drawingId = drawingId,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingExcelName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.excel_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.excel_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -111,8 +180,26 @@ class InspectionResultScreen : BaseScreen() {
         val csvBtn = UiComponents.inflateSecondaryButton(csvSlot, getString(R.string.result_export_csv))
         csvSlot.addView(csvBtn)
         csvBtn.setOnClickListener {
-            // CSV Recording engine not implemented — metadata/report CSV only via Review/Report.
-            Toast.makeText(requireContext(), R.string.op_feature_later, Toast.LENGTH_SHORT).show()
+            val summary = viewModel.summary.value
+            if (summary == null || summary.empty) {
+                Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            pendingCsvName = InspectionCsvExportService.defaultFileName(summary.sessionId)
+            createCsvLauncher.launch(ExcelExportUi.createCsvDocumentIntent(pendingCsvName))
+        }
+
+        val excelSlot = view.findViewById<FrameLayout>(R.id.result_excel_slot)
+        val excelBtn = UiComponents.inflateSecondaryButton(excelSlot, getString(R.string.result_export_excel))
+        excelSlot.addView(excelBtn)
+        excelBtn.setOnClickListener {
+            val summary = viewModel.summary.value
+            if (summary == null || summary.empty) {
+                Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            pendingExcelName = InspectionExcelReportGenerator.defaultFileName()
+            createExcelLauncher.launch(ExcelExportUi.createDocumentIntent(pendingExcelName))
         }
 
         val finishSlot = view.findViewById<FrameLayout>(R.id.result_finish_slot)

@@ -18,6 +18,13 @@ object ExcelExportUi {
             putExtra(Intent.EXTRA_TITLE, fileName)
         }
 
+    fun createCsvDocumentIntent(fileName: String): Intent =
+        Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/csv"
+            putExtra(Intent.EXTRA_TITLE, fileName)
+        }
+
     fun takePersistablePermission(context: Context, uri: Uri) {
         val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         runCatching {

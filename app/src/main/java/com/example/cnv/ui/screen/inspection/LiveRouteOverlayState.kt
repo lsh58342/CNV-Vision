@@ -24,6 +24,8 @@ data class LiveRouteOverlayState(
     val traversedSegmentIds: Set<String> = emptySet(),
     val currentSegmentId: String? = null,
     val currentProgress: Float = 0f,
+    /** Absolute route progress 0f..1f (coverage), for Progress % label. */
+    val routeProgressPercent: Float = 0f,
     val markerX: Double? = null,
     val markerY: Double? = null,
     val directionRad: Float = 0f,

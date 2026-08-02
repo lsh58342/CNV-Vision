@@ -12,12 +12,12 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.example.cnv.R
 import com.example.cnv.analysis.InspectionAnalysisResult
-import com.example.cnv.factory.repository.CsvMetadataRepository
-import com.example.cnv.factory.repository.FactoryCatalog
-import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.report.excel.ExcelExportUi
+import com.example.cnv.report.excel.InspectionCsvExportService
 import com.example.cnv.report.excel.InspectionExcelExportService
 import com.example.cnv.report.excel.InspectionExcelReportGenerator
+import com.example.cnv.factory.repository.ReplayMetadataRepository
+import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.rule.InspectionIssue
 import com.example.cnv.rule.InspectionRuleZoneSummary
 import com.example.cnv.rule.InspectionWarning
@@ -39,12 +39,14 @@ class InspectionReviewScreen : BaseScreen() {
     private val vm: InspectionReviewViewModel by viewModels { InspectionReviewViewModel.Factory() }
     private val catalog = FactoryCatalog.get()
     private val excelExport = InspectionExcelExportService(catalog)
+    private val csvExport = InspectionCsvExportService(catalog)
     private val dateFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     private val timeFmt = SimpleDateFormat("HH:mm:ss", Locale.US)
 
     private var sessionId: String? = null
     private var drawingId: String? = null
     private var pendingExcelFileName: String = InspectionExcelReportGenerator.defaultFileName()
+    private var pendingCsvFileName: String = "inspection.csv"
 
     private val createExcelLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
@@ -68,6 +70,33 @@ class InspectionReviewScreen : BaseScreen() {
                     getString(R.string.excel_export_ok, exportResult.fileName.orEmpty())
                 } else {
                     exportResult.errorMessage ?: getString(R.string.excel_export_fail)
+                },
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+    }
+
+    private val createCsvLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data ?: return@registerForActivityResult
+        val sid = sessionId ?: return@registerForActivityResult
+        val did = drawingId ?: return@registerForActivityResult
+        Toast.makeText(requireContext(), R.string.csv_exporting, Toast.LENGTH_SHORT).show()
+        csvExport.exportAsync(
+            sessionId = sid,
+            drawingId = did,
+            targetUri = uri,
+            contentResolver = requireContext().contentResolver,
+            fileName = pendingCsvFileName,
+        ) { exportResult ->
+            if (!isAdded) return@exportAsync
+            Toast.makeText(
+                requireContext(),
+                if (exportResult.success) {
+                    getString(R.string.csv_export_ok, exportResult.fileName.orEmpty())
+                } else {
+                    exportResult.errorMessage ?: getString(R.string.csv_export_fail)
                 },
                 Toast.LENGTH_SHORT,
             ).show()
@@ -134,13 +163,9 @@ class InspectionReviewScreen : BaseScreen() {
             createExcelLauncher.launch(ExcelExportUi.createDocumentIntent(pendingExcelFileName))
         }
         view.findViewById<MaterialButton>(R.id.button_review_csv).setOnClickListener {
-            catalog.csvMetadata.put(
-                CsvMetadataRepository.CsvMeta(
-                    drawingId = drawingId,
-                    label = "CSV export pending · $sessionId",
-                ),
-            )
-            Toast.makeText(requireContext(), R.string.history_csv_export_toast, Toast.LENGTH_SHORT).show()
+            val sid = sessionId ?: return@setOnClickListener
+            pendingCsvFileName = InspectionCsvExportService.defaultFileName(sid)
+            createCsvLauncher.launch(ExcelExportUi.createCsvDocumentIntent(pendingCsvFileName))
         }
         view.findViewById<MaterialButton>(R.id.button_review_detail).setOnClickListener {
             nav().navigate(
