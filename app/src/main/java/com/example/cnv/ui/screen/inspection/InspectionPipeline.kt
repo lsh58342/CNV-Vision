@@ -139,6 +139,7 @@ class InspectionPipeline(
                 routeVersion = session.freeze.routeVersion,
                 calibrationVersion = session.freeze.calibrationVersion,
                 conveyorProfile = profileSnap,
+                ruleCatalogVersion = catalog.rules.catalogVersion(),
             )
         }
         return true

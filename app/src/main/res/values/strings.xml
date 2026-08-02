@@ -543,7 +543,7 @@
     <string name="review_warning_none">No warnings</string>
     <string name="review_heatmap_meta">Heat points (Repository): %1$d</string>
     <string name="review_issue_empty">No zone issues</string>
-    <string name="review_issue_format">Type: %1$s\nSeverity: %2$s\nOccurrences: %3$d</string>
+    <string name="review_issue_format">Type: %1$s\nSeverity: %2$s\nOccurrences: %3$d\nRecommendation: %4$s</string>
     <string name="review_zone_empty">No zone statistics</string>
     <string name="review_zone_format">Distance: %1$.1f mm\nShock Count: %2$d\nCoverage: %3$.1f%%\nValidation Score: %4$.2f</string>
     <string name="review_open_replay">Open Replay</string>

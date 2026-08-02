@@ -52,6 +52,7 @@ class InspectionRepository(
         routeVersion: String = "",
         calibrationVersion: Int = 0,
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
+        ruleCatalogVersion: Int = 0,
     ) {
         ensureBackground()
         val db = database() ?: return
@@ -70,6 +71,7 @@ class InspectionRepository(
                 profileDirection = conveyorProfile.direction.name,
                 profileExpectedFps = conveyorProfile.expectedFps,
                 profileMotionProfile = conveyorProfile.motionProfile.name,
+                ruleCatalogVersion = ruleCatalogVersion,
             ),
         )
     }
@@ -125,9 +127,11 @@ class InspectionRepository(
         )
         val db = database()
         var profileSnap = conveyorProfile ?: ConveyorProfileSnapshot.empty()
+        var ruleVersion = 0
         if (db != null) {
             val existing = db.sessionDao().getSession(result.sessionId)
             profileSnap = existing?.toProfileSnapshot() ?: profileSnap
+            ruleVersion = existing?.ruleCatalogVersion ?: 0
             db.sessionDao().insertSession(
                 InspectionSessionEntity(
                     sessionId = result.sessionId,
@@ -160,6 +164,7 @@ class InspectionRepository(
                     maxSpeedDifferenceMm = speedValidation.maximumDifferenceMm,
                     avgSpeedDifferenceMm = speedValidation.averageDifferenceMm,
                     speedValidationScore = speedValidation.validationScore,
+                    ruleCatalogVersion = ruleVersion,
                 ),
             )
             if (events.isNotEmpty()) {
@@ -167,7 +172,7 @@ class InspectionRepository(
             }
         }
         save(result)
-        return summary.copy(conveyorProfile = profileSnap)
+        return summary.copy(conveyorProfile = profileSnap, ruleCatalogVersion = ruleVersion)
     }
 
     fun loadSession(sessionId: String): PersistedInspectionSession? {
@@ -265,6 +270,7 @@ class InspectionRepository(
             averageDifferenceMm = avgSpeedDifferenceMm,
             validationScore = speedValidationScore,
         ),
+        ruleCatalogVersion = ruleCatalogVersion,
     )
 
     private fun InspectionSessionEntity.toProfileSnapshot() = ConveyorProfileSnapshot(

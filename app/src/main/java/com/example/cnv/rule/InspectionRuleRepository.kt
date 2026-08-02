@@ -1,19 +1,28 @@
 package com.example.cnv.rule
 
+import com.example.cnv.analysis.InspectionAnalysisResult
+import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.repository.FactoryCatalog
 
 /**
- * Cached Rule Result access (STEP 17-1).
- * Inspection Review must use this — never re-evaluate rules in the UI.
- * Depends on Analysis Repository only (no Inspection Event analysis).
+ * Cached session Rule Results (STEP 18).
+ * Review / Replay / Report must use this — never re-evaluate in UI.
+ * Definitions come from [RuleDefinitionRepository]; Analysis from Analysis Repository.
  */
 class InspectionRuleRepository(
     private val catalog: FactoryCatalog,
-    private val engine: InspectionRuleEngine = InspectionRuleEngine(),
+    private val definitionRepository: RuleDefinitionRepository = RuleDefinitionRepository().also {
+        DefaultRuleCatalog.seedInto(it)
+    },
+    private val engine: InspectionRuleEngine = InspectionRuleEngine(definitionRepository),
 ) {
 
     private val lock = Any()
     private val cache = LinkedHashMap<String, InspectionRuleResult>()
+
+    fun definitions(): RuleDefinitionRepository = definitionRepository
+
+    fun catalogVersion(): Int = definitionRepository.catalogVersion()
 
     fun getCached(sessionId: String): InspectionRuleResult? =
         synchronized(lock) { cache[sessionId] }
@@ -34,7 +43,8 @@ class InspectionRuleRepository(
     }
 
     /**
-     * Analyze-once via Analysis Repository, then evaluate rules (cached).
+     * Analyze-once via Analysis Repository, then evaluate rules once (cached for session).
+     * Changing Rule definitions does not re-evaluate existing cached sessions.
      */
     fun getOrEvaluateAsync(
         sessionId: String,
@@ -45,29 +55,47 @@ class InspectionRuleRepository(
             onResult(it)
             return
         }
-        catalog.analysis.getOrAnalyzeAsync(sessionId, preferredDrawingId) { analysis ->
-            if (analysis == null) {
+        catalog.inspections.loadSessionAsync(sessionId) { persisted ->
+            if (preferredDrawingId != null &&
+                persisted != null &&
+                persisted.summary.drawingId != preferredDrawingId
+            ) {
                 onResult(null)
-                return@getOrAnalyzeAsync
+                return@loadSessionAsync
             }
-            val result = evaluateAndCache(analysis)
-            onResult(result)
+            val snapshotVersion = persisted?.summary?.ruleCatalogVersion
+                ?.takeIf { it > 0 }
+                ?: catalogVersion()
+            val drawingId = preferredDrawingId ?: persisted?.summary?.drawingId
+            catalog.analysis.getOrAnalyzeAsync(sessionId, drawingId) { analysis ->
+                if (analysis == null) {
+                    onResult(null)
+                    return@getOrAnalyzeAsync
+                }
+                onResult(evaluateAndCache(analysis, drawingId, snapshotVersion))
+            }
         }
     }
 
     fun evaluateFromCachedAnalysis(sessionId: String): InspectionRuleResult? {
         getCached(sessionId)?.let { return it }
         val analysis = catalog.analysis.getCached(sessionId) ?: return null
-        return evaluateAndCache(analysis)
+        return evaluateAndCache(analysis, analysis.drawingId, catalogVersion())
     }
 
     private fun evaluateAndCache(
-        analysis: com.example.cnv.analysis.InspectionAnalysisResult,
+        analysis: InspectionAnalysisResult,
+        preferredDrawingId: String?,
+        ruleCatalogVersionSnapshot: Int,
     ): InspectionRuleResult {
         synchronized(lock) {
             cache[analysis.sessionId]?.let { return it }
         }
-        val result = engine.evaluate(analysis)
+        val ctx = buildContext(
+            drawingId = analysis.drawingId.ifBlank { preferredDrawingId },
+            ruleCatalogVersionSnapshot = ruleCatalogVersionSnapshot,
+        )
+        val result = engine.evaluate(analysis, ctx)
         synchronized(lock) {
             cache[analysis.sessionId] = result
             while (cache.size > MAX_CACHE) {
@@ -76,6 +104,24 @@ class InspectionRuleRepository(
             }
         }
         return result
+    }
+
+    fun buildContext(
+        drawingId: String?,
+        ruleCatalogVersionSnapshot: Int = catalogVersion(),
+    ): RuleEvaluationContext {
+        val ctx = CurrentContext.get()
+        val drawing = drawingId?.let { catalog.drawings.get(it) }
+            ?: catalog.drawings.current(ctx)
+        val floor = drawing?.floorId?.let { catalog.floors.get(it) }
+        return RuleEvaluationContext(
+            factoryId = ctx.factoryId,
+            buildingId = ctx.buildingId ?: floor?.buildingId,
+            floorId = ctx.floorId ?: drawing?.floorId,
+            drawingId = drawing?.id ?: drawingId,
+            zoneId = null,
+            ruleCatalogVersionSnapshot = ruleCatalogVersionSnapshot,
+        )
     }
 
     companion object {

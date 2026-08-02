@@ -24,8 +24,8 @@ import com.example.cnv.replay.analysis.ReplayStatistics
 import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
 
 /**
- * Replay Viewer ViewModel — Engine API + Analysis Repository (STEP 16-3 / 17).
- * Does not re-analyze Inspection Events; session stats come from Analysis Result.
+ * Replay Viewer ViewModel — Engine API + Analysis / Rule Repositories (STEP 16-3 / 17 / 18).
+ * Does not re-analyze Events or re-evaluate Rules; uses cached Results only.
  */
 class ReplayViewModel(
     private val engine: ReplayEngine,
@@ -68,6 +68,7 @@ class ReplayViewModel(
     private var zoneOverlays: List<HeatMapZoneOverlay> = emptyList()
     private var drawingName: String = "—"
     private var sessionAnalysis: InspectionAnalysisResult? = null
+    private var sessionRules: com.example.cnv.rule.InspectionRuleResult? = null
 
     private val engineListener = ReplayEngine.Listener { publish() }
 
@@ -115,6 +116,10 @@ class ReplayViewModel(
             }
             catalog.analysis.getOrAnalyzeAsync(sessionId, preferredDrawingId) { result ->
                 sessionAnalysis = result
+                publish()
+            }
+            catalog.rules.getOrEvaluateAsync(sessionId, preferredDrawingId) { rules ->
+                sessionRules = rules
                 publish()
             }
             publish()
@@ -228,7 +233,7 @@ class ReplayViewModel(
             frameIndex = engine.currentIndex(),
             frameCount = engine.frameCount(),
             current = frame,
-            highlight = analysis.currentHighlight(),
+            highlight = resolveHighlight(frame),
             statistics = stats,
             engineStatistics = engineStats,
             markerLabel = buildMarkerLabel(frame, engineStats),
@@ -247,6 +252,34 @@ class ReplayViewModel(
             playbackSpeed = engine.playbackSpeed(),
             routePositionMm = engine.currentRoutePositionMm(),
         )
+    }
+
+    /**
+     * Highlight from cached Rule Result when applicable; otherwise Replay Analysis highlight.
+     * Does not re-evaluate rules.
+     */
+    private fun resolveHighlight(frame: ReplayFrame?): ReplayHighlightKind {
+        val base = analysis.currentHighlight()
+        val rules = sessionRules ?: return base
+        val severe = rules.triggered().any {
+            it.severity == com.example.cnv.rule.RuleSeverity.CRITICAL ||
+                it.severity == com.example.cnv.rule.RuleSeverity.HIGH
+        }
+        if (!severe || frame == null) return base
+        val shockRule = rules.triggered().any {
+            it.category == com.example.cnv.rule.RuleCategory.SHOCK
+        }
+        val trackRule = rules.triggered().any {
+            it.category == com.example.cnv.rule.RuleCategory.TRACKING
+        }
+        return when {
+            shockRule && frame.hasShock -> ReplayHighlightKind.RULE
+            trackRule && frame.trackingConfidence in 0f..analysis.lowConfidenceThreshold() ->
+                ReplayHighlightKind.RULE
+            severe && (base == ReplayHighlightKind.SHOCK || base == ReplayHighlightKind.LOW_CONFIDENCE) ->
+                ReplayHighlightKind.RULE
+            else -> base
+        }
     }
 
     private fun buildMarkerLabel(frame: ReplayFrame?, stats: ReplayEngineStatistics): String {

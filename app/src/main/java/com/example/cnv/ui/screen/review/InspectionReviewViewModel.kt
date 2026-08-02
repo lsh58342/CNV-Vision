@@ -13,9 +13,9 @@ import com.example.cnv.rule.InspectionRuleZoneSummary
 import com.example.cnv.rule.InspectionWarning
 
 /**
- * Inspection Review ViewModel (STEP 17-1).
- * Loads Analysis / Rule / HeatMap via Repositories only — no Engine direct calls,
- * no Inspection Event analysis, no HeatMap regeneration, no Rule re-compute in UI.
+ * Inspection Review ViewModel (STEP 17-1 / 18).
+ * Loads Analysis / Rule / HeatMap via Repositories only — no Engine direct calls.
+ * Warning / Issue / Zone sections display Rule Result; rules are not re-evaluated in UI.
  */
 class InspectionReviewViewModel(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),

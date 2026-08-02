@@ -13,7 +13,7 @@ import java.util.concurrent.Executors
         InspectionEventEntity::class,
         ConveyorProfileEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {

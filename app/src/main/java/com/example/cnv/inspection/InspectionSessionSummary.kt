@@ -23,6 +23,8 @@ data class InspectionSessionSummary(
     val appVersion: String,
     val conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
     val speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
+    /** Rule catalog version frozen at Inspection start (STEP 18). */
+    val ruleCatalogVersion: Int = 0,
 )
 
 /**

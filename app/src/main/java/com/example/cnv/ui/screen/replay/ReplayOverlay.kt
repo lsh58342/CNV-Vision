@@ -137,6 +137,7 @@ class ReplayOverlay @JvmOverloads constructor(
             val color = when (currentKind) {
                 ReplayHighlightKind.SHOCK -> COLOR_SHOCK
                 ReplayHighlightKind.LOW_CONFIDENCE -> COLOR_LOW_CONF
+                ReplayHighlightKind.RULE -> COLOR_RULE
                 else -> COLOR_CURRENT
             }
             drawMarker(canvas, camera, cur, color, radius = 14f, label = true)
@@ -168,5 +169,6 @@ class ReplayOverlay @JvmOverloads constructor(
         private const val COLOR_CURRENT = 0xFF4CAF50.toInt()
         private const val COLOR_SHOCK = 0xFFE53935.toInt()
         private const val COLOR_LOW_CONF = 0xFFFF9800.toInt()
+        private const val COLOR_RULE = 0xFFCE93D8.toInt()
     }
 }

@@ -87,6 +87,7 @@ class ZoneInspectionRepository(
         routeVersion: String = "",
         calibrationVersion: Int = 0,
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
+        ruleCatalogVersion: Int = 0,
     ) {
         inspectionRepository.createSession(
             sessionId = sessionId,
@@ -96,6 +97,7 @@ class ZoneInspectionRepository(
             routeVersion = routeVersion,
             calibrationVersion = calibrationVersion,
             conveyorProfile = conveyorProfile,
+            ruleCatalogVersion = ruleCatalogVersion,
         )
         index(drawingId, sessionId)
     }
@@ -108,6 +110,7 @@ class ZoneInspectionRepository(
         routeVersion: String = "",
         calibrationVersion: Int = 0,
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
+        ruleCatalogVersion: Int = 0,
     ) {
         InspectionDbGate.execute {
             createSession(
@@ -118,6 +121,7 @@ class ZoneInspectionRepository(
                 routeVersion = routeVersion,
                 calibrationVersion = calibrationVersion,
                 conveyorProfile = conveyorProfile,
+                ruleCatalogVersion = ruleCatalogVersion,
             )
         }
     }

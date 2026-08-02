@@ -158,8 +158,8 @@ class InspectionReviewScreen : BaseScreen() {
     private fun formatWarnings(warnings: List<InspectionWarning>): String {
         if (warnings.isEmpty()) return getString(R.string.review_warning_none)
         return warnings.joinToString("\n") { w ->
-            "• ${w.label} [${w.severity.name}]" +
-                if (w.detail.isNotBlank()) " — ${w.detail}" else ""
+            "• ${w.ruleId} ${w.label} [${w.severity.name}]\n  → ${w.recommendation.displayLabel()}" +
+                if (w.detail.isNotBlank()) "\n  ${w.detail}" else ""
         }
     }
 
@@ -174,12 +174,14 @@ class InspectionReviewScreen : BaseScreen() {
         empty.isVisible = false
         for (issue in issues) {
             val row = layoutInflater.inflate(R.layout.item_review_issue, list, false)
-            row.findViewById<TextView>(R.id.review_issue_title).text = issue.zoneName
+            row.findViewById<TextView>(R.id.review_issue_title).text =
+                "${issue.zoneName} · ${issue.ruleId}"
             row.findViewById<TextView>(R.id.review_issue_body).text = getString(
                 R.string.review_issue_format,
-                issue.issueType.name,
+                issue.issueType,
                 issue.severity.name,
                 issue.occurrenceCount,
+                issue.recommendation.displayLabel(),
             )
             list.addView(row)
         }

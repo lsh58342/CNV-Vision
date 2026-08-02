@@ -40,6 +40,8 @@ data class InspectionSessionEntity(
     val maxSpeedDifferenceMm: Float = 0f,
     val avgSpeedDifferenceMm: Float = 0f,
     val speedValidationScore: Float = 0f,
+    /** Rule catalog version frozen at Inspection start (STEP 18). */
+    val ruleCatalogVersion: Int = 0,
 )
 
 /**
