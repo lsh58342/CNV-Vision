@@ -19,8 +19,8 @@ data class HeatMapDisplayConfig(
     val pointRadiusPx: Float = DEFAULT_POINT_RADIUS,
     val shockRingRadiusPx: Float = DEFAULT_SHOCK_RING_RADIUS,
     val originRadiusPx: Float = DEFAULT_ORIGIN_RADIUS,
-    /** Shock emphasis when point.shockStrength >= this (from intensity config). */
-    val shockEmphasisMinStrength: Float = HeatMapIntensityConfig.DEFAULT_MEDIUM,
+    /** Shock emphasis when point.shockStrength (g) >= this. */
+    val shockEmphasisMinStrength: Float = HeatMapIntensityConfig.DEFAULT_RECORD,
 ) {
     fun colorFor(intensity: HeatIntensity): Int = when (intensity) {
         HeatIntensity.LOW -> colorLow
@@ -29,19 +29,22 @@ data class HeatMapDisplayConfig(
         HeatIntensity.CRITICAL -> colorCritical
     }
 
+    fun colorForShockG(shockG: Float): Int =
+        HeatMapIntensityConfig.DEFAULT.colorForShockG(shockG)
+
     companion object {
         val DEFAULT = HeatMapDisplayConfig()
-        val DEFAULT_LOW = Color.parseColor("#42A5F5")
-        val DEFAULT_MEDIUM = Color.parseColor("#FFEE58")
-        val DEFAULT_HIGH = Color.parseColor("#FF9800")
-        val DEFAULT_CRITICAL = Color.parseColor("#E53935")
-        val DEFAULT_SHOCK_EMPHASIS = Color.parseColor("#FF1744")
+        val DEFAULT_LOW = HeatMapIntensityConfig.COLOR_GREEN
+        val DEFAULT_MEDIUM = HeatMapIntensityConfig.COLOR_YELLOW
+        val DEFAULT_HIGH = HeatMapIntensityConfig.COLOR_ORANGE
+        val DEFAULT_CRITICAL = HeatMapIntensityConfig.COLOR_RED
+        val DEFAULT_SHOCK_EMPHASIS = HeatMapIntensityConfig.COLOR_RED
         val DEFAULT_ROUTE = Color.parseColor("#9E9E9E")
-        val DEFAULT_ORIGIN = Color.parseColor("#FFEB3B")
+        val DEFAULT_ORIGIN = Color.parseColor("#4CAF50")
         val DEFAULT_ZONE_BORDER = Color.parseColor("#80CBC4")
         val DEFAULT_ZONE_HIGHLIGHT = Color.parseColor("#26A69A")
-        const val DEFAULT_POINT_RADIUS = 7f
-        const val DEFAULT_SHOCK_RING_RADIUS = 11f
+        const val DEFAULT_POINT_RADIUS = 8f
+        const val DEFAULT_SHOCK_RING_RADIUS = 12f
         const val DEFAULT_ORIGIN_RADIUS = 10f
     }
 }

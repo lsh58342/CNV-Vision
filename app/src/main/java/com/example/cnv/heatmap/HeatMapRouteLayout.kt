@@ -7,9 +7,11 @@ import com.example.cnv.route.CoordinateMapper
 import com.example.cnv.route.WorldCoordinate
 
 /**
- * Builds a Drawing-plane [CoordinateMapper] from Route topology (STEP 14).
- * Lays segments end-to-end along the preferred path — does not mutate Route.
- * Points outside known segments return null (no off-route heat).
+ * Builds a Drawing-plane layout from Route + optional world [CoordinateMapper].
+ *
+ * STEP 20-19: When [worldMapper] is provided, segment endpoints keep true DXF/world
+ * geometry (ㄷ shape). The old Y=0 “straighten” fallback is used only when no mapper
+ * is available.
  */
 object HeatMapRouteLayout {
 
@@ -19,11 +21,81 @@ object HeatMapRouteLayout {
         val totalLengthMm: Float,
     )
 
-    fun build(route: Route, scale: Double = 1.0): LayoutResult? {
+    fun build(
+        route: Route,
+        worldMapper: CoordinateMapper? = null,
+        scale: Double = 1.0,
+    ): LayoutResult? {
         if (route.segments.isEmpty()) return null
         val ordered = orderSegments(route)
         if (ordered.isEmpty()) return null
 
+        if (worldMapper != null) {
+            buildFromWorldMapper(route, ordered, worldMapper)?.let { return it }
+            println(
+                "LOG[HeatMapRouteLayout] worldMapper incomplete — " +
+                    "refusing horizontal collapse for Inspection geometry",
+            )
+            // Prefer incomplete world geometry over forcing a horizontal line.
+            return null
+        }
+
+        return buildHorizontalFallback(route, ordered, scale)
+    }
+
+    /**
+     * Preserve DXF / RouteGenerator world coordinates (ㄷ, corners, etc.).
+     */
+    private fun buildFromWorldMapper(
+        route: Route,
+        ordered: List<String>,
+        worldMapper: CoordinateMapper,
+    ): LayoutResult? {
+        val geometry = LinkedHashMap<String, CoordinateMapper.SegmentGeometry>()
+        val segmentStartMm = LinkedHashMap<String, Float>()
+        var cursorMm = 0f
+        var minY = Double.POSITIVE_INFINITY
+        var maxY = Double.NEGATIVE_INFINITY
+
+        for (segmentId in ordered) {
+            val segment = route.segment(segmentId) ?: continue
+            val start = worldMapper.toWorld(position(segmentId, segment.fromNodeId, 0f, 0f))
+                ?: return null
+            val end = worldMapper.toWorld(
+                position(segmentId, segment.toNodeId, 1f, segment.lengthMm),
+            ) ?: return null
+            geometry[segmentId] = CoordinateMapper.SegmentGeometry(
+                segmentId = segmentId,
+                start = start,
+                end = end,
+            )
+            segmentStartMm[segmentId] = cursorMm
+            cursorMm += segment.lengthMm
+            minY = minOf(minY, start.y, end.y)
+            maxY = maxOf(maxY, start.y, end.y)
+            println(
+                "LOG[HeatMapRouteLayout][WORLD] $segmentId " +
+                    "(${start.x}, ${start.y}) → (${end.x}, ${end.y})",
+            )
+        }
+        if (geometry.isEmpty()) return null
+        println(
+            "LOG[HeatMapRouteLayout][WORLD] segments=${geometry.size} " +
+                "ySpan=${maxY - minY} (non-zero expected for ㄷ)",
+        )
+        return LayoutResult(
+            mapper = CoordinateMapper(segmentGeometry = geometry),
+            segmentStartMm = segmentStartMm,
+            totalLengthMm = cursorMm,
+        )
+    }
+
+    /** Legacy 1D unwrap — horizontal only. Do not use when Drawing geometry is required. */
+    private fun buildHorizontalFallback(
+        route: Route,
+        ordered: List<String>,
+        scale: Double,
+    ): LayoutResult? {
         val geometry = LinkedHashMap<String, CoordinateMapper.SegmentGeometry>()
         val segmentStartMm = LinkedHashMap<String, Float>()
         var cursorX = 0.0
@@ -44,6 +116,10 @@ object HeatMapRouteLayout {
             cursorMm += segment.lengthMm
         }
         if (geometry.isEmpty()) return null
+        println(
+            "LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=${geometry.size} " +
+                "(no worldMapper — route drawn as a line)",
+        )
         return LayoutResult(
             mapper = CoordinateMapper(segmentGeometry = geometry),
             segmentStartMm = segmentStartMm,
@@ -58,6 +134,22 @@ object HeatMapRouteLayout {
         distanceFromSegmentStart: Float,
         timestampNs: Long,
         confidence: Float,
+    ): RoutePosition = position(
+        segmentId,
+        nodeId,
+        progress,
+        distanceFromSegmentStart,
+        timestampNs,
+        confidence,
+    )
+
+    private fun position(
+        segmentId: String,
+        nodeId: String,
+        progress: Float,
+        distanceFromSegmentStart: Float,
+        timestampNs: Long = 0L,
+        confidence: Float = 1f,
     ): RoutePosition = RoutePosition(
         segmentId = segmentId,
         nodeId = nodeId,
@@ -68,9 +160,6 @@ object HeatMapRouteLayout {
         confidence = confidence,
     )
 
-    /**
-     * Resolve drawing coordinate; null if segment is not on the laid-out route.
-     */
     fun toDrawingCoordinate(
         layout: LayoutResult,
         segmentId: String,
@@ -78,13 +167,11 @@ object HeatMapRouteLayout {
     ): WorldCoordinate? {
         if (!layout.segmentStartMm.containsKey(segmentId)) return null
         return layout.mapper.toWorld(
-            toRoutePosition(
+            position(
                 segmentId = segmentId,
                 nodeId = "",
                 progress = progress,
                 distanceFromSegmentStart = 0f,
-                timestampNs = 0L,
-                confidence = 1f,
             ),
         )
     }
@@ -113,7 +200,6 @@ object HeatMapRouteLayout {
             segmentId = nextEdge?.segmentId
             if (segmentId != null && segmentId in visited) break
         }
-        // Append any remaining segments (branches) without inventing topology connections.
         route.segments.forEach { s ->
             if (s.id !in visited) ordered.add(s.id)
         }

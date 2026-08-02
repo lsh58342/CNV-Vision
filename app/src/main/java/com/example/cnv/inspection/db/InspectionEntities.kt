@@ -76,4 +76,13 @@ data class InspectionEventEntity(
     val shockStrength: Float = 0f,
     val trackingConfidence: Float = 0f,
     val eventType: String = "",
+    /** Absolute route position (mm) — STEP 20-20 Shock Event. */
+    val routePositionMm: Float = 0f,
+    val worldX: Float = 0f,
+    val worldY: Float = 0f,
+    val speedMmPerSec: Float = 0f,
+    /** Peak shock in g (same as shockStrength when recordable). */
+    val peakG: Float = 0f,
+    val movingAverageG: Float = 0f,
+    val zoneName: String = "",
 )

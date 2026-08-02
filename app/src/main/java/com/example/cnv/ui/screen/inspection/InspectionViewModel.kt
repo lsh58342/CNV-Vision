@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import com.example.cnv.debug.TrackingDebugSnapshot
 import com.example.cnv.inspection.InspectionResult
 
 /**
@@ -32,6 +33,9 @@ class InspectionViewModel(
 
     private val _preflight = MutableLiveData(InspectionPreflight.ready())
     val preflight: LiveData<InspectionPreflight> = _preflight
+
+    private val _trackingDebug = MutableLiveData(TrackingDebugSnapshot())
+    val trackingDebug: LiveData<TrackingDebugSnapshot> = _trackingDebug
 
     private val handler = Handler(Looper.getMainLooper())
     private val pollRunnable = object : Runnable {
@@ -83,9 +87,11 @@ class InspectionViewModel(
     private fun refreshSnapshots() {
         val live = pipeline.readLiveDashboard()
         _dashboard.value = live
-        _status.value = live.toUiStatus()
+        val ui = live.toUiStatus()
+        _status.value = ui
         _liveRoute.value = pipeline.readLiveRouteOverlay()
         _shockGraph.value = pipeline.readShockGraph()
+        _trackingDebug.value = pipeline.readTrackingDebug(ui.trackingLabel)
     }
 
     private fun startPolling() {

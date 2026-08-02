@@ -18,6 +18,7 @@ class PositionEstimator(
     )
 
     private var state: State? = null
+    private var lastLoggedSegmentId: String? = null
 
     fun reset(route: Route) {
         state = State(
@@ -25,10 +26,13 @@ class PositionEstimator(
             distanceFromSegmentStart = 0f,
             direction = RouteDirection.FORWARD,
         )
+        lastLoggedSegmentId = null
+        logEnter(route.startSegmentId, reason = "RESET")
     }
 
     fun clear() {
         state = null
+        lastLoggedSegmentId = null
     }
 
     /**
@@ -41,6 +45,10 @@ class PositionEstimator(
         confidence: Float,
     ): RoutePosition? {
         if (confidence < config.minimumConfidence) {
+            println(
+                "LOG[MapMatch][SKIP] confidence=${"%.2f".format(confidence)} " +
+                    "< min=${config.minimumConfidence} delta=${"%.2f".format(deltaDistanceMm)}",
+            )
             return null
         }
         val current = ensureState(route)
@@ -60,6 +68,12 @@ class PositionEstimator(
             advanceBackward(route, current, travel)
         } ?: return null
 
+        if (advanced.segmentId != lastLoggedSegmentId) {
+            lastLoggedSegmentId?.let { logExit(it) }
+            logEnter(advanced.segmentId)
+            lastLoggedSegmentId = advanced.segmentId
+        }
+
         state = advanced
         return buildPosition(route, advanced, timestampNs, confidence)
     }
@@ -75,6 +89,11 @@ class PositionEstimator(
         )
     }
 
+    /**
+     * STEP 20-22: Do **not** absorb overshoot into the current segment when a next edge exists.
+     * Old `remaining <= room + matchingTolerance` kept progress clamped at end of segment 0
+     * for all small optical-flow deltas (≤50mm), so Tracking never entered segment 1+.
+     */
     private fun advanceForward(route: Route, current: State, travelMm: Float): State? {
         var remaining = travelMm
         var segmentId = current.segmentId
@@ -86,28 +105,37 @@ class PositionEstimator(
             val segment = route.segment(segmentId) ?: return null
             val room = (segment.lengthMm - distance).coerceAtLeast(0f)
 
-            if (remaining <= room + config.matchingToleranceMm) {
-                val proposed = distance + remaining
-                if (proposed - segment.lengthMm > config.maximumPositionErrorMm) {
-                    return null
-                }
+            if (remaining <= room) {
                 return State(
                     segmentId = segmentId,
-                    distanceFromSegmentStart = proposed.coerceIn(0f, segment.lengthMm),
+                    distanceFromSegmentStart = distance + remaining,
                     direction = RouteDirection.FORWARD,
                 )
             }
 
+            // Consume remainder of this segment, then hop if topology allows.
             remaining -= room
             val nextEdge = route.preferredOutgoingEdge(segment.toNodeId)
             if (nextEdge == null || nextEdge.segmentId == segmentId) {
+                // Dead-end: clamp at end. Tolerate tiny residual without rejecting frame.
+                if (remaining > config.maximumPositionErrorMm) {
+                    println(
+                        "LOG[MapMatch][DEAD_END] seg=$segmentId remaining=${"%.1f".format(remaining)} " +
+                            "noOutgoing from=${segment.toNodeId}",
+                    )
+                }
                 return State(segmentId, segment.lengthMm, RouteDirection.FORWARD)
             }
-            if (remaining > 0f && remaining <= config.branchToleranceMm) {
-                remaining = 0f
-            }
+            println(
+                "LOG[MapMatch][HOP] $segmentId → ${nextEdge.segmentId} " +
+                    "carryMm=${"%.2f".format(remaining)} via=${segment.toNodeId}",
+            )
             segmentId = nextEdge.segmentId
             distance = 0f
+            // Tiny leftovers at nodes are noise — drop within branch tolerance after hop.
+            if (remaining <= config.branchToleranceMm) {
+                remaining = 0f
+            }
         }
         return State(segmentId, distance, RouteDirection.FORWARD)
     }
@@ -121,18 +149,20 @@ class PositionEstimator(
         while (remaining > 0f && guard < MAX_SEGMENT_HOPS) {
             guard++
             val segment = route.segment(segmentId) ?: return null
-            if (remaining <= distance + config.matchingToleranceMm) {
-                val nextDistance = (distance - remaining).coerceAtLeast(0f)
-                return State(segmentId, nextDistance, RouteDirection.BACKWARD)
+            if (remaining <= distance) {
+                return State(segmentId, distance - remaining, RouteDirection.BACKWARD)
             }
 
             remaining -= distance.coerceAtLeast(0f)
-            val previous = findIncomingPreferred(route, segment.fromNodeId) ?: return State(
-                segmentId,
-                0f,
-                RouteDirection.BACKWARD,
-            )
+            val previous = findIncomingPreferred(route, segment.fromNodeId)
+            if (previous == null) {
+                return State(segmentId, 0f, RouteDirection.BACKWARD)
+            }
             val prevSegment = route.segment(previous.segmentId) ?: return null
+            println(
+                "LOG[MapMatch][HOP_BACK] $segmentId → ${previous.segmentId} " +
+                    "carryMm=${"%.2f".format(remaining)}",
+            )
             segmentId = previous.segmentId
             distance = prevSegment.lengthMm
             if (remaining <= config.nodeRadiusMm) {
@@ -176,6 +206,16 @@ class PositionEstimator(
             timestampNs = timestampNs,
             confidence = confidence,
         )
+    }
+
+    private fun logEnter(segmentId: String, reason: String = "TRANSITION") {
+        println("ENTER SEGMENT $segmentId ($reason)")
+        println("LOG[RouteTransition] ENTER SEGMENT $segmentId")
+    }
+
+    private fun logExit(segmentId: String) {
+        println("EXIT SEGMENT $segmentId")
+        println("LOG[RouteTransition] EXIT SEGMENT $segmentId")
     }
 
     companion object {

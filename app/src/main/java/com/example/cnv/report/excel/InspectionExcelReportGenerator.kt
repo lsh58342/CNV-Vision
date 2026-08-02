@@ -267,11 +267,12 @@ class InspectionExcelReportGenerator {
             listOf("Average Speed (mm/s)", a.speed.averageSpeedMmPerSec),
             listOf("Maximum Speed (mm/s)", a.speed.maximumSpeedMmPerSec),
             listOf("Minimum Speed (mm/s)", a.speed.minimumSpeedMmPerSec),
-            listOf("Average Shock", a.shock.averageShock),
-            listOf("Maximum Shock", a.shock.maximumShock),
+            listOf("Average Shock (G)", a.shock.averageShock),
+            listOf("Maximum Shock (G)", a.shock.maximumShock),
             listOf("Shock Events", a.shock.shockCount),
-            listOf("Threshold", c.shockThreshold),
-            listOf("Calibration (mmPerPixel)", c.mmPerPixel ?: ""),
+            listOf("Threshold (G)", c.shockThreshold),
+            listOf("Calibration(mmPerPixel)", c.mmPerPixel ?: ""),
+            listOf("Origin", if (c.originSet) "${c.originX ?: ""},${c.originY ?: ""}" else ""),
             listOf("Origin Set", c.originSet),
             listOf("Origin X", c.originX ?: ""),
             listOf("Origin Y", c.originY ?: ""),
@@ -417,41 +418,57 @@ class InspectionExcelReportGenerator {
         val rows = ArrayList<List<Any?>>()
         rows.add(
             listOf(
-                "Timestamp", "X", "Y", "Distance", "Speed", "Shock",
-                "Tracking Confidence", "Zone", "Rule Trigger",
+                "Timestamp", "Building", "Floor", "Drawing", "Zone",
+                "Route Position", "World X", "World Y",
+                "Shock(G)", "Peak(G)", "Average(G)", "Speed",
+                "Calibration(mmPerPixel)", "Origin",
             ),
         )
-        val events = input.events.sortedBy { it.timestampNs }
-        val heat = input.heatPoints.sortedBy { it.timestampNs }
-        val triggered = input.rules.triggered().joinToString(";") { it.ruleId }
+        val events = input.events.filter { it.hasShock }.sortedBy { it.timestampNs }
         val dateFmt = runCatching { SimpleDateFormat(timeFmtPattern, Locale.US) }
             .getOrElse { SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US) }
-        val zoneRanges = zoneDistanceRanges(input.analysis)
-        var prevDist: Float? = null
-        var prevTs: Long? = null
+        val origin = if (input.context.originSet) {
+            "${input.context.originX ?: ""},${input.context.originY ?: ""}"
+        } else {
+            ""
+        }
+        val cal = input.context.mmPerPixel ?: ""
         for (e in events) {
-            val hp = nearestHeat(heat, e.timestampNs)
-            val speed: Any = if (prevDist != null && prevTs != null && e.timestampNs > prevTs) {
-                val dt = (e.timestampNs - prevTs) / 1_000_000_000.0
-                if (dt > 0) ((e.distanceMm - prevDist) / dt).toFloat() else ""
+            val zone = e.zoneName.ifBlank { input.context.zoneName }
+            val routePos: Any = if (e.routePositionMm > 0f) e.routePositionMm else e.routePosition
+            val speed: Any = if (e.speedMmPerSec != 0f) {
+                e.speedMmPerSec
             } else {
-                ""
+                input.analysis.speed.averageSpeedMmPerSec
+            }
+            val wx: Any = if (e.worldX != 0f || e.worldY != 0f) {
+                e.worldX
+            } else {
+                nearestHeat(input.heatPoints, e.timestampNs)?.drawingX ?: ""
+            }
+            val wy: Any = if (e.worldX != 0f || e.worldY != 0f) {
+                e.worldY
+            } else {
+                nearestHeat(input.heatPoints, e.timestampNs)?.drawingY ?: ""
             }
             rows.add(
                 listOf(
                     dateFmt.format(Date(e.timestampNs / 1_000_000L)),
-                    hp?.drawingX ?: "",
-                    hp?.drawingY ?: "",
-                    e.distanceMm,
+                    input.context.buildingName,
+                    input.context.floorName,
+                    input.context.drawingName,
+                    zone,
+                    routePos,
+                    wx,
+                    wy,
+                    e.shockStrength,
+                    e.peakG.takeIf { it > 0f } ?: e.shockStrength,
+                    e.movingAverageG,
                     speed,
-                    if (e.hasShock) e.shockStrength else 0f,
-                    e.trackingConfidence,
-                    zoneForDistance(e.distanceMm, zoneRanges),
-                    if (e.hasShock || e.trackingConfidence < 0.5f) triggered else "",
+                    cal,
+                    origin,
                 ),
             )
-            prevDist = e.distanceMm
-            prevTs = e.timestampNs
         }
         return rows
     }

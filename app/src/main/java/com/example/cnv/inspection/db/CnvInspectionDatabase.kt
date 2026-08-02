@@ -23,7 +23,7 @@ import java.util.concurrent.Executors
         SiteCalibrationEntity::class,
         SiteDrawingRouteEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {
@@ -159,6 +159,32 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN routePositionMm REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN worldX REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN worldY REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN speedMmPerSec REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN peakG REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN movingAverageG REAL NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE inspection_events ADD COLUMN zoneName TEXT NOT NULL DEFAULT ''",
+                )
+            }
+        }
+
         fun build(context: Context): CnvInspectionDatabase =
             Room.databaseBuilder(
                 context.applicationContext,
@@ -167,7 +193,7 @@ abstract class CnvInspectionDatabase : RoomDatabase() {
             )
                 .setQueryExecutor(roomExecutor)
                 .setTransactionExecutor(roomExecutor)
-                .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .build()
     }
 }

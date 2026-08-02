@@ -131,9 +131,14 @@ class InspectionRecorder(
                 confidenceSamples++
                 minConfidence = min(minConfidence, event.confidence)
                 if (event.shockLevel > 0f) {
-                    shockCount++
-                    if (event.shockLevel > maxShock) {
-                        maxShock = event.shockLevel
+                    val shockG = com.example.cnv.imu.ShockUnits.ms2ToG(
+                        maxOf(event.peakAcceleration, event.shockLevel),
+                    )
+                    if (com.example.cnv.imu.ShockUnits.isRecordableG(shockG)) {
+                        shockCount++
+                        if (shockG > maxShock) {
+                            maxShock = shockG
+                        }
                     }
                 }
             }

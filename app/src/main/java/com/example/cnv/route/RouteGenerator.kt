@@ -33,7 +33,7 @@ class RouteGenerator(
             segmentGeometry = optimized.segmentGeometry,
             config = coordinateConfig,
         )
-        routeRepository.setRoute(optimized.route)
+        routeRepository.setRoute(optimized.route, mapper)
         val result = RouteImportResult(
             route = optimized.route,
             routeName = optimized.route.name,

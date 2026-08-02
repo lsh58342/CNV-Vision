@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.example.cnv.analysis.InspectionAnalysisResult
 import com.example.cnv.factory.repository.FactoryCatalog
+import com.example.cnv.imu.ShockUnits
 import com.example.cnv.inspection.PersistedInspectionEvent
 import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.profile.InspectionProfileCodec
@@ -12,7 +13,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * CSV export for Inspection Summary (STEP 20-18).
+ * CSV export for Inspection Summary (STEP 20-18 / 20-20).
  * Repository / Analysis data only — no engine recalculation.
  */
 class InspectionCsvExportService(
@@ -35,9 +36,16 @@ class InspectionCsvExportService(
         onDone: (Result) -> Unit,
     ) {
         InspectionDbGate.submit(
-            block = { exportSync(sessionId, drawingId, targetUri, contentResolver, fileName) },
+            block = {
+                val r = exportSync(sessionId, drawingId, targetUri, contentResolver, fileName)
+                println(
+                    "LOG[STEP20-20][CSV] success=${r.success} file=${r.fileName} err=${r.errorMessage}",
+                )
+                r
+            },
             onMain = onDone,
             onError = { e ->
+                println("LOG[STEP20-20][CSV] success=false err=${e.message}")
                 onDone(Result(success = false, errorMessage = e.message ?: "CSV export failed"))
             },
         )
@@ -79,6 +87,11 @@ class InspectionCsvExportService(
             fun row(k: String, v: Any?) {
                 append(escape(k)).append(',').append(escape(v?.toString().orEmpty())).append('\n')
             }
+            val origin = if (ctx.originSet) {
+                "${ctx.originX ?: ""},${ctx.originY ?: ""}"
+            } else {
+                ""
+            }
             appendLine("field,value")
             row("Inspection Summary", "P0")
             row("Timestamp", ctx.timestampLabel)
@@ -90,26 +103,51 @@ class InspectionCsvExportService(
             row("Route Length (mm)", ctx.routeLengthMm)
             row("Average Speed (mm/s)", analysis.speed.averageSpeedMmPerSec)
             row("Maximum Speed (mm/s)", analysis.speed.maximumSpeedMmPerSec)
-            row("Average Shock", analysis.shock.averageShock)
-            row("Maximum Shock", analysis.shock.maximumShock)
+            row("Average Shock (G)", analysis.shock.averageShock)
+            row("Maximum Shock (G)", analysis.shock.maximumShock)
             row("Shock Events", analysis.shock.shockCount)
-            row("Threshold", ctx.shockThreshold)
-            row("Calibration (mmPerPixel)", ctx.mmPerPixel ?: "")
+            row("Threshold (G)", ctx.shockThreshold)
+            row("Calibration(mmPerPixel)", ctx.mmPerPixel ?: "")
+            row("Origin", origin)
             row("Origin Set", ctx.originSet)
-            row("Origin X", ctx.originX ?: "")
-            row("Origin Y", ctx.originY ?: "")
             row("Session ID", analysis.sessionId)
             row("Duration (ms)", analysis.summary.durationMs)
             row("Distance (mm)", analysis.distance.totalDistanceMm)
             appendLine()
-            appendLine("eventIndex,timestampNs,shockStrength,hasShock,routePosition,distanceMm")
-            events.forEachIndexed { i, e ->
-                append(i).append(',')
-                append(e.timestampNs).append(',')
+            appendLine(
+                "Timestamp,Building,Floor,Drawing,Zone,Route Position," +
+                    "World X,World Y,Shock(G),Peak(G),Average(G),Speed," +
+                    "Calibration(mmPerPixel),Origin",
+            )
+            val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+            val shockEvents = events.filter { it.hasShock }.sortedBy { it.timestampNs }
+            for (e in shockEvents) {
+                val ts = dateFmt.format(Date(e.timestampNs / 1_000_000L))
+                val zone = e.zoneName.ifBlank { ctx.zoneName }
+                val routePos = if (e.routePositionMm > 0f) {
+                    e.routePositionMm.toString()
+                } else {
+                    e.routePosition
+                }
+                val speed = if (e.speedMmPerSec != 0f) {
+                    e.speedMmPerSec
+                } else {
+                    analysis.speed.averageSpeedMmPerSec
+                }
+                append(escape(ts)).append(',')
+                append(escape(ctx.buildingName)).append(',')
+                append(escape(ctx.floorName)).append(',')
+                append(escape(ctx.drawingName)).append(',')
+                append(escape(zone)).append(',')
+                append(escape(routePos)).append(',')
+                append(e.worldX).append(',')
+                append(e.worldY).append(',')
                 append(e.shockStrength).append(',')
-                append(e.hasShock).append(',')
-                append(escape(e.routePosition)).append(',')
-                append(e.distanceMm).append('\n')
+                append(e.peakG.takeIf { it > 0f } ?: e.shockStrength).append(',')
+                append(e.movingAverageG).append(',')
+                append(speed).append(',')
+                append(ctx.mmPerPixel ?: "").append(',')
+                append(escape(origin)).append('\n')
             }
         }
 
@@ -161,8 +199,7 @@ data class InspectionExportContext(
             val routeLen = catalog.routes.currentRoute()?.let { r ->
                 r.segments.sumOf { it.lengthMm.toDouble() }.toFloat()
             } ?: analysis.distance.totalDistanceMm
-            val thr = profile.sensor.minimumShockThreshold.takeIf { it > 0f }
-                ?: com.example.cnv.core.config.IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
+            val thr = ShockUnits.asThresholdG(profile.sensor.minimumShockThreshold)
             return InspectionExportContext(
                 buildingName = building?.name.orEmpty(),
                 floorName = floor?.name.orEmpty(),

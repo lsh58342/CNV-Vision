@@ -65,10 +65,23 @@
     <com.example.cnv.ui.screen.inspection.LiveRouteViewer
         android:id="@+id/inspection_live_route"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="160dp"
         android:layout_marginTop="4dp"
         android:background="#FF1A1A1A"
-        android:minHeight="160dp" />
+        android:minHeight="120dp" />
+
+    <TextView
+        android:id="@+id/inspection_tracking_debug_hud"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:background="#CC000000"
+        android:fontFamily="monospace"
+        android:maxLines="18"
+        android:padding="6dp"
+        android:text="TRACKING DEBUG"
+        android:textColor="#FF00E676"
+        android:textSize="10sp" />
 
     <ScrollView
         android:id="@+id/inspection_dashboard_scroll"

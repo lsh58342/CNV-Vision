@@ -59,4 +59,11 @@ data class PersistedInspectionEvent(
     val shockStrength: Float,
     val trackingConfidence: Float,
     val eventType: String,
+    val routePositionMm: Float = 0f,
+    val worldX: Float = 0f,
+    val worldY: Float = 0f,
+    val speedMmPerSec: Float = 0f,
+    val peakG: Float = 0f,
+    val movingAverageG: Float = 0f,
+    val zoneName: String = "",
 )

@@ -154,7 +154,11 @@ class CADController(
 
     private fun refreshRoute() {
         val route = routeRepository.current()
-        val mapper = mapperProvider()
+        val mapper = mapperProvider() ?: routeRepository.currentMapper()
+        println(
+            "LOG[CADController][REFRESH] hasRoute=${route != null} " +
+                "hasMapper=${mapper != null} segments=${route?.segments?.size ?: 0}",
+        )
         cadView.setRouteData(route, mapper)
         latestPositionEvent?.let { applyPosition(it) }
     }

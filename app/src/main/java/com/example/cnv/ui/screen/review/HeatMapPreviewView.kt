@@ -60,10 +60,13 @@ class HeatMapPreviewView @JvmOverloads constructor(
         val oy = pad + (usableH - spanY.toFloat() * scale) / 2f
         val radius = max(4f, 6f * (scale / 40f).coerceIn(0.5f, 2f))
         for (p in points) {
-            fillPaint.color = config.colorFor(p.intensity)
+            fillPaint.color = config.colorForShockG(p.shockStrength)
             val sx = ox + ((p.drawingX - minX) * scale).toFloat()
             val sy = oy + ((p.drawingY - minY) * scale).toFloat()
-            canvas.drawCircle(sx, sy, radiusFor(p.intensity, radius), fillPaint)
+            val r = radiusFor(p.intensity, radius) *
+                (1f + (p.shockStrength - HeatMapDisplayConfig.DEFAULT.shockEmphasisMinStrength)
+                    .coerceAtLeast(0f) * 0.2f)
+            canvas.drawCircle(sx, sy, r.coerceIn(4f, 18f), fillPaint)
         }
     }
 

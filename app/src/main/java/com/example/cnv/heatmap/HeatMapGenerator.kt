@@ -1,42 +1,50 @@
 package com.example.cnv.heatmap
 
 import com.example.cnv.inspection.PersistedInspectionSession
+import com.example.cnv.imu.ShockUnits
 import com.example.cnv.map.Route
 import com.example.cnv.route.CoordinateMapper
+import kotlin.math.roundToInt
 
 /**
- * Generates Drawing [DrawingHeatPoint]s from persisted Inspection Session events (STEP 14).
- * Does not touch Camera / OpenCV / Fusion / Inspection algorithms.
- * Viewer must not call this — only [factory.repository.HeatMapRepository] orchestration.
+ * Generates Drawing [DrawingHeatPoint]s from persisted Inspection Session events.
+ * Shock strength is stored in **g**. Points below [ShockUnits.RECORDING_THRESHOLD_G] are skipped.
  */
 class HeatMapGenerator(
     private val intensityConfig: HeatMapIntensityConfig = HeatMapIntensityConfig.DEFAULT,
 ) {
 
-    /**
-     * @param mapper optional prebuilt mapper (e.g. from RouteGenerator); falls back to [HeatMapRouteLayout].
-     */
     fun generatePoints(
         sessions: List<PersistedInspectionSession>,
         route: Route,
         mapper: CoordinateMapper? = null,
     ): List<DrawingHeatPoint> {
-        val baseLayout = HeatMapRouteLayout.build(route) ?: return emptyList()
-        val layout = if (mapper != null) {
-            HeatMapRouteLayout.LayoutResult(
-                mapper = mapper,
-                segmentStartMm = baseLayout.segmentStartMm,
-                totalLengthMm = baseLayout.totalLengthMm,
-            )
-        } else {
-            baseLayout
-        }
+        val layout = HeatMapRouteLayout.build(route, worldMapper = mapper)
+            ?: HeatMapRouteLayout.build(route, worldMapper = null)
+            ?: return emptyList()
 
         val out = ArrayList<DrawingHeatPoint>()
         for (session in sessions) {
             out.addAll(pointsForSession(session, layout))
         }
-        return out
+        val aggregated = aggregateOverlapping(out)
+        println(
+            "LOG[HeatMapGenerator] sessions=${sessions.size} raw=${out.size} " +
+                "aggregated=${aggregated.size} thresholdG=${ShockUnits.RECORDING_THRESHOLD_G}",
+        )
+        aggregated.forEachIndexed { i, p ->
+            if (i < 40 || p.shockStrength >= ShockUnits.RECORDING_THRESHOLD_G) {
+                println(
+                    "HeatPoint\n" +
+                        "X=${"%.1f".format(p.drawingX)}\n" +
+                        "Y=${"%.1f".format(p.drawingY)}\n" +
+                        "Shock=${"%.2f".format(p.shockStrength)}g\n" +
+                        "Timestamp=${p.timestampNs}\n" +
+                        "Session=${p.sessionId}",
+                )
+            }
+        }
+        return aggregated
     }
 
     fun generateLayer(
@@ -80,22 +88,20 @@ class HeatMapGenerator(
                 }
             }
 
+            if (!event.hasShock) continue
+            val shockG = normalizeToG(event.shockStrength)
+            if (!ShockUnits.isRecordableG(shockG)) continue
+
             val segmentId = lastSegmentId ?: continue
             val world = HeatMapRouteLayout.toDrawingCoordinate(layout, segmentId, lastProgress)
-                ?: continue // off-route — skip
+                ?: continue
 
-            val intensity = intensityConfig.intensityFor(event.shockStrength, event.hasShock)
-            val strength = if (event.hasShock) {
-                event.shockStrength
-            } else {
-                intensityConfig.baseNoShockStrength
-            }
-
+            val intensity = intensityConfig.intensityFor(shockG, hasShock = true)
             out.add(
                 DrawingHeatPoint(
                     drawingX = world.x,
                     drawingY = world.y,
-                    shockStrength = strength,
+                    shockStrength = shockG,
                     intensity = intensity,
                     timestampNs = event.timestampNs,
                     routePositionMm = lastRouteMm,
@@ -107,6 +113,41 @@ class HeatMapGenerator(
             )
         }
         return out
+    }
+
+    /**
+     * Same-location stacks — accumulate shock (max + count boost) for stronger display.
+     */
+    private fun aggregateOverlapping(points: List<DrawingHeatPoint>): List<DrawingHeatPoint> {
+        if (points.isEmpty()) return emptyList()
+        val buckets = LinkedHashMap<String, MutableList<DrawingHeatPoint>>()
+        for (p in points) {
+            val key = "${(p.drawingX / ACCUM_CELL).roundToInt()}_${(p.drawingY / ACCUM_CELL).roundToInt()}_${p.sessionId}"
+            buckets.getOrPut(key) { ArrayList() }.add(p)
+        }
+        return buckets.values.map { group ->
+            val first = group.first()
+            val maxShock = group.maxOf { it.shockStrength }
+            val sumShock = group.sumOf { it.shockStrength.toDouble() }.toFloat()
+            val accum = (maxShock + (sumShock - maxShock) * 0.25f).coerceAtLeast(maxShock)
+            first.copy(
+                shockStrength = accum,
+                intensity = intensityConfig.intensityFor(accum, hasShock = true),
+                timestampNs = group.maxOf { it.timestampNs },
+            )
+        }
+    }
+
+    /**
+     * Accept either g or legacy m/s² values from older sessions.
+     */
+    private fun normalizeToG(raw: Float): Float {
+        if (raw <= 0f) return 0f
+        // Legacy normalized 0–1 confidence → treat as unusable for g heat.
+        if (raw <= 1.05f) return raw
+        // Likely m/s²
+        if (raw > 4f) return ShockUnits.ms2ToG(raw)
+        return raw
     }
 
     private data class ParsedRoute(val segmentId: String, val nodeId: String, val progress: Float)
@@ -136,5 +177,9 @@ class HeatMapGenerator(
             }
         }
         return null
+    }
+
+    companion object {
+        private const val ACCUM_CELL = 8.0
     }
 }

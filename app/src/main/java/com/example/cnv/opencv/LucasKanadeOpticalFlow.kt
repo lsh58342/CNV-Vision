@@ -61,8 +61,10 @@ class LucasKanadeOpticalFlow {
             val errorArray = error.toArray()
 
             val pairCount = minOf(prevArray.size, nextArray.size, statusArray.size)
+            var lost = 0
             for (index in 0 until pairCount) {
                 if (statusArray[index].toInt() != TRACK_STATUS_OK) {
+                    lost++
                     continue
                 }
                 val err = if (index < errorArray.size) errorArray[index] else 0f
@@ -74,10 +76,14 @@ class LucasKanadeOpticalFlow {
                     ),
                 )
             }
+            OpticalFlowDebugHub.onTrack(tracked = pairs.size, lost = lost)
 
             nextPoints.release()
             status.release()
             error.release()
+        } else {
+            OpticalFlowDebugHub.onReinitialize()
+            OpticalFlowDebugHub.onTrack(tracked = 0, lost = 0)
         }
 
         updatePreviousFrame(gray, currentKeypoints)
@@ -89,6 +95,7 @@ class LucasKanadeOpticalFlow {
         previousGray = null
         previousPoints?.release()
         previousPoints = null
+        OpticalFlowDebugHub.reset()
     }
 
     private fun updatePreviousFrame(gray: Mat, currentKeypoints: Array<KeyPoint>) {

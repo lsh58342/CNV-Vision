@@ -11,6 +11,9 @@ import com.example.cnv.config.CalibrationManager
 import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.debug.RouteDebugController
 import com.example.cnv.debug.RouteDebugView
+import com.example.cnv.debug.TrackingAttitudeProbe
+import com.example.cnv.debug.TrackingDebugSampler
+import com.example.cnv.debug.TrackingDebugSnapshot
 import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.model.ConveyorProfileSnapshot
 import com.example.cnv.factory.repository.FactoryCatalog
@@ -19,11 +22,13 @@ import com.example.cnv.imu.IMUManager
 import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.inspection.InspectionManager
 import com.example.cnv.inspection.InspectionResult
+import com.example.cnv.inspection.InspectionShockGeo
 import com.example.cnv.inspection.InspectionState
 import com.example.cnv.inspection.RouteQualityScore
 import com.example.cnv.inspection.db.InspectionDbGate
 import com.example.cnv.map.MapMatchingEngine
 import com.example.cnv.opencv.OpenCVManager
+import com.example.cnv.opencv.OpticalFlowDebugHub
 import com.example.cnv.production.ProductionMetrics
 import com.example.cnv.route.RouteGenerator
 import com.example.cnv.rule.RuleSeverity
@@ -63,6 +68,9 @@ class InspectionPipeline(
     private val mapMatchingEngine: MapMatchingEngine
     private val inspectionManager: InspectionManager
     private val routeDebugController: RouteDebugController
+    private val attitudeProbe = TrackingAttitudeProbe(activity)
+    private val trackingDebugSampler: TrackingDebugSampler
+    private var lastTrackingDebugLogMs: Long = 0L
 
     private var cameraRunning = false
     private var sensorsRunning = false
@@ -89,9 +97,9 @@ class InspectionPipeline(
     private var lastOverlayMarkerX: Double? = null
     private var lastOverlayMarkerY: Double? = null
 
-    /** Ring buffer for live shock graph (Fusion shockLevel samples). */
+    /** Ring buffer for live shock graph (g). */
     private val shockSeries = ArrayDeque<Float>(SHOCK_SERIES_CAP)
-    private val shockThreshold: Float = IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
+    private val shockThreshold: Float = com.example.cnv.imu.ShockUnits.RECORDING_THRESHOLD_G
 
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
@@ -104,7 +112,21 @@ class InspectionPipeline(
             statsTextView = TextView(activity),
             issuesTextView = TextView(activity),
             mapMatchingEngine = mapMatchingEngine,
-            mapperProvider = { routeGenerator.latestResult()?.mapper },
+            mapperProvider = {
+                routeRepository.currentMapper() ?: routeGenerator.latestResult()?.mapper
+            },
+        )
+        trackingDebugSampler = TrackingDebugSampler(
+            routeRepository = routeRepository,
+            mapMatchingEngine = mapMatchingEngine,
+            fusionEngine = fusionEngine,
+            imuManager = imuManager,
+            inspectionManager = inspectionManager,
+            attitudeProbe = attitudeProbe,
+            mapperProvider = {
+                routeRepository.currentMapper() ?: routeGenerator.latestResult()?.mapper
+            },
+            layoutProvider = { ensureDashboardLayout() },
         )
     }
 
@@ -252,6 +274,11 @@ class InspectionPipeline(
         traversedSegmentIds.clear()
         lastMarkerSegmentId = null
         ensureDashboardLayout()
+        InspectionShockGeo.bind(
+            route = route,
+            worldMapper = routeRepository.currentMapper()
+                ?: routeGenerator.latestResult()?.mapper,
+        )
         if (drawingId != null) {
             val conveyorLive = drawing?.conveyorProfile
             val sid = session.sessionId
@@ -365,6 +392,14 @@ class InspectionPipeline(
                     }.orEmpty(),
                     heatPointsJson = heatJson,
                 )
+                val finished = catalog.inspections.loadSession(sessionId)
+                logSessionVerification(
+                    sessionId = sessionId,
+                    heatPoints = heatPoints,
+                    events = finished?.events.orEmpty(),
+                    graphPoints = shockSeries.size,
+                    historyOk = finished != null && heatJson.isNotEmpty(),
+                )
                 if (routeForHeat != null) {
                     catalog.heatMaps.regenerateHeatLayer(
                         drawingId = drawingId,
@@ -374,8 +409,44 @@ class InspectionPipeline(
                     )
                 }
             }
+            InspectionShockGeo.clear()
+        } else {
+            InspectionShockGeo.clear()
         }
         return result
+    }
+
+    private fun logSessionVerification(
+        sessionId: String,
+        heatPoints: List<com.example.cnv.heatmap.DrawingHeatPoint>,
+        events: List<com.example.cnv.inspection.PersistedInspectionEvent>,
+        graphPoints: Int,
+        historyOk: Boolean,
+    ) {
+        val peaks = events.filter { it.hasShock }
+        val maxShock = peaks.maxOfOrNull { it.shockStrength } ?: liveMaxShock
+        val avgShock = if (peaks.isEmpty()) {
+            0f
+        } else {
+            peaks.map { it.shockStrength }.average().toFloat()
+        }
+        println(
+            "LOG[STEP20-20][VERIFY] session=$sessionId " +
+                "heatPoints=${heatPoints.size} graphPoints=$graphPoints " +
+                "peakEvents=${peaks.size} thresholdG=${com.example.cnv.imu.ShockUnits.RECORDING_THRESHOLD_G} " +
+                "maxShockG=${"%.2f".format(maxShock)} avgShockG=${"%.2f".format(avgShock)} " +
+                "historyLoad=$historyOk",
+        )
+        peaks.take(20).forEach { e ->
+            println(
+                "HeatPoint\n" +
+                    "X=${"%.1f".format(e.worldX)}\n" +
+                    "Y=${"%.1f".format(e.worldY)}\n" +
+                    "Shock=${"%.2f".format(e.shockStrength)}g\n" +
+                    "Timestamp=${e.timestampNs}\n" +
+                    "Session=${e.sessionId}",
+            )
+        }
     }
 
     /**
@@ -516,13 +587,39 @@ class InspectionPipeline(
 
     fun readShockGraph(): ShockGraphState {
         val fusion = fusionEngine.repository.latest()
-        return ShockGraphState.fromSamples(
+        val currentG = if (fusion != null) {
+            com.example.cnv.imu.ShockUnits.ms2ToG(
+                maxOf(fusion.peakAcceleration, fusion.shockLevel),
+            )
+        } else {
+            shockSeries.lastOrNull() ?: 0f
+        }
+        val state = ShockGraphState.fromSamples(
             samples = shockSeries.toList(),
             threshold = shockThreshold,
-            current = fusion?.shockLevel ?: shockSeries.lastOrNull() ?: 0f,
+            current = currentG,
             average = if (liveShockSamples > 0) liveShockSum / liveShockSamples else 0f,
             maximum = liveMaxShock,
         )
+        println(
+            "LOG[ShockGraph][LIVE] points=${state.samples.size} " +
+                "current=${"%.2f".format(state.current)} " +
+                "avg=${"%.2f".format(state.average)} " +
+                "max=${"%.2f".format(state.maximum)} " +
+                "thr=${state.threshold} peaks=${state.peakIndices.size}",
+        )
+        return state
+    }
+
+    /** STEP 20-22 Tracking Debug Mode — HUD + Logcat. */
+    fun readTrackingDebug(trackingLabel: String): TrackingDebugSnapshot {
+        val snap = trackingDebugSampler.sample(trackingLabel)
+        val now = System.currentTimeMillis()
+        if (now - lastTrackingDebugLogMs >= TRACKING_DEBUG_LOG_INTERVAL_MS) {
+            lastTrackingDebugLogMs = now
+            println(snap.formatLogLine())
+        }
+        return snap
     }
 
     fun readStatus(): InspectionUiStatus = readLiveDashboard().toUiStatus()
@@ -544,12 +641,15 @@ class InspectionPipeline(
         if (fusion != null && fusion.timestampNs != lastFusionTimestampNs) {
             lastFusionTimestampNs = fusion.timestampNs
             liveDistanceMm += kotlin.math.abs(fusion.distance)
-            appendShockSample(fusion.shockLevel)
-            if (fusion.shockLevel > 0f) {
+            val shockG = com.example.cnv.imu.ShockUnits.ms2ToG(
+                maxOf(fusion.peakAcceleration, fusion.shockLevel),
+            )
+            appendShockSample(shockG)
+            if (com.example.cnv.imu.ShockUnits.isRecordableG(shockG)) {
                 liveShockCount++
-                liveShockSum += fusion.shockLevel
+                liveShockSum += shockG
                 liveShockSamples++
-                if (fusion.shockLevel > liveMaxShock) liveMaxShock = fusion.shockLevel
+                if (shockG > liveMaxShock) liveMaxShock = shockG
             }
         }
 
@@ -723,7 +823,9 @@ class InspectionPipeline(
     private fun ensureDashboardLayout(): HeatMapRouteLayout.LayoutResult? {
         dashboardLayout?.let { return it }
         val route = routeRepository.current() ?: return null
-        val built = HeatMapRouteLayout.build(route)
+        val worldMapper = routeRepository.currentMapper()
+            ?: routeGenerator.latestResult()?.mapper
+        val built = HeatMapRouteLayout.build(route, worldMapper = worldMapper)
         dashboardLayout = built
         return built
     }
@@ -751,6 +853,8 @@ class InspectionPipeline(
         speedValidatorEngine.start()
         mapMatchingEngine.start()
         imuManager.start()
+        attitudeProbe.start()
+        OpticalFlowDebugHub.reset()
         routeDebugController.start()
         ensureDashboardLayout()
         sensorsRunning = true
@@ -759,6 +863,7 @@ class InspectionPipeline(
     private fun stopSensors() {
         if (!sensorsRunning) return
         routeDebugController.stop()
+        attitudeProbe.stop()
         imuManager.stop()
         mapMatchingEngine.stop()
         speedValidatorEngine.stop()
@@ -770,5 +875,6 @@ class InspectionPipeline(
 
     companion object {
         private const val SHOCK_SERIES_CAP = 240
+        private const val TRACKING_DEBUG_LOG_INTERVAL_MS = 250L
     }
 }

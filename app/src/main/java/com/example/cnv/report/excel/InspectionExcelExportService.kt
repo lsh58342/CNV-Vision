@@ -35,10 +35,15 @@ class InspectionExcelExportService(
     ) {
         InspectionDbGate.submit(
             block = {
-                exportSync(sessionId, drawingId, targetUri, contentResolver, fileName)
+                val r = exportSync(sessionId, drawingId, targetUri, contentResolver, fileName)
+                println(
+                    "LOG[STEP20-20][EXCEL] success=${r.success} file=${r.fileName} err=${r.errorMessage}",
+                )
+                r
             },
             onMain = onDone,
             onError = { e ->
+                println("LOG[STEP20-20][EXCEL] success=false err=${e.message}")
                 onDone(Result(success = false, errorMessage = e.message ?: "Excel export failed"))
             },
         )

@@ -7,6 +7,7 @@ import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import com.example.cnv.cad.CADCamera
+import com.example.cnv.imu.ShockUnits
 
 /**
  * HeatMap Viewer overlay — renders Repository [DrawingHeatLayer] only (STEP 15).
@@ -161,11 +162,13 @@ class HeatLayerViewerOverlay @JvmOverloads constructor(
 
         if (flags.heatMap) {
             for (p in points) {
-                fillPaint.color = config.colorFor(p.intensity)
+                fillPaint.color = config.colorForShockG(p.shockStrength)
+                val radius = config.pointRadiusPx *
+                    (1f + (p.shockStrength - ShockUnits.RECORDING_THRESHOLD_G).coerceAtLeast(0f) * 0.35f)
                 canvas.drawCircle(
                     camera.worldToViewX(p.drawingX),
                     camera.worldToViewY(p.drawingY),
-                    config.pointRadiusPx,
+                    radius.coerceIn(6f, 18f),
                     fillPaint,
                 )
                 if (flags.shock && p.shockStrength >= config.shockEmphasisMinStrength) {
@@ -178,6 +181,10 @@ class HeatLayerViewerOverlay @JvmOverloads constructor(
                     )
                 }
             }
+            println(
+                "LOG[HeatLayerViewer][DRAW] points=${points.size} " +
+                    "camera=${camera.scale}",
+            )
         } else if (flags.shock) {
             for (p in points) {
                 if (p.shockStrength < config.shockEmphasisMinStrength) continue
@@ -210,10 +217,10 @@ class HeatLayerViewerOverlay @JvmOverloads constructor(
         val left = width - LEGEND_WIDTH - LEGEND_MARGIN
         var top = LEGEND_MARGIN
         val items = listOf(
-            HeatIntensity.LOW to "LOW",
-            HeatIntensity.MEDIUM to "MEDIUM",
-            HeatIntensity.HIGH to "HIGH",
-            HeatIntensity.CRITICAL to "CRITICAL",
+            HeatIntensity.LOW to "1.10–1.30g",
+            HeatIntensity.MEDIUM to "1.30–1.70g",
+            HeatIntensity.HIGH to "1.70–2.20g",
+            HeatIntensity.CRITICAL to "≥2.20g",
         )
         for ((intensity, label) in items) {
             legendPaint.color = config.colorFor(intensity)

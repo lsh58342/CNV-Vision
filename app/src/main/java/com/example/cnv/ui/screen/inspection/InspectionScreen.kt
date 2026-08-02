@@ -87,6 +87,7 @@ class InspectionScreen : BaseScreen() {
         val liveRouteViewer = view.findViewById<LiveRouteViewer>(R.id.inspection_live_route)
         val shockGraph = view.findViewById<ShockGraphView>(R.id.inspection_shock_graph)
         val preflightBanner = view.findViewById<TextView>(R.id.inspection_preflight_banner)
+        val trackingHud = view.findViewById<TextView>(R.id.inspection_tracking_debug_hud)
         viewModel.attachPreview(preview)
 
         viewModel.dashboard.observe(viewLifecycleOwner) { dash ->
@@ -99,6 +100,10 @@ class InspectionScreen : BaseScreen() {
 
         viewModel.shockGraph.observe(viewLifecycleOwner) { graph ->
             shockGraph.bind(graph)
+        }
+
+        viewModel.trackingDebug.observe(viewLifecycleOwner) { debug ->
+            trackingHud.text = debug.formatHud()
         }
 
         viewModel.preflight.observe(viewLifecycleOwner) { gate ->

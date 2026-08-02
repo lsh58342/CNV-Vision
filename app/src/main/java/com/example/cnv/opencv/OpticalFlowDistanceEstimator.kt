@@ -63,6 +63,9 @@ class OpticalFlowDistanceEstimator(
         val medianPixel = pixelMovementEstimator.medianMagnitude(filterResult.inliers)
         calibrationManager.addObservedPixelDistance(medianPixel)
 
+        val heading = meanFlowHeadingDeg(filterResult.inliers)
+        OpticalFlowDebugHub.onFlowHeading(heading, medianPixel)
+
         val distanceMm = frameDistanceEstimator.toMm(medianPixel)
         val applied = accumulatedDistanceTracker.tryAccumulate(
             deltaMm = distanceMm,
@@ -104,6 +107,19 @@ class OpticalFlowDistanceEstimator(
     override fun reset() {
         opticalFlow.release()
         accumulatedDistanceTracker.reset()
+        OpticalFlowDebugHub.reset()
+    }
+
+    private fun meanFlowHeadingDeg(pairs: List<FlowPair>): Float {
+        if (pairs.isEmpty()) return OpticalFlowDebugHub.headingDeg
+        var sx = 0.0
+        var sy = 0.0
+        for (p in pairs) {
+            sx += p.to.x - p.from.x
+            sy += p.to.y - p.from.y
+        }
+        val n = pairs.size.toDouble()
+        return com.example.cnv.debug.TrackingAttitudeProbe.headingFromDelta(sx / n, sy / n)
     }
 
     private fun drawKeypoints(overlay: Mat, keypoints: Array<KeyPoint>) {

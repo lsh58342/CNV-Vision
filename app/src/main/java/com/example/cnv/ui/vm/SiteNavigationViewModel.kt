@@ -486,16 +486,26 @@ class SiteNavigationViewModel : ViewModel() {
         val drawing = catalog.drawings.current(context) ?: return false
         if (!drawing.dwgRegistered || drawing.routeLocked) return false
         if (catalog.activateRouteForDrawing(drawing.id)) {
+            val existingMapper = catalog.routes.underlying().currentMapper()
+            if (existingMapper != null) {
+                routeMapper = existingMapper
+                println(
+                    "LOG[CNV.GenerateRoute][PREVIEW] drawingId=${drawing.id} " +
+                        "source=restored+mapper hasRoute=${catalog.routes.hasRoute()}",
+                )
+                return true
+            }
             println(
                 "LOG[CNV.GenerateRoute][PREVIEW] drawingId=${drawing.id} " +
-                    "source=restored hasRoute=${catalog.routes.hasRoute()}",
+                    "source=restored_without_mapper — regenerating geometry mapper",
             )
-            return true
+            // Fall through: Route topology exists but Drawing coordinates are missing.
         }
-        if (catalog.routes.hasRoute()) {
+        if (catalog.routes.hasRoute() && catalog.routes.underlying().currentMapper() != null) {
+            routeMapper = catalog.routes.underlying().currentMapper()
             println(
                 "LOG[CNV.GenerateRoute][PREVIEW] drawingId=${drawing.id} " +
-                    "source=active_repo hasRoute=true",
+                    "source=active_repo+mapper hasRoute=true",
             )
             return true
         }

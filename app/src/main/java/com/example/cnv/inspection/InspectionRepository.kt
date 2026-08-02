@@ -26,6 +26,19 @@ class InspectionRepository(
     private val lock = Any()
     private val results = ArrayDeque<InspectionResult>()
 
+    /** Carry-forward Route position for Fusion → Shock Event enrichment (STEP 20-20). */
+    private var lastRouteLabel: String = ""
+    private var lastSegmentId: String = ""
+    private var lastProgress: Float = 0f
+    private var lastRouteMm: Float = 0f
+    private var lastWorldX: Float = 0f
+    private var lastWorldY: Float = 0f
+    private var lastZoneName: String = ""
+    private var lastTimestampNs: Long = 0L
+    private var lastSpeedMmPerSec: Float = 0f
+    private val recentShockG = ArrayDeque<Float>()
+    private val movingAvgWindow: Int = 5
+
     fun save(result: InspectionResult) {
         synchronized(lock) {
             results.addLast(result)
@@ -59,6 +72,7 @@ class InspectionRepository(
         routeSnapshotJson: String = "",
     ) {
         ensureBackground()
+        resetEventEnrichment()
         val db = database() ?: return
         db.sessionDao().insertSession(
             InspectionSessionEntity(
@@ -284,30 +298,103 @@ class InspectionRepository(
         return db.sessionDao().historyForDrawing(drawingId).map { it.toInspectionResult() }
     }
 
+    private fun resetEventEnrichment() {
+        lastRouteLabel = ""
+        lastSegmentId = ""
+        lastProgress = 0f
+        lastRouteMm = 0f
+        lastWorldX = 0f
+        lastWorldY = 0f
+        lastZoneName = ""
+        lastTimestampNs = 0L
+        lastSpeedMmPerSec = 0f
+        recentShockG.clear()
+    }
+
     private fun toEntity(sessionId: String, drawingId: String, event: BaseEvent): InspectionEventEntity =
         when (event) {
-            is FusionEvent -> InspectionEventEntity(
-                sessionId = sessionId,
-                drawingId = drawingId,
-                timestampNs = event.timestampNs,
-                distanceMm = event.distanceMm,
-                routePosition = "",
-                hasShock = event.shockLevel > 0f,
-                shockStrength = event.shockLevel,
-                trackingConfidence = event.confidence,
-                eventType = "FusionEvent",
-            )
-            is PositionEvent -> InspectionEventEntity(
-                sessionId = sessionId,
-                drawingId = drawingId,
-                timestampNs = event.timestampNs,
-                distanceMm = event.distanceFromSegmentStart,
-                routePosition = "${event.segmentId}|${event.nodeId}|${event.progress}",
-                hasShock = false,
-                shockStrength = 0f,
-                trackingConfidence = event.confidence,
-                eventType = "PositionEvent",
-            )
+            is FusionEvent -> {
+                val shockG = com.example.cnv.imu.ShockUnits.ms2ToG(
+                    maxOf(event.peakAcceleration, event.shockLevel),
+                )
+                val recordable = com.example.cnv.imu.ShockUnits.isRecordableG(shockG)
+                val avgG = if (recordable) {
+                    recentShockG.addLast(shockG)
+                    while (recentShockG.size > movingAvgWindow) recentShockG.removeFirst()
+                    recentShockG.average().toFloat()
+                } else {
+                    recentShockG.average().toFloat().takeIf { recentShockG.isNotEmpty() } ?: 0f
+                }
+                if (recordable) {
+                    println(
+                        "LOG[ShockEvent][SAVE] session=$sessionId " +
+                            "ts=${event.timestampNs} routeMm=$lastRouteMm " +
+                            "world=(${"%.1f".format(lastWorldX)},${"%.1f".format(lastWorldY)}) " +
+                            "speed=${"%.1f".format(lastSpeedMmPerSec)} " +
+                            "shockG=${"%.2f".format(shockG)} peakG=${"%.2f".format(shockG)} " +
+                            "avgG=${"%.2f".format(avgG)} zone=$lastZoneName",
+                    )
+                }
+                InspectionEventEntity(
+                    sessionId = sessionId,
+                    drawingId = drawingId,
+                    timestampNs = event.timestampNs,
+                    distanceMm = if (lastRouteMm > 0f) lastRouteMm else event.distanceMm,
+                    routePosition = lastRouteLabel,
+                    hasShock = recordable,
+                    shockStrength = if (recordable) shockG else 0f,
+                    trackingConfidence = event.confidence,
+                    eventType = "FusionEvent",
+                    routePositionMm = lastRouteMm,
+                    worldX = lastWorldX,
+                    worldY = lastWorldY,
+                    speedMmPerSec = lastSpeedMmPerSec,
+                    peakG = if (recordable) shockG else 0f,
+                    movingAverageG = avgG,
+                    zoneName = lastZoneName,
+                )
+            }
+            is PositionEvent -> {
+                val label = "${event.segmentId}|${event.nodeId}|${event.progress}"
+                lastRouteLabel = label
+                lastSegmentId = event.segmentId
+                lastProgress = event.progress
+                val resolved = InspectionShockGeo.resolve(event.segmentId, event.progress)
+                if (resolved != null) {
+                    if (lastTimestampNs > 0L && event.timestampNs > lastTimestampNs) {
+                        val dt = (event.timestampNs - lastTimestampNs) / 1_000_000_000.0
+                        if (dt > 0.0) {
+                            lastSpeedMmPerSec =
+                                ((resolved.routePositionMm - lastRouteMm) / dt).toFloat()
+                        }
+                    }
+                    lastRouteMm = resolved.routePositionMm
+                    lastWorldX = resolved.worldX
+                    lastWorldY = resolved.worldY
+                    lastZoneName = resolved.zoneName
+                } else {
+                    lastRouteMm = event.distanceFromSegmentStart
+                }
+                lastTimestampNs = event.timestampNs
+                InspectionEventEntity(
+                    sessionId = sessionId,
+                    drawingId = drawingId,
+                    timestampNs = event.timestampNs,
+                    distanceMm = lastRouteMm,
+                    routePosition = label,
+                    hasShock = false,
+                    shockStrength = 0f,
+                    trackingConfidence = event.confidence,
+                    eventType = "PositionEvent",
+                    routePositionMm = lastRouteMm,
+                    worldX = lastWorldX,
+                    worldY = lastWorldY,
+                    speedMmPerSec = lastSpeedMmPerSec,
+                    peakG = 0f,
+                    movingAverageG = 0f,
+                    zoneName = lastZoneName,
+                )
+            }
             else -> InspectionEventEntity(
                 sessionId = sessionId,
                 drawingId = drawingId,
@@ -392,6 +479,13 @@ class InspectionRepository(
         shockStrength = shockStrength,
         trackingConfidence = trackingConfidence,
         eventType = eventType,
+        routePositionMm = routePositionMm,
+        worldX = worldX,
+        worldY = worldY,
+        speedMmPerSec = speedMmPerSec,
+        peakG = peakG,
+        movingAverageG = movingAverageG,
+        zoneName = zoneName,
     )
 
     companion object {

@@ -9,9 +9,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import com.example.cnv.R
-import com.example.cnv.core.config.IMUConfig
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
+import com.example.cnv.heatmap.HeatPointsCodec
+import com.example.cnv.imu.ShockUnits
 import com.example.cnv.inspection.InspectionSessionSummary
 import com.example.cnv.inspection.PersistedInspectionEvent
 import com.example.cnv.report.excel.ExcelExportUi
@@ -23,6 +24,7 @@ import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
 import com.example.cnv.ui.screen.inspection.ShockGraphState
 import com.example.cnv.ui.screen.inspection.ShockGraphView
+import com.example.cnv.ui.screen.review.HeatMapPreviewView
 import com.google.android.material.button.MaterialButton
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -126,6 +128,7 @@ class SessionDetailScreen : BaseScreen() {
             }
             bindDetail(view, summary)
             bindShockGraph(view, persisted.events, summary)
+            bindHeatMap(view, summary, did)
             bindActions(view, did, sid)
             catalog.analysis.getOrAnalyzeAsync(sid, did) { analysis ->
                 if (!isAdded || analysis == null) return@getOrAnalyzeAsync
@@ -139,29 +142,92 @@ class SessionDetailScreen : BaseScreen() {
         events: List<PersistedInspectionEvent>,
         summary: InspectionSessionSummary,
     ) {
-        val samples = if (events.isEmpty()) {
-            emptyList()
+        val fusion = events.filter { it.eventType == "FusionEvent" || it.hasShock }
+        val samples = if (fusion.isEmpty()) {
+            events.filter { it.hasShock }.map { it.shockStrength }
         } else {
-            events.map { if (it.hasShock) it.shockStrength else 0f }
+            fusion.map { if (it.hasShock) it.shockStrength else 0f }
         }
         val snap = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
             summary.inspectionProfileJson,
         )
-        val thr = snap.sensor.minimumShockThreshold.takeIf { it > 0f }
-            ?: IMUConfig.DEFAULT_CONFIDENCE_THRESHOLD
-        view.findViewById<ShockGraphView>(R.id.detail_shock_graph).bind(
-            ShockGraphState.fromSamples(
-                samples = samples,
-                threshold = thr,
-                current = samples.lastOrNull() ?: 0f,
-                average = summary.let {
-                    if (samples.isEmpty()) 0f else samples.average().toFloat()
-                },
-                maximum = summary.maximumShock.takeIf { it > 0f }
-                    ?: samples.maxOrNull()
-                    ?: 0f,
-            ),
+        val thr = ShockUnits.asThresholdG(snap.sensor.minimumShockThreshold)
+            .takeIf { it > 0f }
+            ?: ShockUnits.RECORDING_THRESHOLD_G
+        val state = ShockGraphState.fromSamples(
+            samples = samples,
+            threshold = thr,
+            current = samples.lastOrNull() ?: 0f,
+            average = if (samples.isEmpty()) {
+                0f
+            } else {
+                samples.filter { it >= thr }.ifEmpty { samples }.average().toFloat()
+            },
+            maximum = summary.maximumShock.takeIf { it > 0f }
+                ?: samples.maxOrNull()
+                ?: 0f,
         )
+        view.findViewById<ShockGraphView>(R.id.detail_shock_graph).bind(state)
+        println(
+            "LOG[ShockGraph][HISTORY] points=${state.samples.size} " +
+                "peaks=${state.peakIndices.size} thr=$thr " +
+                "max=${"%.2f".format(state.maximum)} avg=${"%.2f".format(state.average)} " +
+                "y=${state.samples.take(24).joinToString(",") { "%.2f".format(it) }}",
+        )
+        println(
+            "LOG[STEP20-20][HISTORY] heatJsonEmpty=${summary.heatPointsJson.isBlank()} " +
+                "shockEvents=${events.count { it.hasShock }} graphPoints=${state.samples.size} " +
+                "historyLoad=true",
+        )
+    }
+
+    private fun bindHeatMap(
+        view: View,
+        summary: InspectionSessionSummary,
+        drawingId: String,
+    ) {
+        val preview = view.findViewById<HeatMapPreviewView>(R.id.detail_heatmap_preview)
+        val meta = view.findViewById<TextView>(R.id.detail_heatmap_meta)
+        val fromJson = HeatPointsCodec.decode(summary.heatPointsJson)
+        if (fromJson.isNotEmpty()) {
+            catalog.heatMaps.restoreSessionPoints(summary.sessionId, summary.heatPointsJson)
+            preview.setHeatPoints(fromJson)
+            meta.text = "HeatPoints=${fromJson.size} (session JSON)"
+            println(
+                "LOG[HeatMap][HISTORY] loaded=${fromJson.size} session=${summary.sessionId}",
+            )
+            return
+        }
+        // Fallback: regenerate from Room events + route snapshot when JSON missing.
+        com.example.cnv.inspection.db.InspectionDbGate.execute {
+            val session = catalog.inspections.loadSession(summary.sessionId)
+            val route = session?.summary?.routeSnapshotJson?.let {
+                com.example.cnv.inspection.RouteSnapshotCodec.decode(it)?.toRoute()
+            } ?: catalog.routes.currentRoute()
+            val mapper = catalog.routes.underlying().currentMapper()
+            val points = if (session != null && route != null) {
+                catalog.heatMaps.generateSessionPoints(drawingId, session, route, mapper)
+            } else {
+                emptyList()
+            }
+            if (points.isNotEmpty()) {
+                // Persist recovered heat so next History open is instant.
+                // finishSession path already stores JSON; this is repair-only.
+            }
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                if (!isAdded) return@post
+                preview.setHeatPoints(points)
+                meta.text = if (points.isEmpty()) {
+                    "HeatMap unavailable — check session heatPointsJson / Route Snapshot"
+                } else {
+                    "HeatPoints=${points.size} (regenerated)"
+                }
+                println(
+                    "LOG[HeatMap][HISTORY] regenerated=${points.size} " +
+                        "session=${summary.sessionId} route=${route != null}",
+                )
+            }
+        }
     }
 
     private fun bindAnalysis(view: View, a: com.example.cnv.analysis.InspectionAnalysisResult) {

@@ -4,6 +4,7 @@ import com.example.cnv.core.config.IMUConfig
 
 /**
  * Rule-based shock peak detector. No AI.
+ * Peaks ≥ [ShockUnits.RECORDING_THRESHOLD_G] are always emitted.
  */
 class ShockDetector(
     private val config: IMUConfig,
@@ -71,13 +72,23 @@ class ShockDetector(
             return null
         }
         val confidence = computeConfidence(peakAccel, peakGyro, duration)
-        val event = if (confidence >= config.confidenceThreshold) {
+        val peakG = ShockUnits.ms2ToG(peakAccel)
+        val recordable = ShockUnits.isRecordableG(peakG) || confidence >= config.confidenceThreshold
+        val event = if (recordable) {
+            println(
+                "LOG[ShockDetector][PEAK] peakMs2=%.3f peakG=%.3f conf=%.2f durationNs=%d"
+                    .format(peakAccel, peakG, confidence, duration),
+            )
             IMUEvent(
                 timestampNs = timestampNs,
                 peakAcceleration = peakAccel,
                 peakGyroscope = peakGyro,
                 durationNs = duration,
-                confidence = confidence,
+                confidence = if (ShockUnits.isRecordableG(peakG)) {
+                    confidence.coerceAtLeast(config.confidenceThreshold)
+                } else {
+                    confidence
+                },
             )
         } else {
             null
