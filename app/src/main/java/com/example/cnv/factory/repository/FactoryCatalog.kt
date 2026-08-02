@@ -26,6 +26,7 @@ class FactoryCatalog(
     val csvMetadata: CsvMetadataRepository = CsvMetadataRepository(),
     val replayMetadata: ReplayMetadataRepository = ReplayMetadataRepository(),
     val conveyorProfiles: ConveyorProfileRepository = ConveyorProfileRepository(),
+    val inspectionProfiles: InspectionProfileRepository = InspectionProfileRepository(),
     val workOrders: WorkOrderRepository = WorkOrderRepository(),
     val excelArchives: ExcelArchiveRepository = ExcelArchiveRepository(),
 ) {
@@ -49,6 +50,7 @@ class FactoryCatalog(
         csvMetadata.removeForDrawing(drawingId)
         replayMetadata.removeForDrawing(drawingId)
         conveyorProfiles.deleteAsync(drawingId)
+        inspectionProfiles.deleteAsync(drawingId)
         analysis.invalidateDrawing(drawingId)
         rules.invalidateDrawing(drawingId)
         reports.invalidateDrawing(drawingId)

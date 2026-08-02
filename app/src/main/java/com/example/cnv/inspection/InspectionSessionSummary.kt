@@ -25,6 +25,8 @@ data class InspectionSessionSummary(
     val speedValidation: SpeedValidationSummary = SpeedValidationSummary.EMPTY,
     /** Rule catalog version frozen at Inspection start (STEP 18). */
     val ruleCatalogVersion: Int = 0,
+    /** Full Inspection Profile snapshot at start (STEP 19-2). */
+    val inspectionProfileJson: String = "",
 )
 
 /**

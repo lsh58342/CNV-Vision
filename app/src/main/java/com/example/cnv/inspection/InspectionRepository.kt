@@ -53,6 +53,7 @@ class InspectionRepository(
         calibrationVersion: Int = 0,
         conveyorProfile: ConveyorProfileSnapshot = ConveyorProfileSnapshot.empty(),
         ruleCatalogVersion: Int = 0,
+        inspectionProfileJson: String = "",
     ) {
         ensureBackground()
         val db = database() ?: return
@@ -72,6 +73,7 @@ class InspectionRepository(
                 profileExpectedFps = conveyorProfile.expectedFps,
                 profileMotionProfile = conveyorProfile.motionProfile.name,
                 ruleCatalogVersion = ruleCatalogVersion,
+                inspectionProfileJson = inspectionProfileJson,
             ),
         )
     }
@@ -165,6 +167,7 @@ class InspectionRepository(
                     avgSpeedDifferenceMm = speedValidation.averageDifferenceMm,
                     speedValidationScore = speedValidation.validationScore,
                     ruleCatalogVersion = ruleVersion,
+                    inspectionProfileJson = existing?.inspectionProfileJson.orEmpty(),
                 ),
             )
             if (events.isNotEmpty()) {
@@ -271,6 +274,7 @@ class InspectionRepository(
             validationScore = speedValidationScore,
         ),
         ruleCatalogVersion = ruleCatalogVersion,
+        inspectionProfileJson = inspectionProfileJson,
     )
 
     private fun InspectionSessionEntity.toProfileSnapshot() = ConveyorProfileSnapshot(

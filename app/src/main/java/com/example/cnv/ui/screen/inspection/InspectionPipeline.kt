@@ -131,16 +131,39 @@ class InspectionPipeline(
             ?: ConveyorProfileSnapshot.empty()
         sessionConveyorSnapshot = profileSnap
         if (drawingId != null) {
-            catalog.inspections.createSessionAsync(
-                drawingId = drawingId,
-                sessionId = session.sessionId,
-                startTimeMs = session.startTimeMs,
-                appVersion = versionName,
-                routeVersion = session.freeze.routeVersion,
-                calibrationVersion = session.freeze.calibrationVersion,
-                conveyorProfile = profileSnap,
-                ruleCatalogVersion = catalog.rules.catalogVersion(),
-            )
+            val conveyorLive = drawing?.conveyorProfile
+            com.example.cnv.inspection.db.InspectionDbGate.execute {
+                val stored = catalog.inspectionProfiles.loadSync(
+                    drawingId,
+                    conveyorFallback = conveyorLive
+                        ?: com.example.cnv.factory.model.ConveyorProfile.fromConfig(),
+                )
+                val profile = stored.copy(
+                    conveyor = conveyorLive ?: stored.conveyor,
+                    rule = if (stored.rule.entries.isEmpty()) {
+                        com.example.cnv.factory.repository.InspectionProfileRepository
+                            .buildDefaultRuleProfile(catalog.rules.catalogVersion())
+                    } else {
+                        stored.rule.copy(catalogVersion = catalog.rules.catalogVersion())
+                    },
+                    updatedAtMs = System.currentTimeMillis(),
+                )
+                val snapshot = com.example.cnv.profile.InspectionProfileSnapshot.from(profile)
+                catalog.inspections.createSession(
+                    drawingId = drawingId,
+                    sessionId = session.sessionId,
+                    startTimeMs = session.startTimeMs,
+                    appVersion = versionName,
+                    routeVersion = session.freeze.routeVersion,
+                    calibrationVersion = session.freeze.calibrationVersion,
+                    conveyorProfile = profileSnap,
+                    ruleCatalogVersion = catalog.rules.catalogVersion(),
+                    inspectionProfileJson = com.example.cnv.profile.InspectionProfileCodec
+                        .encodeSnapshot(snapshot),
+                )
+                // Same background thread — avoid nested DbGate submit.
+                catalog.inspectionProfiles.saveSync(drawingId, profile)
+            }
         }
         return true
     }

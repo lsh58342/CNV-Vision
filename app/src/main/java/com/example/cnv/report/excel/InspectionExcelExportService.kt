@@ -64,11 +64,15 @@ class InspectionExcelExportService(
         }
 
         val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
+        val profileSnapshot = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
+            persisted.summary.inspectionProfileJson,
+        )
         val input = InspectionExcelReportGenerator.Input(
             analysis = analysis,
             rules = rules,
             events = persisted.events,
             heatPoints = heatPoints,
+            profileSnapshot = profileSnapshot,
             context = buildContext(drawingId),
         )
 

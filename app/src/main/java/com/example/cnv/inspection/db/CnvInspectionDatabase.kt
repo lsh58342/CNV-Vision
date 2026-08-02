@@ -12,14 +12,16 @@ import java.util.concurrent.Executors
         InspectionSessionEntity::class,
         InspectionEventEntity::class,
         ConveyorProfileEntity::class,
+        InspectionProfileEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class CnvInspectionDatabase : RoomDatabase() {
     abstract fun sessionDao(): InspectionSessionDao
     abstract fun eventDao(): InspectionEventDao
     abstract fun conveyorProfileDao(): ConveyorProfileDao
+    abstract fun inspectionProfileDao(): InspectionProfileDao
 
     companion object {
         private const val DB_NAME = "cnv_inspection.db"
