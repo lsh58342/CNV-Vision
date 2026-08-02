@@ -491,7 +491,7 @@
     <string name="replay_shock_yes">Yes</string>
     <string name="replay_shock_no">No</string>
     <string name="replay_session_label">%1$s · session %2$s · frame %3$d/%4$d · visible %5$d</string>
-    <string name="replay_stats_format">Current: %1$s\nElapsed: %2$s\nDistance: %3$.1f mm\nZone: %4$s\nShock: %5$s (%6$.2f)\nConfidence: %7$.2f\nValidation: %8$.2f</string>
+    <string name="replay_stats_format">Elapsed: %1$s\nDistance: %2$.1f mm\nSpeed: %3$.1f mm/s\nConfidence: %4$.2f\nShocks: %5$d\nCoverage: %6$.1f%%\nZone: %7$s\nShock now: %8$s (%9$.2f)\nValidation: %10$.2f</string>
     <string name="history_deleted">Session deleted</string>
     <string name="history_no_session_selected">No Session selected</string>
     <string name="history_session_missing">Session not found for this Drawing</string>

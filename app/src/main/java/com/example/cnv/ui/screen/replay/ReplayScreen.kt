@@ -27,8 +27,8 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.TextInputEditText
 
 /**
- * Replay Viewer + Analysis Tools UI (STEP 16 / 16-1).
- * Analysis reads Engine cache only; does not modify ReplayEngine.
+ * Replay Viewer + Analysis Tools UI (STEP 16-3).
+ * Depends on ViewModel → [com.example.cnv.replay.ReplayEngine] interface only.
  */
 class ReplayScreen : BaseScreen() {
 
@@ -240,16 +240,18 @@ class ReplayScreen : BaseScreen() {
         )
         view.findViewById<TextView>(R.id.replay_marker_label).text = state.markerLabel
 
-        val s = state.statistics
+        val s = state.engineStatistics
         view.findViewById<TextView>(R.id.replay_stats_panel).text = getString(
             R.string.replay_stats_format,
-            formatDuration(s.currentTimeMs),
             formatDuration(s.elapsedMs),
-            s.distanceMm,
+            s.currentDistanceMm,
+            s.currentSpeedMmPerSec,
+            s.currentConfidence,
+            s.shockCount,
+            s.coverage * 100f,
             s.currentZoneName,
             if (s.hasShock) getString(R.string.replay_shock_yes) else getString(R.string.replay_shock_no),
             s.shockStrength,
-            s.trackingConfidence,
             s.validationScore,
         )
 

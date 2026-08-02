@@ -1,16 +1,18 @@
 package com.example.cnv.replay.analysis
 
 import com.example.cnv.factory.model.Zone
-import com.example.cnv.replay.ReplayEngineApi
+import com.example.cnv.replay.ReplayEngine
+import com.example.cnv.replay.ReplayEngineStatistics
 import com.example.cnv.replay.ReplayFrame
 import java.util.Locale
 
 /**
- * Replay Analysis Tools (STEP 16-1 / 16-2).
- * Uses [ReplayEngineApi] only — never touches Engine internals, cache classes, or Room.
+ * Replay Analysis (STEP 16-1 / 16-3).
+ * Depends on [ReplayEngine] interface only — read-only.
+ * Does not modify playback state, seek, or touch Engine internals / Room.
  */
 class ReplayAnalysis(
-    private val engine: ReplayEngineApi,
+    private val engine: ReplayEngine,
     private val config: ReplayAnalysisConfig = ReplayAnalysisConfig.DEFAULT,
 ) {
 
@@ -50,6 +52,10 @@ class ReplayAnalysis(
     }
 
     fun highlightedZoneId(): String? = highlightedZoneId
+
+    fun setHighlightedZoneId(zoneId: String?) {
+        highlightedZoneId = zoneId
+    }
 
     fun clearZoneHighlight() {
         highlightedZoneId = null
@@ -104,98 +110,55 @@ class ReplayAnalysis(
         }
     }
 
-    fun jumpToShock(target: JumpTarget): ReplayFrame? {
-        highlightedZoneId = null
-        engine.seek(target.frameIndex)
-        return engine.currentEvent()
+    /** Suggest previous/next visible frame index — Viewer/Engine performs seek. */
+    fun suggestStepVisible(delta: Int): Int? {
+        val frames = visibleFrames().ifEmpty { engine.events() }
+        if (frames.isEmpty()) return null
+        val ordered = frames.map { it.index }
+        val cur = engine.currentIndex()
+        val pos = ordered.indexOf(cur).takeIf { it >= 0 }
+            ?: ordered.indexOfFirst { it >= cur }.takeIf { it >= 0 }
+            ?: 0
+        return ordered[(pos + delta).coerceIn(0, ordered.lastIndex)]
     }
 
-    fun jumpToZone(target: ZoneJumpTarget): ReplayFrame? {
-        highlightedZoneId = target.zoneId
-        engine.seek(target.frameIndex)
-        return engine.currentEvent()
-    }
-
-    fun jumpToLowConfidence(target: JumpTarget): ReplayFrame? {
-        highlightedZoneId = null
-        engine.seek(target.frameIndex)
-        return engine.currentEvent()
-    }
-
-    fun jumpToTimestampNs(timestampNs: Long): ReplayFrame? {
-        highlightedZoneId = null
-        engine.seekToTimestampNs(timestampNs)
-        return engine.currentEvent()
-    }
-
-    fun jumpToTimestampMs(timestampMs: Long, treatAsElapsed: Boolean = true): ReplayFrame? {
+    fun suggestStepMatching(delta: Int, predicate: (ReplayFrame) -> Boolean): Int? {
         val frames = engine.events()
         if (frames.isEmpty()) return null
-        val targetNs = if (treatAsElapsed) {
+        val cur = engine.currentIndex()
+        val matches = frames.filter(predicate)
+        if (matches.isEmpty()) return null
+        val target = if (delta < 0) {
+            matches.lastOrNull { it.index < cur } ?: matches.first()
+        } else {
+            matches.firstOrNull { it.index > cur } ?: matches.last()
+        }
+        return target.index
+    }
+
+    fun suggestPreviousZoneBoundary(zones: List<Zone>): ZoneJumpTarget? {
+        val targets = zoneTargets(zones).sortedBy { it.frameIndex }
+        val cur = engine.currentIndex()
+        return targets.lastOrNull { it.frameIndex < cur }
+    }
+
+    fun suggestNextZoneBoundary(zones: List<Zone>): ZoneJumpTarget? {
+        val targets = zoneTargets(zones).sortedBy { it.frameIndex }
+        val cur = engine.currentIndex()
+        return targets.firstOrNull { it.frameIndex > cur }
+    }
+
+    fun resolveTimestampMs(timestampMs: Long, treatAsElapsed: Boolean = true): Long? {
+        val frames = engine.events()
+        if (frames.isEmpty()) return null
+        return if (treatAsElapsed) {
             frames.first().timestampNs + timestampMs * 1_000_000L
         } else {
             timestampMs * 1_000_000L
         }
-        return jumpToTimestampNs(targetNs)
     }
 
-    fun jumpToRoutePositionMm(routeMm: Float): ReplayFrame? {
-        highlightedZoneId = null
-        engine.seekToRoutePositionMm(routeMm)
-        return engine.currentEvent()
-    }
-
-    fun previousEvent(): ReplayFrame? {
-        val frames = visibleFrames().ifEmpty { engine.events() }
-        if (frames.isEmpty()) return null
-        stepVisible(frames, -1)
-        return engine.currentEvent()
-    }
-
-    fun nextEvent(): ReplayFrame? {
-        val frames = visibleFrames().ifEmpty { engine.events() }
-        if (frames.isEmpty()) return null
-        stepVisible(frames, +1)
-        return engine.currentEvent()
-    }
-
-    fun previousShock(): ReplayFrame? = stepMatching(-1) { it.hasShock }
-
-    fun nextShock(): ReplayFrame? = stepMatching(+1) { it.hasShock }
-
-    fun previousZoneBoundary(zones: List<Zone>): ReplayFrame? {
-        val targets = zoneTargets(zones).sortedBy { it.frameIndex }
-        val cur = engine.currentIndex()
-        val prev = targets.lastOrNull { it.frameIndex < cur } ?: return null
-        return jumpToZone(prev)
-    }
-
-    fun nextZoneBoundary(zones: List<Zone>): ReplayFrame? {
-        val targets = zoneTargets(zones).sortedBy { it.frameIndex }
-        val cur = engine.currentIndex()
-        val next = targets.firstOrNull { it.frameIndex > cur } ?: return null
-        return jumpToZone(next)
-    }
-
-    fun statistics(): ReplayStatistics {
-        val frame = engine.currentEvent() ?: return ReplayStatistics.EMPTY
-        val summary = engine.currentSession()
-        val wallMs = if (frame.timestampNs > 0L) frame.timestampNs / 1_000_000L else 0L
-        return ReplayStatistics(
-            currentTimeMs = wallMs,
-            elapsedMs = frame.elapsedMs,
-            distanceMm = frame.distanceMm,
-            currentZoneName = frame.zoneName?.takeIf { it.isNotBlank() } ?: "—",
-            hasShock = frame.hasShock,
-            shockStrength = frame.shockStrength,
-            trackingConfidence = frame.trackingConfidence,
-            validationScore = summary?.speedValidation?.validationScore ?: 0f,
-            routePositionMm = frame.routePositionMm,
-            drawingX = frame.drawingX,
-            drawingY = frame.drawingY,
-            timestampNs = frame.timestampNs,
-        )
-    }
+    fun statistics(): ReplayStatistics = toAnalysisStats(engine.currentStatistics())
 
     fun currentHighlight(): ReplayHighlightKind {
         val frame = engine.currentEvent() ?: return ReplayHighlightKind.NONE
@@ -207,31 +170,20 @@ class ReplayAnalysis(
         }
     }
 
-    private fun stepVisible(frames: List<ReplayFrame>, delta: Int) {
-        val ordered = frames.map { it.index }
-        val cur = engine.currentIndex()
-        val pos = ordered.indexOf(cur).takeIf { it >= 0 }
-            ?: ordered.indexOfFirst { it >= cur }.takeIf { it >= 0 }
-            ?: 0
-        val nextPos = (pos + delta).coerceIn(0, ordered.lastIndex)
-        engine.seek(ordered[nextPos])
-    }
-
-    private fun stepMatching(delta: Int, predicate: (ReplayFrame) -> Boolean): ReplayFrame? {
-        val frames = engine.events()
-        if (frames.isEmpty()) return null
-        val cur = engine.currentIndex()
-        val matches = frames.filter(predicate)
-        if (matches.isEmpty()) return null
-        val target = if (delta < 0) {
-            matches.lastOrNull { it.index < cur } ?: matches.first()
-        } else {
-            matches.firstOrNull { it.index > cur } ?: matches.last()
-        }
-        highlightedZoneId = null
-        engine.seek(target.index)
-        return engine.currentEvent()
-    }
+    private fun toAnalysisStats(s: ReplayEngineStatistics) = ReplayStatistics(
+        currentTimeMs = s.currentTimeMs,
+        elapsedMs = s.elapsedMs,
+        distanceMm = s.currentDistanceMm,
+        currentZoneName = s.currentZoneName,
+        hasShock = s.hasShock,
+        shockStrength = s.shockStrength,
+        trackingConfidence = s.currentConfidence,
+        validationScore = s.validationScore,
+        routePositionMm = s.routePositionMm,
+        drawingX = s.drawingX,
+        drawingY = s.drawingY,
+        timestampNs = s.timestampNs,
+    )
 
     private fun applyFilter(frames: List<ReplayFrame>, f: ReplayFilter): List<ReplayFrame> {
         var list = frames

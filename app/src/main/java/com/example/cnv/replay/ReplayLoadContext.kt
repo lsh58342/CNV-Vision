@@ -5,7 +5,7 @@ import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.map.Route
 
 /**
- * Context for [ReplayEngineApi.loadSession] — Drawing geometry, not Room access by Viewer.
+ * Context for [ReplayEngine.loadSession] — Drawing geometry, not Room access by Viewer.
  */
 data class ReplayLoadContext(
     val preferredDrawingId: String? = null,

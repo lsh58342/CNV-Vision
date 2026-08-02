@@ -10,7 +10,8 @@ import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.heatmap.HeatMapZoneOverlay
 import com.example.cnv.replay.ReplayEngine
-import com.example.cnv.replay.ReplayEngineApi
+import com.example.cnv.replay.ReplayEngineFactory
+import com.example.cnv.replay.ReplayEngineStatistics
 import com.example.cnv.replay.ReplayFrame
 import com.example.cnv.replay.ReplayLoadContext
 import com.example.cnv.replay.ReplayPlaybackState
@@ -22,10 +23,11 @@ import com.example.cnv.replay.analysis.ReplayStatistics
 import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
 
 /**
- * Replay Viewer ViewModel — Engine API only (STEP 16-2).
- * No Room / Inspection Event cache access from Viewer.
+ * Replay Viewer ViewModel — depends on [ReplayEngine] interface only (STEP 16-3).
+ * Playback / seek are Engine-owned; Analysis is read-only.
  */
 class ReplayViewModel(
+    private val engine: ReplayEngine,
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
 ) : ViewModel() {
 
@@ -40,6 +42,7 @@ class ReplayViewModel(
         val current: ReplayFrame? = null,
         val highlight: ReplayHighlightKind = ReplayHighlightKind.NONE,
         val statistics: ReplayStatistics = ReplayStatistics.EMPTY,
+        val engineStatistics: ReplayEngineStatistics = ReplayEngineStatistics.EMPTY,
         val markerLabel: String = "",
         val routePolyline: List<Pair<Double, Double>> = emptyList(),
         val zones: List<HeatMapZoneOverlay> = emptyList(),
@@ -52,21 +55,19 @@ class ReplayViewModel(
         val zoneOptions: List<Zone> = emptyList(),
         val sessionStartNs: Long = 0L,
         val playbackSpeed: Float = 1f,
+        val routePositionMm: Float = 0f,
     )
 
     private val _state = MutableLiveData(UiState())
     val state: LiveData<UiState> = _state
 
-    private val engine: ReplayEngineApi = ReplayEngine()
     private val analysis = ReplayAnalysis(engine, ReplayAnalysisConfig.DEFAULT)
     private var zones: List<Zone> = emptyList()
     private var routePolyline: List<Pair<Double, Double>> = emptyList()
     private var zoneOverlays: List<HeatMapZoneOverlay> = emptyList()
     private var drawingName: String = "—"
 
-    private val engineListener = ReplayEngineApi.Listener {
-        publish()
-    }
+    private val engineListener = ReplayEngine.Listener { publish() }
 
     init {
         engine.addListener(engineListener)
@@ -126,47 +127,55 @@ class ReplayViewModel(
     fun jumpZoneList(): List<ReplayAnalysis.ZoneJumpTarget> = analysis.zoneTargets(zones)
 
     fun selectShock(target: ReplayAnalysis.JumpTarget) {
-        analysis.jumpToShock(target)
+        analysis.clearZoneHighlight()
+        engine.seek(target.frameIndex)
     }
 
     fun selectZone(target: ReplayAnalysis.ZoneJumpTarget) {
-        analysis.jumpToZone(target)
+        analysis.setHighlightedZoneId(target.zoneId)
+        engine.seek(target.frameIndex)
     }
 
     fun selectLowConfidence(target: ReplayAnalysis.JumpTarget) {
-        analysis.jumpToLowConfidence(target)
+        analysis.clearZoneHighlight()
+        engine.seek(target.frameIndex)
     }
 
     fun jumpTimestampElapsedMs(elapsedMs: Long) {
-        analysis.jumpToTimestampMs(elapsedMs, treatAsElapsed = true)
+        analysis.clearZoneHighlight()
+        val ns = analysis.resolveTimestampMs(elapsedMs, treatAsElapsed = true) ?: return
+        engine.seekToTimestampNs(ns)
     }
 
     fun jumpRoutePositionMm(mm: Float) {
-        analysis.jumpToRoutePositionMm(mm)
+        analysis.clearZoneHighlight()
+        engine.seekToRoutePositionMm(mm)
     }
 
     fun previousEvent() {
-        analysis.previousEvent()
+        analysis.suggestStepVisible(-1)?.let { engine.seek(it) }
     }
 
     fun nextEvent() {
-        analysis.nextEvent()
+        analysis.suggestStepVisible(+1)?.let { engine.seek(it) }
     }
 
     fun previousShock() {
-        analysis.previousShock()
+        analysis.clearZoneHighlight()
+        analysis.suggestStepMatching(-1) { it.hasShock }?.let { engine.seek(it) }
     }
 
     fun nextShock() {
-        analysis.nextShock()
+        analysis.clearZoneHighlight()
+        analysis.suggestStepMatching(+1) { it.hasShock }?.let { engine.seek(it) }
     }
 
     fun previousZone() {
-        analysis.previousZoneBoundary(zones)
+        analysis.suggestPreviousZoneBoundary(zones)?.let { selectZone(it) }
     }
 
     fun nextZone() {
-        analysis.nextZoneBoundary(zones)
+        analysis.suggestNextZoneBoundary(zones)?.let { selectZone(it) }
     }
 
     fun setFilter(filter: ReplayFilter) {
@@ -181,6 +190,7 @@ class ReplayViewModel(
 
     private fun publish() {
         val frame = engine.currentEvent()
+        val engineStats = engine.currentStatistics()
         val stats = analysis.statistics()
         val events = engine.events()
         _state.value = UiState(
@@ -194,7 +204,8 @@ class ReplayViewModel(
             current = frame,
             highlight = analysis.currentHighlight(),
             statistics = stats,
-            markerLabel = buildMarkerLabel(frame, stats),
+            engineStatistics = engineStats,
+            markerLabel = buildMarkerLabel(frame, engineStats),
             routePolyline = routePolyline,
             zones = zoneOverlays,
             highlightedZoneId = analysis.highlightedZoneId(),
@@ -208,18 +219,20 @@ class ReplayViewModel(
             zoneOptions = zones,
             sessionStartNs = events.firstOrNull()?.timestampNs ?: 0L,
             playbackSpeed = engine.playbackSpeed(),
+            routePositionMm = engine.currentRoutePositionMm(),
         )
     }
 
-    private fun buildMarkerLabel(frame: ReplayFrame?, stats: ReplayStatistics): String {
+    private fun buildMarkerLabel(frame: ReplayFrame?, stats: ReplayEngineStatistics): String {
         if (frame == null) return "—"
         val xy = if (frame.drawingX != null && frame.drawingY != null) {
             "(${"%.1f".format(frame.drawingX)}, ${"%.1f".format(frame.drawingY)})"
         } else {
             "(—, —)"
         }
-        return "t=${stats.elapsedMs}ms · route=${"%.1f".format(frame.routePositionMm)}mm · " +
-            "xy=$xy · dist=${"%.1f".format(frame.distanceMm)}mm · conf=${"%.2f".format(frame.trackingConfidence)}"
+        return "t=${stats.elapsedMs}ms · route=${"%.1f".format(stats.routePositionMm)}mm · " +
+            "xy=$xy · dist=${"%.1f".format(stats.currentDistanceMm)}mm · " +
+            "spd=${"%.1f".format(stats.currentSpeedMmPerSec)} · conf=${"%.2f".format(stats.currentConfidence)}"
     }
 
     private fun buildRoutePolyline(layout: HeatMapRouteLayout.LayoutResult?): List<Pair<Double, Double>> {
@@ -259,11 +272,13 @@ class ReplayViewModel(
         }
     }
 
-    class Factory : ViewModelProvider.Factory {
+    class Factory(
+        private val engine: ReplayEngine = ReplayEngineFactory.createDefault(),
+    ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(ReplayViewModel::class.java)) {
-                return ReplayViewModel() as T
+                return ReplayViewModel(engine = engine) as T
             }
             error("Unknown ViewModel: ${modelClass.name}")
         }

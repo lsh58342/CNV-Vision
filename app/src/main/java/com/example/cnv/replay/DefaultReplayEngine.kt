@@ -1,35 +1,33 @@
-package com.example.cnv.replay.facade
+package com.example.cnv.replay
 
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.inspection.InspectionSessionSummary
-import com.example.cnv.replay.ReplayConfig
-import com.example.cnv.replay.ReplayEngineApi
-import com.example.cnv.replay.ReplayFrame
-import com.example.cnv.replay.ReplayLoadContext
-import com.example.cnv.replay.ReplayPlaybackState
-import com.example.cnv.replay.ReplayPosition
 import com.example.cnv.replay.internal.ReplayEventCache
 import com.example.cnv.replay.internal.ReplayPlaybackController
 import com.example.cnv.replay.internal.ReplaySessionLoader
 import com.example.cnv.replay.internal.ReplayStateMachine
+import com.example.cnv.replay.internal.ReplayStatisticsProvider
 import com.example.cnv.replay.internal.ReplayTimelineController
 
 /**
- * Replay Engine Facade — sole external entry to Replay internals (STEP 16-2).
- * Viewer / Analysis / AI / Report must not reach past this type into internal components.
+ * Default Replay Engine — Facade over internal components (STEP 16-3).
+ *
+ * External modules must depend on [ReplayEngine], not this class.
+ * Construct via [ReplayEngineFactory] for injection.
  */
-class ReplayEngineFacade(
+class DefaultReplayEngine(
     private val config: ReplayConfig = ReplayConfig.DEFAULT,
     catalog: FactoryCatalog = FactoryCatalog.get(),
-) : ReplayEngineApi {
+) : ReplayEngine {
 
     private val stateMachine = ReplayStateMachine()
     private val cache = ReplayEventCache()
     private val timeline = ReplayTimelineController()
     private val loader = ReplaySessionLoader(catalog)
+    private val statisticsProvider = ReplayStatisticsProvider()
     private val playback = ReplayPlaybackController(onTick = { advanceFromPlayback() })
 
-    private val listeners = mutableListOf<ReplayEngineApi.Listener>()
+    private val listeners = mutableListOf<ReplayEngine.Listener>()
 
     @Volatile
     private var lastError: String? = null
@@ -72,11 +70,10 @@ class ReplayEngineFacade(
             timeline.seek(cache.frames(), 0)
         }
         if (!stateMachine.toPlaying()) {
-            if (state == ReplayPlaybackState.READY || state == ReplayPlaybackState.PAUSED) {
-                stateMachine.toPlaying()
-            } else {
+            if (state != ReplayPlaybackState.READY && state != ReplayPlaybackState.PAUSED) {
                 return
             }
+            stateMachine.toPlaying()
         }
         playback.play()
         schedulePlayback()
@@ -147,21 +144,32 @@ class ReplayEngineFacade(
         seek((timeline.index() - 1).coerceAtLeast(0))
     }
 
+    override fun setPlaybackSpeed(speed: Float) {
+        playback.setPlaybackSpeed(speed)
+        if (playback.isPlaying()) schedulePlayback()
+        notifyListeners()
+    }
+
+    override fun playbackSpeed(): Float = playback.playbackSpeed()
+
     override fun currentEvent(): ReplayFrame? = timeline.currentFrame()
 
     override fun currentSession(): InspectionSessionSummary? = cache.summary()
 
     override fun currentState(): ReplayPlaybackState = stateMachine.state()
 
-    override fun currentPosition(): ReplayPosition = timeline.position()
+    override fun currentTimelinePosition(): ReplayPosition = timeline.position()
 
-    override fun playbackSpeed(): Float = playback.playbackSpeed()
+    override fun currentRoutePositionMm(): Float =
+        timeline.currentFrame()?.routePositionMm ?: 0f
 
-    override fun setPlaybackSpeed(speed: Float) {
-        playback.setPlaybackSpeed(speed)
-        if (playback.isPlaying()) schedulePlayback()
-        notifyListeners()
-    }
+    override fun currentStatistics(): ReplayEngineStatistics =
+        statisticsProvider.statistics(
+            summary = cache.summary(),
+            frames = cache.frames(),
+            current = timeline.currentFrame(),
+            currentIndex = timeline.index(),
+        )
 
     override fun events(): List<ReplayFrame> = cache.frames()
 
@@ -173,11 +181,11 @@ class ReplayEngineFacade(
 
     override fun errorMessage(): String? = lastError
 
-    override fun addListener(listener: ReplayEngineApi.Listener) {
+    override fun addListener(listener: ReplayEngine.Listener) {
         synchronized(listeners) { listeners.add(listener) }
     }
 
-    override fun removeListener(listener: ReplayEngineApi.Listener) {
+    override fun removeListener(listener: ReplayEngine.Listener) {
         synchronized(listeners) { listeners.remove(listener) }
     }
 

@@ -1,7 +1,7 @@
 package com.example.cnv.replay
 
 /**
- * Cached Replay frame DTO exposed via [ReplayEngineApi.events] / [ReplayEngineApi.currentEvent].
+ * Cached Replay frame DTO exposed via [ReplayEngine.events] / [ReplayEngine.currentEvent].
  * Built once inside Engine; consumers must not rebuild from Room.
  */
 data class ReplayFrame(

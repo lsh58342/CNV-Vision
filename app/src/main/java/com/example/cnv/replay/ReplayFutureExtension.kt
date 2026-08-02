@@ -1,12 +1,13 @@
 package com.example.cnv.replay
 
 /**
- * Future consumers (Replay AI / Report / Export / Compare / Sync) must depend on
- * [ReplayEngineApi] only — same contract as Viewer and Analysis (STEP 16-2).
+ * Future consumers (AI / Report / Export / Compare / Sync) depend on [ReplayEngine] only (STEP 16-3).
  *
- * Do not import `com.example.cnv.replay.internal` or `facade` implementation details
- * from feature modules; obtain an Engine via [ReplayEngine].
+ * Planned implementations (not in this STEP):
+ * - MockReplayEngine
+ * - RemoteReplayEngine
+ * - ProductionReplayEngine (alias of [DefaultReplayEngine] if needed)
+ *
+ * Obtain engines via [ReplayEngineFactory]; do not import `replay.internal`.
  */
-object ReplayFutureExtension {
-    // Intentionally empty — documents the extension contract for AI / Report.
-}
+object ReplayFutureExtension
