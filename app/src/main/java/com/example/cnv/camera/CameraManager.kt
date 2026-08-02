@@ -2,6 +2,7 @@ package com.example.cnv.camera
 
 import android.Manifest
 import android.content.pm.PackageManager
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageAnalysis
@@ -19,13 +20,20 @@ class CameraManager(
 
     private var analyzer: ImageAnalysis.Analyzer? = null
 
-    private val requestCameraPermission = activity.registerForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            startPreview()
+    /**
+     * Keyed registry registration (no LifecycleOwner) — safe when Activity is already RESUMED.
+     * [ComponentActivity.registerForActivityResult] requires registration before STARTED and
+     * crashes when InspectionPipeline creates CameraManager from a resumed Fragment.
+     */
+    private val requestCameraPermission: ActivityResultLauncher<String> =
+        activity.activityResultRegistry.register(
+            "cnv_camera_permission_${System.identityHashCode(this)}",
+            ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) {
+                startPreview()
+            }
         }
-    }
 
     /** Rebind preview surface for Inspection screen migration (wiring only). */
     fun attachPreviewView(view: PreviewView) {

@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -31,6 +30,7 @@ import com.example.cnv.zone.editor.ZoneEditorMode
 import com.example.cnv.zone.editor.ZonePolylineResolver
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 
 /**
  * Drawing Workspace Commissioning tab — 6 gated steps (Origin → Route Lock).
@@ -137,34 +137,34 @@ class CommissioningWizardScreen : BaseScreen() {
             progress = currentStep.index
         }
 
-        val slot = root.findViewById<FrameLayout>(R.id.wiz_workspace)
-        slot.removeAllViews()
-        val content = layoutInflater.inflate(R.layout.include_wizard_step_workspace, slot, false)
-        slot.addView(content)
-        workspace = content
-        bindStepWorkspace(content, snap)
+        // Bottom panel only — CAD stays as primary ConstraintLayout workspace.
+        workspace = root.findViewById(R.id.wiz_bottom_content)
+        bindStepWorkspace(root, snap)
         updateNavButtons(root, snap)
     }
 
-    private fun bindStepWorkspace(content: View, snap: CommissioningWizardProgress.Snapshot) {
-        val input = content.findViewById<TextInputEditText>(R.id.wiz_input)
-        val secondaryLayout = content.findViewById<View>(R.id.wiz_input_secondary_layout)
-        val action = content.findViewById<MaterialButton>(R.id.button_wiz_action)
-        val action2 = content.findViewById<MaterialButton>(R.id.button_wiz_action_secondary)
-        val status = content.findViewById<TextView>(R.id.wiz_workspace_status)
-        val cadSlot = content.findViewById<FrameLayout>(R.id.wiz_cad_slot)
-        val validationList = content.findViewById<LinearLayout>(R.id.wiz_validation_list)
+    private fun bindStepWorkspace(root: View, snap: CommissioningWizardProgress.Snapshot) {
+        val inputLayout = root.findViewById<TextInputLayout>(R.id.wiz_input_layout)
+        val input = root.findViewById<TextInputEditText>(R.id.wiz_input)
+        val secondaryLayout = root.findViewById<View>(R.id.wiz_input_secondary_layout)
+        val action = root.findViewById<MaterialButton>(R.id.button_wiz_action)
+        val action2 = root.findViewById<MaterialButton>(R.id.button_wiz_action_secondary)
+        val status = root.findViewById<TextView>(R.id.wiz_workspace_status)
+        val validationList = root.findViewById<LinearLayout>(R.id.wiz_validation_list)
 
         secondaryLayout.isVisible = false
         action2.isVisible = false
-        cadSlot.isVisible = false
         validationList.isVisible = false
-        input.isVisible = false
+        inputLayout.isVisible = false
+        input.isVisible = true
         action.isVisible = true
+        UiComponents.clearChildren(validationList)
+
+        // CAD is always primary; keep route preview loaded for every step.
+        siteVm.ensureRoutePreviewForCurrentDrawing()
 
         when (currentStep) {
             CommissioningWizardProgress.Step.ORIGIN -> {
-                cadSlot.isVisible = true
                 action.setText(R.string.ws_confirm_pick)
                 status.text = if (snap.originOk) {
                     getString(R.string.wiz_status_origin_ok)
@@ -173,21 +173,17 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
                 if (!snap.dwgOk) {
                     Toast.makeText(requireContext(), R.string.wiz_fail_dwg, Toast.LENGTH_SHORT).show()
-                } else {
-                    val previewOk = siteVm.ensureRoutePreviewForCurrentDrawing()
-                    if (!previewOk) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(
-                                R.string.setup_route_failed_layer,
-                                siteVm.currentConveyorLayerName(),
-                            ),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
+                } else if (!siteVm.ensureRoutePreviewForCurrentDrawing()) {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(
+                            R.string.setup_route_failed_layer,
+                            siteVm.currentConveyorLayerName(),
+                        ),
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
-                attachCad(content, originPickEnabled = !snap.originOk)
-                cadController?.fitToRoute()
+                attachCad(root, originPickEnabled = !snap.originOk)
                 applyOriginMarkerFromDrawing()
                 action.isEnabled = !snap.originOk
                 action.alpha = if (action.isEnabled) 1f else 0.45f
@@ -212,12 +208,12 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_status_need_cal)
                 }
+                attachCad(root)
                 action.setOnClickListener {
                     if (!snap.originOk) {
                         Toast.makeText(requireContext(), R.string.ws_need_origin, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
-                    // Open Calibration; Drawing ready flag is set only after Finish succeeds.
                     AppNavigator.openCalibration(requireActivity())
                 }
             }
@@ -233,6 +229,7 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_status_need_route_layer, selected)
                 }
+                attachCad(root)
                 action2.setOnClickListener { promptConveyorLayerSelection() }
                 action.setOnClickListener {
                     val selectedLayer = siteVm.currentConveyorLayerName()
@@ -250,8 +247,7 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
             }
             CommissioningWizardProgress.Step.ZONE -> {
-                cadSlot.isVisible = true
-                input.isVisible = true
+                inputLayout.isVisible = true
                 input.hint = getString(R.string.zone_editor_name_hint)
                 validationList.isVisible = true
                 action.setText(R.string.ws_zone_create)
@@ -269,14 +265,14 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_status_need_zone)
                 }
-                bindZoneEditorPanel(validationList, content)
-                attachCad(content, zoneMultiSelect = true)
+                bindZoneEditorPanel(validationList, root)
+                attachCad(root, zoneMultiSelect = true)
                 refreshZoneHighlights()
                 action2.setOnClickListener {
-                    beginZoneMultiSelect(content)
+                    beginZoneMultiSelect(root)
                 }
                 action.setOnClickListener {
-                    createOrSaveZoneFromSelection(content, input)
+                    createOrSaveZoneFromSelection(root, input)
                 }
             }
             CommissioningWizardProgress.Step.VALIDATION -> {
@@ -288,6 +284,7 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_validation_fail)
                 }
+                attachCad(root)
             }
             CommissioningWizardProgress.Step.ROUTE_LOCK -> {
                 action.setText(R.string.setup_route_lock)
@@ -300,6 +297,7 @@ class CommissioningWizardScreen : BaseScreen() {
                 } else {
                     getString(R.string.wiz_lock_blocked)
                 }
+                attachCad(root)
                 action.isEnabled = CommissioningWizardProgress.canLockRoute(snap)
                 action.alpha = if (action.isEnabled) 1f else 0.45f
                 action.setOnClickListener {
@@ -321,14 +319,14 @@ class CommissioningWizardScreen : BaseScreen() {
     }
 
     private fun attachCad(
-        content: View,
+        root: View,
         originPickEnabled: Boolean = false,
         zoneMultiSelect: Boolean = false,
     ) {
         cadController?.stop()
         cadController?.setOnOriginTapListener(null)
         cadController?.setOnTapSelectionListener(null)
-        val cadView = content.findViewById<CADView>(R.id.wiz_cad_view)
+        val cadView = root.findViewById<CADView>(R.id.wiz_cad_view)
         cadController = CADController(
             routeRepository = FactoryCatalog.get().routes.underlying(),
             cadView = cadView,
@@ -340,7 +338,7 @@ class CommissioningWizardScreen : BaseScreen() {
         )
         cadController?.setLayerEnabled(CADLayer.DEBUG, false)
         cadController?.start()
-        cadController?.fitToRoute()
+        cadView.post { cadController?.fitToRoute() }
         if (originPickEnabled) {
             cadController?.setOnOriginTapListener { viewX, viewY ->
                 val pick = cadController?.pickRouteStartPoint(viewX, viewY)
@@ -356,15 +354,15 @@ class CommissioningWizardScreen : BaseScreen() {
             cadController?.setOnTapSelectionListener { info ->
                 val segmentId = info.segmentId.takeIf { it != "—" } ?: return@setOnTapSelectionListener
                 if (!zoneMultiSelectActive) {
-                    beginZoneMultiSelect(content)
+                    beginZoneMultiSelect(root)
                 }
                 if (zoneEditor.togglePolyline(segmentId)) {
                     refreshZoneHighlights()
-                    content.findViewById<TextView>(R.id.wiz_workspace_status)?.text =
+                    root.findViewById<TextView>(R.id.wiz_workspace_status)?.text =
                         getString(R.string.ws_zone_selected_count, zoneEditor.draft().selectedCount())
                     bindZoneEditorPanel(
-                        content.findViewById(R.id.wiz_validation_list),
-                        content,
+                        root.findViewById(R.id.wiz_validation_list),
+                        root,
                     )
                 }
             }
@@ -537,15 +535,6 @@ class CommissioningWizardScreen : BaseScreen() {
     private fun bindZoneEditorPanel(list: LinearLayout, content: View) {
         UiComponents.clearChildren(list)
         list.isVisible = true
-        val draft = zoneEditor.draft()
-        list.addView(
-            UiComponents.inflateInfoCard(
-                list,
-                getString(R.string.ws_zone_method_cad),
-                getString(R.string.ws_zone_selected_count, draft.selectedCount()) +
-                    "\n" + getString(R.string.ws_zone_multi_hint),
-            ),
-        )
         val zones = FactoryCatalog.get().zones.listForCurrentDrawing()
         list.addView(UiComponents.inflateSectionHeader(list, getString(R.string.ws_zone_list_title)))
         if (zones.isEmpty()) {
