@@ -87,7 +87,13 @@ class InspectionReviewScreen : BaseScreen() {
             )
         }
         view.findViewById<MaterialButton>(R.id.button_review_report).setOnClickListener {
-            Toast.makeText(requireContext(), R.string.review_report_toast, Toast.LENGTH_SHORT).show()
+            nav().navigate(
+                CnvDestination.MAINTENANCE_REPORT,
+                args = Bundle().apply {
+                    putString(NavArgs.DRAWING_ID, drawingId)
+                    putString(NavArgs.SESSION_ID, sessionId)
+                },
+            )
         }
         view.findViewById<MaterialButton>(R.id.button_review_csv).setOnClickListener {
             catalog.csvMetadata.put(
