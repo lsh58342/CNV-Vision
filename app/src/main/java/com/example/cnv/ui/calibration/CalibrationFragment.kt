@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.camera.view.PreviewView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.example.cnv.R
@@ -47,6 +48,9 @@ class CalibrationFragment : Fragment() {
         pixelDistanceText = view.findViewById(R.id.text_pixel_distance)
         mmPerPixelText = view.findViewById(R.id.text_mm_per_pixel)
         realDistanceInput = view.findViewById(R.id.input_real_distance)
+
+        val preview = view.findViewById<PreviewView>(R.id.calibration_preview)
+        (requireActivity() as CalibrationActivity).startCameraPipeline(preview)
 
         view.findViewById<Button>(R.id.button_start_calibration).setOnClickListener {
             viewModel.startCalibration()
@@ -90,11 +94,19 @@ class CalibrationFragment : Fragment() {
         super.onResume()
         viewModel.refresh()
         refreshHandler.post(refreshRunnable)
+        view?.findViewById<PreviewView>(R.id.calibration_preview)?.let { preview ->
+            (activity as? CalibrationActivity)?.startCameraPipeline(preview)
+        }
     }
 
     override fun onPause() {
         refreshHandler.removeCallbacks(refreshRunnable)
         super.onPause()
+    }
+
+    override fun onDestroyView() {
+        (activity as? CalibrationActivity)?.stopCameraPipeline()
+        super.onDestroyView()
     }
 
     companion object {

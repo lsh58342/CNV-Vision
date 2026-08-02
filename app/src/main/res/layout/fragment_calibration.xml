@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:padding="24dp">
+    android:padding="16dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -20,6 +20,16 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <androidx.camera.view.PreviewView
+            android:id="@+id/calibration_preview"
+            android:layout_width="0dp"
+            android:layout_height="240dp"
+            android:layout_marginTop="12dp"
+            android:contentDescription="@string/calibration_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_calibration_title" />
+
         <TextView
             android:id="@+id/text_session_status"
             android:layout_width="0dp"
@@ -28,7 +38,7 @@
             android:text="@string/calibration_session_inactive"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/text_calibration_title" />
+            app:layout_constraintTop_toBottomOf="@id/calibration_preview" />
 
         <TextView
             android:id="@+id/text_pixel_distance"
