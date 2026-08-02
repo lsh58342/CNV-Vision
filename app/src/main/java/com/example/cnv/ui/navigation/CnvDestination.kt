@@ -14,6 +14,7 @@ import com.example.cnv.ui.screen.replay.ReplayScreen
 import com.example.cnv.ui.screen.report.MaintenanceReportScreen
 import com.example.cnv.ui.screen.result.InspectionResultScreen
 import com.example.cnv.ui.screen.review.InspectionReviewScreen
+import com.example.cnv.ui.screen.profile.InspectionProfileEditorScreen
 import com.example.cnv.ui.screen.settings.SettingsScreen
 import com.example.cnv.ui.screen.splash.SplashScreen
 import com.example.cnv.ui.screen.zone.ZoneListScreen
@@ -44,6 +45,7 @@ enum class CnvDestination {
     INSPECTION_REVIEW,
     MAINTENANCE_REPORT,
     INSPECTION_SESSION_DETAIL,
+    INSPECTION_PROFILE_EDITOR,
     SETTINGS,
     DEVELOPER,
     COORDINATE_VALIDATION,
@@ -70,6 +72,7 @@ enum class CnvDestination {
         INSPECTION_REVIEW -> InspectionReviewScreen()
         MAINTENANCE_REPORT -> MaintenanceReportScreen()
         INSPECTION_SESSION_DETAIL -> SessionDetailScreen()
+        INSPECTION_PROFILE_EDITOR -> InspectionProfileEditorScreen()
         SETTINGS -> SettingsScreen()
         DEVELOPER -> DeveloperScreen()
         COORDINATE_VALIDATION -> com.example.cnv.ui.screen.developer.CoordinateValidationScreen()

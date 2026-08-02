@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/cnv_bg"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/profile_editor_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cnv_surface"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:text="@string/profile_editor_title"
+        android:textAppearance="@style/TextAppearance.CNV.Title"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/profile_editor_drawing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cnv_surface"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="12dp"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/profile_section_conveyor"
+                android:textAppearance="@style/TextAppearance.CNV.Caption"
+                android:textStyle="bold" />
+
+            <include layout="@layout/dialog_conveyor_profile" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/profile_section_sensor"
+                android:textAppearance="@style/TextAppearance.CNV.Caption"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_gravity_alpha">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_gravity_alpha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_highpass_alpha">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_highpass_alpha"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_shock_threshold">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_shock_threshold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_peak_interval">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_peak_interval"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_moving_avg">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_moving_avg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/profile_tracking_threshold">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/input_tracking_threshold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal"
+                    android:minHeight="48dp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/profile_section_rule"
+                android:textAppearance="@style/TextAppearance.CNV.Caption"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/profile_rule_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_profile_cancel"
+            style="@style/Widget.CNV.Button.Secondary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:minHeight="56dp"
+            android:text="@android:string/cancel" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_profile_save"
+            style="@style/Widget.CNV.Button.Primary"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minHeight="56dp"
+            android:text="@string/profile_editor_save" />
+    </LinearLayout>
+</LinearLayout>

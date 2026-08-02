@@ -146,17 +146,39 @@ class SessionDetailScreen : BaseScreen() {
             s.appVersion,
         )
 
-        // Always Session Snapshot — never live Drawing Conveyor Profile.
-        val profile = s.conveyorProfile
-        val speed = profile.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
+        // Always Session Snapshot — never live Drawing profile.
+        val conveyor = s.conveyorProfile
+        val speed = conveyor.nominalSpeedMPerMin?.let { "%.2f m/min".format(it) }
             ?: getString(R.string.conveyor_nominal_unset)
+        val snap = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
+            s.inspectionProfileJson,
+        )
+        val sensor = snap.sensor
+        val ruleSummary = if (snap.rule.entries.isEmpty()) {
+            getString(R.string.profile_history_rules_empty)
+        } else {
+            snap.rule.entries.joinToString("\n") { e ->
+                val thr = e.thresholdOverride?.toString() ?: "—"
+                val sev = e.severityOverride?.name ?: "—"
+                "${e.ruleId}: enabled=${e.enabled} thr=$thr sev=$sev"
+            }
+        }
         view.findViewById<TextView>(R.id.detail_profile).text = getString(
-            R.string.history_detail_profile,
+            R.string.history_detail_inspection_profile,
             speed,
-            profile.speedTolerancePercent,
-            profile.direction.name,
-            profile.expectedFps,
-            profile.motionProfile.name,
+            conveyor.speedTolerancePercent,
+            conveyor.direction.name,
+            conveyor.expectedFps,
+            conveyor.motionProfile.name,
+            sensor.gravityFilterAlpha,
+            sensor.highPassAlpha,
+            sensor.minimumShockThreshold,
+            sensor.peakIntervalNs,
+            sensor.movingAverageWindow,
+            sensor.trackingConfidenceThreshold,
+            snap.rule.catalogVersion,
+            ruleSummary,
+            snap.capturedAtMs.takeIf { it > 0L }?.let { dateFmt.format(Date(it)) } ?: "—",
         )
 
         view.findViewById<TextView>(R.id.detail_statistics).text = getString(

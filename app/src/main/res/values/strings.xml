@@ -591,6 +591,29 @@
     <string name="history_open_excel">Open Excel</string>
     <string name="history_open_excel_named">Open Excel: %1$s</string>
 
+    <!-- Inspection Profile Editor (STEP 20-2) -->
+    <string name="profile_editor_title">Inspection Profile</string>
+    <string name="profile_editor_open">Edit Inspection Profile</string>
+    <string name="profile_editor_drawing_fmt">Drawing: %1$s</string>
+    <string name="profile_editor_save">Save Profile</string>
+    <string name="profile_editor_saved">Inspection Profile saved</string>
+    <string name="profile_editor_save_fail">Failed to save Inspection Profile</string>
+    <string name="profile_section_conveyor">Conveyor Profile</string>
+    <string name="profile_section_sensor">Sensor Profile</string>
+    <string name="profile_section_rule">Rule Profile</string>
+    <string name="profile_gravity_alpha">Gravity Filter Alpha</string>
+    <string name="profile_highpass_alpha">High Pass Alpha</string>
+    <string name="profile_shock_threshold">Minimum Shock Threshold</string>
+    <string name="profile_peak_interval">Peak Interval (ns)</string>
+    <string name="profile_moving_avg">Moving Average Window</string>
+    <string name="profile_tracking_threshold">Tracking Confidence Threshold</string>
+    <string name="profile_rule_enabled">Enabled</string>
+    <string name="profile_rule_threshold">Threshold Override</string>
+    <string name="profile_rule_severity">Severity Override</string>
+    <string name="profile_severity_default">(default)</string>
+    <string name="profile_history_rules_empty">No rule overrides in snapshot</string>
+    <string name="history_detail_inspection_profile">Conveyor\nNominal Speed: %1$s\nTolerance: ±%2$.1f%%\nDirection: %3$s\nExpected FPS: %4$.0f\nMotion: %5$s\n\nSensor\nGravity Alpha: %6$.3f\nHighPass Alpha: %7$.3f\nShock Threshold: %8$.3f\nPeak Interval: %9$d ns\nMoving Avg: %10$d\nTracking Threshold: %11$.3f\n\nRule Catalog v%12$d\n%13$s\n\nSnapshot: %14$s</string>
+
     <!-- Live Inspection Dashboard (STEP 20-1) -->
     <string name="live_dash_title">Live Dashboard</string>
     <string name="live_dash_system_title">System Status</string>

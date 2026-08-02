@@ -85,7 +85,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:minHeight="48dp"
-            android:text="@string/conveyor_profile_edit" />
+            android:text="@string/profile_editor_open" />
 
         <TextView
             android:id="@+id/overview_wizard_progress"

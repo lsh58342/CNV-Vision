@@ -200,7 +200,10 @@ class DrawingWorkspaceScreen : BaseScreen() {
 
         bindConveyorProfile(content, drawing?.conveyorProfile)
         content.findViewById<MaterialButton>(R.id.button_overview_edit_profile).setOnClickListener {
-            showEditConveyorProfileDialog(drawing?.conveyorProfile ?: ConveyorProfile.fromConfig())
+            val args = Bundle().apply {
+                putString(com.example.cnv.ui.navigation.NavArgs.DRAWING_ID, drawing?.id)
+            }
+            nav().navigate(CnvDestination.INSPECTION_PROFILE_EDITOR, args = args)
         }
 
         val statusContainer = content.findViewById<LinearLayout>(R.id.overview_status_container)
