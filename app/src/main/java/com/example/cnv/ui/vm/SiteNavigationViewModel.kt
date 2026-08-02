@@ -5,10 +5,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.cnv.dwg.DWGImporter
 import com.example.cnv.dwg.StubDWGReader
-import com.example.cnv.factory.context.AccessRole
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
-import com.example.cnv.factory.context.canAccessCommissioning
 import com.example.cnv.factory.model.Building
 import com.example.cnv.factory.model.ConveyorProfile
 import com.example.cnv.factory.model.Drawing
@@ -73,12 +71,6 @@ class SiteNavigationViewModel : ViewModel() {
     private val _contextSummary = MutableLiveData("")
     val contextSummary: LiveData<String> = _contextSummary
 
-    private val _canOpenDeveloper = MutableLiveData(false)
-    val canOpenDeveloper: LiveData<Boolean> = _canOpenDeveloper
-
-    private val _canOpenCommissioning = MutableLiveData(false)
-    val canOpenCommissioning: LiveData<Boolean> = _canOpenCommissioning
-
     private val _historyLines = MutableLiveData<List<InspectionResult>>(emptyList())
     val historyLines: LiveData<List<InspectionResult>> = _historyLines
 
@@ -100,7 +92,6 @@ class SiteNavigationViewModel : ViewModel() {
                 }
             }
         }
-        refreshGates()
         refreshSummary()
     }
 
@@ -329,7 +320,6 @@ class SiteNavigationViewModel : ViewModel() {
     }
 
     fun unlockRouteForCurrentDrawing(): Boolean {
-        if (context.accessRole != AccessRole.DEVELOPER) return false
         val drawing = catalog.drawings.current(context) ?: return false
         catalog.drawings.upsert(
             drawing.copy(routeLocked = false, updatedAtMs = System.currentTimeMillis()),
@@ -484,28 +474,12 @@ class SiteNavigationViewModel : ViewModel() {
     fun currentZoneName(): String =
         catalog.zones.current(context)?.name ?: "—"
 
-    fun setRole(role: AccessRole) {
-        context.setAccessRole(role)
-        refreshGates()
-        refreshSummary()
-    }
-
-    fun enterCommissioningMode(): Boolean {
-        refreshGates()
-        if (_canOpenCommissioning.value != true) return false
-        return context.setAppMode(AppMode.COMMISSIONING)
-    }
+    fun enterCommissioningMode(): Boolean =
+        context.setAppMode(AppMode.COMMISSIONING)
 
     fun leaveCommissioningMode() {
         context.setAppMode(AppMode.OPERATION)
-        refreshGates()
         refreshSummary()
-    }
-
-    fun refreshGates() {
-        val role = context.accessRole
-        _canOpenDeveloper.value = role.canAccessCommissioning()
-        _canOpenCommissioning.value = role.canAccessCommissioning()
     }
 
     /** Compatibility: Floor dashboard observers — maps to Drawing dashboard when a Drawing is selected. */

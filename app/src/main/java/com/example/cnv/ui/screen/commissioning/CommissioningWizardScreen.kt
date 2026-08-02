@@ -50,7 +50,6 @@ class CommissioningWizardScreen : BaseScreen() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (!siteVm.enterCommissioningMode()) {
-            Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
             return
         }
         val snap = CommissioningWizardProgress.snapshot()

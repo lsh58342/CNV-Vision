@@ -27,7 +27,7 @@ class ZoneEditorActivity : AppCompatActivity() {
         LgesPolandSite.ensure()
 
         if (!editor.isAccessible()) {
-            Toast.makeText(this, R.string.comm_denied, Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
             finish()
             return
         }

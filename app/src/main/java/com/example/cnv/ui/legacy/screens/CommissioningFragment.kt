@@ -21,12 +21,7 @@ class CommissioningFragment : BaseScreenFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        siteVm.refreshGates()
-        if (siteVm.canOpenCommissioning.value != true) {
-            Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
-            nav().navigateBack()
-            return
-        }
+        siteVm.enterCommissioningMode()
         siteVm.contextSummary.observe(viewLifecycleOwner) {
             view.findViewById<TextView>(R.id.commissioning_context).text = it
         }
@@ -61,7 +56,7 @@ class CommissioningFragment : BaseScreenFragment() {
         }
         view.findViewById<MaterialButton>(R.id.button_comm_zone_editor).setOnClickListener {
             if (!AppNavigator.openZoneEditor(requireActivity())) {
-                Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.zone_editor_need_context, Toast.LENGTH_SHORT).show()
             }
         }
         view.findViewById<MaterialButton>(R.id.button_comm_route_lock).setOnClickListener {

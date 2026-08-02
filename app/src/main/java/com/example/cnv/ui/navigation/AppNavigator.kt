@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.fragment.app.FragmentActivity
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
-import com.example.cnv.factory.context.canAccessCommissioning
 import com.example.cnv.ui.calibration.CalibrationActivity
 import com.example.cnv.ui.commissioning.ZoneEditorActivity
 
@@ -23,7 +22,6 @@ object AppNavigator {
     fun openZoneEditor(from: FragmentActivity): Boolean {
         val ctx = CurrentContext.get()
         if (ctx.appMode != AppMode.COMMISSIONING) return false
-        if (!ctx.accessRole.canAccessCommissioning()) return false
         from.startActivity(Intent(from, ZoneEditorActivity::class.java))
         return true
     }

@@ -22,20 +22,8 @@ class CurrentContext {
 
     @Volatile var appMode: AppMode = AppMode.OPERATION
         private set
-    @Volatile var accessRole: AccessRole = AccessRole.OPERATOR
-        private set
-
-    fun setAccessRole(role: AccessRole) {
-        accessRole = role
-        if (!role.canAccessCommissioning() && appMode == AppMode.COMMISSIONING) {
-            appMode = AppMode.OPERATION
-        }
-    }
 
     fun setAppMode(mode: AppMode): Boolean {
-        if (mode == AppMode.COMMISSIONING && !accessRole.canAccessCommissioning()) {
-            return false
-        }
         appMode = mode
         return true
     }
@@ -99,7 +87,7 @@ class CurrentContext {
     }
 
     fun summary(): String = buildString {
-        append("mode=$appMode role=$accessRole ")
+        append("mode=$appMode ")
         append("F=${factoryId ?: "—"} ")
         append("B=${buildingId ?: "—"} ")
         append("Fl=${floorId ?: "—"} ")

@@ -2,7 +2,6 @@ package com.example.cnv.zone.editor
 
 import com.example.cnv.factory.context.AppMode
 import com.example.cnv.factory.context.CurrentContext
-import com.example.cnv.factory.context.canAccessCommissioning
 import com.example.cnv.factory.model.RouteAnchor
 import com.example.cnv.factory.model.Zone
 import com.example.cnv.factory.repository.FactoryCatalog
@@ -25,8 +24,7 @@ class ZoneEditorController(
     fun draft(): ZoneEditorDraft = draft
 
     fun isAccessible(): Boolean =
-        context.appMode == AppMode.COMMISSIONING &&
-            context.accessRole.canAccessCommissioning()
+        context.appMode == AppMode.COMMISSIONING
 
     fun beginCadCreation(): Boolean {
         if (!isAccessible()) return false

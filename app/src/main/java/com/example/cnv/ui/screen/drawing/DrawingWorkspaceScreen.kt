@@ -30,8 +30,7 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Drawing Workspace — single hub for Overview / Commissioning / Inspection / HeatMap / History.
- * Replaces Drawing List, Drawing Dashboard, and Open Drawing.
+ * Drawing Workspace — Overview / Commissioning / Inspection / HeatMap / History / Settings.
  */
 class DrawingWorkspaceScreen : BaseScreen() {
 
@@ -65,6 +64,7 @@ class DrawingWorkspaceScreen : BaseScreen() {
         tabs.addTab(tabs.newTab().setText(R.string.ws_tab_inspection))
         tabs.addTab(tabs.newTab().setText(R.string.ws_tab_heatmap))
         tabs.addTab(tabs.newTab().setText(R.string.ws_tab_history))
+        tabs.addTab(tabs.newTab().setText(R.string.ws_tab_settings))
 
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
@@ -75,6 +75,7 @@ class DrawingWorkspaceScreen : BaseScreen() {
                     2 -> openInspection()
                     3 -> nav().navigate(CnvDestination.HEATMAP_VIEWER)
                     4 -> nav().navigate(CnvDestination.INSPECTION_HISTORY)
+                    5 -> nav().navigate(CnvDestination.SETTINGS)
                 }
             }
 

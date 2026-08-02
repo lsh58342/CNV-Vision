@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212"
+    android:background="@color/cnv_bg"
     android:orientation="vertical"
     android:padding="24dp">
 
@@ -10,10 +10,8 @@
         android:id="@+id/screen_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Settings"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:text="@string/settings_title"
+        android:textAppearance="@style/TextAppearance.CNV.Title" />
 
     <TextView
         android:id="@+id/screen_body"
@@ -21,16 +19,31 @@
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         android:layout_weight="1"
-        android:text="@string/rebuild_phase1_skeleton"
-        android:textColor="#B0B0B0"
-        android:textSize="14sp" />
+        android:fontFamily="monospace"
+        android:textAppearance="@style/TextAppearance.CNV.Caption" />
 
     <Button
-        android:id="@+id/button_screen_next"
+        android:id="@+id/button_settings_calibration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="52dp"
-        android:text="@string/rebuild_next" />
+        android:text="@string/open_calibration" />
+
+    <Button
+        android:id="@+id/button_settings_developer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="52dp"
+        android:text="@string/screen_developer" />
+
+    <Button
+        android:id="@+id/button_settings_about"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="52dp"
+        android:text="@string/settings_about" />
 
     <Button
         android:id="@+id/button_screen_back"

@@ -71,35 +71,6 @@
                 android:text="@string/settings_about" />
 
             <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/settings_role_hint"
-                android:textAppearance="@style/TextAppearance.CNV.Caption" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_role_operator"
-                style="@style/Widget.CNV.Button.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/settings_role_operator" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_role_admin"
-                style="@style/Widget.CNV.Button.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_role_admin" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_role_developer"
-                style="@style/Widget.CNV.Button.Secondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_role_developer" />
-
-            <TextView
                 android:id="@+id/settings_admin_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -114,7 +85,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="@string/screen_developer"
-                android:visibility="gone" />
+                android:visibility="visible" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_settings_commissioning"
@@ -122,7 +93,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/settings_open_commissioning"
-                android:visibility="gone" />
+                android:visibility="visible" />
         </LinearLayout>
     </ScrollView>
 

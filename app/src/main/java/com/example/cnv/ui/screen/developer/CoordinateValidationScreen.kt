@@ -5,13 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import com.example.cnv.R
 import com.example.cnv.cad.CADController
 import com.example.cnv.cad.CADLayer
 import com.example.cnv.cad.CADView
-import com.example.cnv.factory.context.AccessRole
-import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.heatmap.CoordinateDebugOverlay
 import com.example.cnv.heatmap.CoordinateValidationBuilder
@@ -21,7 +18,7 @@ import com.example.cnv.ui.screen.BaseScreen
 import com.google.android.material.button.MaterialButton
 
 /**
- * Developer-only Coordinate Validation viewer (STEP 14-1).
+ * Coordinate Validation viewer (STEP 14-1).
  * Shows Route Position → Drawing Coordinate mapping; no HeatMap calc/UI.
  */
 class CoordinateValidationScreen : BaseScreen() {
@@ -36,11 +33,6 @@ class CoordinateValidationScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        if (CurrentContext.get().accessRole != AccessRole.DEVELOPER) {
-            Toast.makeText(requireContext(), R.string.coord_developer_only, Toast.LENGTH_SHORT).show()
-            nav().navigateBack()
-            return
-        }
 
         val cadView = view.findViewById<CADView>(R.id.coord_cad_view)
         val overlay = view.findViewById<CoordinateDebugOverlay>(R.id.coord_debug_overlay)

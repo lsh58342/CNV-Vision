@@ -9,7 +9,6 @@ import android.widget.TextView
 import android.widget.Toast
 import com.example.cnv.R
 import com.example.cnv.debug.SpeedValidationDebugHud
-import com.example.cnv.factory.context.AccessRole
 import com.example.cnv.speed.SpeedValidatorEngine
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.screen.BaseScreen
@@ -27,7 +26,6 @@ class DeveloperScreen : BaseScreen() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        siteVm.setRole(AccessRole.DEVELOPER)
 
         val body = view.findViewById<TextView>(R.id.screen_body)
         val engine = SpeedValidatorEngine.sharedOrNull()
@@ -48,10 +46,7 @@ class DeveloperScreen : BaseScreen() {
             nav().navigate(CnvDestination.COORDINATE_VALIDATION)
         }
         view.findViewById<Button>(R.id.button_screen_next).setOnClickListener {
-            if (!siteVm.enterCommissioningMode()) {
-                Toast.makeText(requireContext(), R.string.comm_denied, Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            siteVm.enterCommissioningMode()
             nav().navigate(CnvDestination.DRAWING_WORKSPACE)
         }
         view.findViewById<Button>(R.id.button_screen_back).setOnClickListener { nav().navigateBack() }

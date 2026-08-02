@@ -404,6 +404,7 @@
     <string name="ws_tab_inspection">Inspection</string>
     <string name="ws_tab_heatmap">HeatMap</string>
     <string name="ws_tab_history">History</string>
+    <string name="ws_tab_settings">Settings</string>
 
     <!-- Drawing State (Phase 11) -->
     <string name="draw_state_not_configured">NOT_CONFIGURED</string>
