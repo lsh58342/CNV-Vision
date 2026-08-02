@@ -165,10 +165,21 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
                 if (!snap.dwgOk) {
                     Toast.makeText(requireContext(), R.string.wiz_fail_dwg, Toast.LENGTH_SHORT).show()
-                } else if (!siteVm.ensureRoutePreviewForCurrentDrawing()) {
-                    Toast.makeText(requireContext(), R.string.setup_route_failed, Toast.LENGTH_LONG).show()
+                } else {
+                    val previewOk = siteVm.ensureRoutePreviewForCurrentDrawing()
+                    if (!previewOk) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(
+                                R.string.setup_route_failed_layer,
+                                siteVm.currentConveyorLayerName(),
+                            ),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
                 attachCad(content, originPickEnabled = !snap.originOk)
+                cadController?.fitToRoute()
                 applyOriginMarkerFromDrawing()
                 action.isEnabled = !snap.originOk
                 action.alpha = if (action.isEnabled) 1f else 0.45f
@@ -216,14 +227,15 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
                 action2.setOnClickListener { promptConveyorLayerSelection() }
                 action.setOnClickListener {
-                    if (siteVm.generateRouteForCurrentDrawing()) {
+                    val selectedLayer = siteVm.currentConveyorLayerName()
+                    if (siteVm.generateRouteForCurrentDrawing(layerName = selectedLayer)) {
                         Toast.makeText(requireContext(), R.string.setup_route_generated, Toast.LENGTH_SHORT).show()
                         refresh()
                         showStep(requireView())
                     } else {
                         Toast.makeText(
                             requireContext(),
-                            getString(R.string.setup_route_failed_layer, siteVm.currentConveyorLayerName()),
+                            getString(R.string.setup_route_failed_layer, selectedLayer),
                             Toast.LENGTH_LONG,
                         ).show()
                     }

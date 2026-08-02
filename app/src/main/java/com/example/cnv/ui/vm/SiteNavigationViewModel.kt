@@ -319,13 +319,13 @@ class SiteNavigationViewModel : ViewModel() {
         )
         loadDrawingDashboard()
         drawing.dwgUri?.let { runCadImportDiagnostics(sourcePath = it, conveyorLayer = trimmed) }
+        println("LOG[CNV.GenerateRoute][LAYER_SET] drawingId=${drawing.id} layer=$trimmed")
         return true
     }
 
     fun currentConveyorLayerName(): String {
-        val drawing = catalog.drawings.current(context)
-        return drawing?.conveyorLayerName?.takeIf { it.isNotBlank() }
-            ?: DWGConfig.DEFAULT_LAYER_FILTER
+        val drawing = catalog.drawings.current(context) ?: return DWGConfig.DEFAULT_LAYER_FILTER
+        return resolveEffectiveConveyorLayer(drawing)
     }
 
     /**
@@ -338,7 +338,7 @@ class SiteNavigationViewModel : ViewModel() {
         val drawing = catalog.drawings.current(context)
         val source = sourcePath ?: drawing?.dwgUri ?: return null
         val layer = conveyorLayer
-            ?: drawing?.conveyorLayerName?.takeIf { it.isNotBlank() }
+            ?: drawing?.let { resolveEffectiveConveyorLayer(it) }
             ?: DWGConfig.DEFAULT_LAYER_FILTER
         val report = DxfImportAnalyzer.analyze(source, layer)
         _cadImportReport.value = report
@@ -348,52 +348,289 @@ class SiteNavigationViewModel : ViewModel() {
     fun latestCadImportReport(): DxfImportReport? =
         _cadImportReport.value ?: DxfImportDiagnosticsStore.latest
 
-    fun generateRouteForCurrentDrawing(): Boolean {
-        val drawing = catalog.drawings.current(context) ?: return false
-        if (drawing.routeLocked) return false
-        if (!drawing.dwgRegistered || !drawing.originSet) return false
-        val routeRepo = catalog.routes.underlying()
+    /**
+     * @param layerName user-selected conveyor layer; when null, uses Drawing effective layer
+     * (never silently forces [DWGConfig.DEFAULT] when a real DXF layer exists).
+     */
+    fun generateRouteForCurrentDrawing(layerName: String? = null): Boolean {
+        val drawing = catalog.drawings.current(context)
+        if (drawing == null) {
+            logGenerateRoute(
+                selectedLayer = layerName,
+                extractorLayer = null,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = null,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "no_current_drawing",
+            )
+            return false
+        }
+        if (drawing.routeLocked) {
+            logGenerateRoute(
+                selectedLayer = layerName ?: drawing.conveyorLayerName,
+                extractorLayer = null,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "route_locked",
+            )
+            return false
+        }
+        if (!drawing.dwgRegistered) {
+            logGenerateRoute(
+                selectedLayer = layerName ?: drawing.conveyorLayerName,
+                extractorLayer = null,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "dwg_not_registered",
+            )
+            return false
+        }
+        if (!drawing.originSet) {
+            logGenerateRoute(
+                selectedLayer = layerName ?: drawing.conveyorLayerName,
+                extractorLayer = null,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "origin_not_set",
+            )
+            return false
+        }
+
         val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
-        val layer = drawing.conveyorLayerName.ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
-        runCadImportDiagnostics(sourcePath = source, conveyorLayer = layer)
-        val importer = DWGImporter(reader = CadReaderFactory.create(source))
+        val selectedLayer = layerName?.trim()?.takeIf { it.isNotEmpty() }
+            ?: resolveEffectiveConveyorLayer(drawing)
+        // Persist effective selection so UI / Origin preview stay aligned.
+        if (!selectedLayer.equals(drawing.conveyorLayerName, ignoreCase = true)) {
+            catalog.drawings.upsert(
+                drawing.copy(
+                    conveyorLayerName = selectedLayer,
+                    updatedAtMs = System.currentTimeMillis(),
+                ),
+            )
+        }
+
+        val imported = importRouteCandidates(source, selectedLayer)
+        if (imported == null) {
+            logGenerateRoute(
+                selectedLayer = selectedLayer,
+                extractorLayer = selectedLayer,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "no_candidates",
+            )
+            return false
+        }
+
+        runCadImportDiagnostics(sourcePath = source, conveyorLayer = imported.layer)
+        val routeRepo = catalog.routes.underlying()
         val generator = RouteGenerator(routeRepository = routeRepo)
-        val dwgResult = importer.importFrom(source, layerName = layer)
-        if (dwgResult.candidates.isEmpty()) return false
-        val generated = generator.generate(candidates = dwgResult.candidates) ?: return false
+        val generated = generator.generate(candidates = imported.candidates)
+        if (generated == null) {
+            logGenerateRoute(
+                selectedLayer = selectedLayer,
+                extractorLayer = imported.layer,
+                candidateCount = imported.candidates.size,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = catalog.routes.hasRoute(),
+                failure = "route_normalize_failed",
+            )
+            return false
+        }
         routeMapper = generated.mapper
-        val route = routeRepo.current() ?: return false
-        catalog.routes.setRoute(route)
+        // Wire through ContextRouteRepository (persist + drawingRoutes), not only underlying.
+        catalog.routes.setRoute(generated.route, drawingId = drawing.id)
+        val activated = catalog.activateRouteForDrawing(drawing.id)
+        val latest = catalog.drawings.get(drawing.id) ?: drawing
         catalog.drawings.upsert(
-            drawing.copy(
-                routeId = route.id,
+            latest.copy(
+                routeId = generated.route.id,
+                conveyorLayerName = imported.layer,
                 updatedAtMs = System.currentTimeMillis(),
             ),
         )
         loadDrawingDashboard()
-        return true
+        val previewExists = catalog.routes.hasRoute()
+        logGenerateRoute(
+            selectedLayer = selectedLayer,
+            extractorLayer = imported.layer,
+            candidateCount = imported.candidates.size,
+            routeSaved = previewExists,
+            drawingId = drawing.id,
+            activated = activated,
+            previewRouteExists = previewExists,
+            failure = null,
+        )
+        return previewExists
     }
 
     /**
      * Loads Route into [RouteRepository] for Origin CAD pick without marking Drawing.routeId.
-     * Does not bypass Origin gate for official Generate Route.
      */
     fun ensureRoutePreviewForCurrentDrawing(): Boolean {
         val drawing = catalog.drawings.current(context) ?: return false
         if (!drawing.dwgRegistered || drawing.routeLocked) return false
-        if (catalog.routes.hasRoute() && routeMapper != null) return true
-        val routeRepo = catalog.routes.underlying()
+        if (catalog.activateRouteForDrawing(drawing.id)) {
+            println(
+                "LOG[CNV.GenerateRoute][PREVIEW] drawingId=${drawing.id} " +
+                    "source=restored hasRoute=${catalog.routes.hasRoute()}",
+            )
+            return true
+        }
+        if (catalog.routes.hasRoute()) {
+            println(
+                "LOG[CNV.GenerateRoute][PREVIEW] drawingId=${drawing.id} " +
+                    "source=active_repo hasRoute=true",
+            )
+            return true
+        }
         val source = drawing.dwgUri ?: "stub://drawing-${drawing.id}.dwg"
-        val layer = drawing.conveyorLayerName.ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
-        val importer = DWGImporter(reader = CadReaderFactory.create(source))
-        val generator = RouteGenerator(routeRepository = routeRepo)
-        val dwgResult = importer.importFrom(source, layerName = layer)
-        if (dwgResult.candidates.isEmpty()) return false
-        val generated = generator.generate(candidates = dwgResult.candidates) ?: return false
+        val selectedLayer = resolveEffectiveConveyorLayer(drawing)
+        val imported = importRouteCandidates(source, selectedLayer) ?: run {
+            logGenerateRoute(
+                selectedLayer = selectedLayer,
+                extractorLayer = selectedLayer,
+                candidateCount = 0,
+                routeSaved = false,
+                drawingId = drawing.id,
+                activated = false,
+                previewRouteExists = false,
+                failure = "preview_no_candidates",
+            )
+            return false
+        }
+        if (!imported.layer.equals(drawing.conveyorLayerName, ignoreCase = true)) {
+            catalog.drawings.upsert(
+                drawing.copy(
+                    conveyorLayerName = imported.layer,
+                    updatedAtMs = System.currentTimeMillis(),
+                ),
+            )
+        }
+        val generator = RouteGenerator(routeRepository = catalog.routes.underlying())
+        val generated = generator.generate(candidates = imported.candidates) ?: return false
         routeMapper = generated.mapper
-        catalog.routes.setRoute(generated.route)
+        catalog.routes.setRoute(generated.route, drawingId = drawing.id)
+        val activated = catalog.activateRouteForDrawing(drawing.id)
+        logGenerateRoute(
+            selectedLayer = selectedLayer,
+            extractorLayer = imported.layer,
+            candidateCount = imported.candidates.size,
+            routeSaved = catalog.routes.hasRoute(),
+            drawingId = drawing.id,
+            activated = activated,
+            previewRouteExists = catalog.routes.hasRoute(),
+            failure = null,
+        )
         return catalog.routes.hasRoute()
     }
+
+    /**
+     * Prefer the user/Drawing layer when it exists in the DXF.
+     * Never try missing [DWGConfig.DEFAULT_LAYER_FILTER] before real file layers.
+     */
+    private fun importRouteCandidates(
+        sourcePath: String,
+        preferredLayer: String,
+    ): LayerImport? {
+        val fileLayers = peekCadLayers(sourcePath)
+        val preferred = preferredLayer.trim().ifBlank { DWGConfig.DEFAULT_LAYER_FILTER }
+        val preferredInFile = fileLayers.any { it.equals(preferred, ignoreCase = true) }
+        val ordered = LinkedHashSet<String>()
+        if (preferredInFile) {
+            ordered.add(fileLayers.first { it.equals(preferred, ignoreCase = true) })
+        }
+        fileLayers.forEach { ordered.add(it) }
+        if (!preferredInFile) {
+            // Try saved selection last (may be stale CONVEYOR after restore).
+            ordered.add(preferred)
+        }
+        if (ordered.none { it.equals("0", ignoreCase = true) }) {
+            ordered.add("0")
+        }
+
+        println(
+            "LOG[CNV.GenerateRoute][LAYER_ORDER] preferred=$preferred " +
+                "preferredInFile=$preferredInFile fileLayers=$fileLayers order=$ordered",
+        )
+
+        for (layer in ordered) {
+            val result = runCatching {
+                DWGImporter(reader = CadReaderFactory.create(sourcePath))
+                    .importFrom(sourcePath, layerName = layer)
+            }.onFailure { err ->
+                println("LOG[CNV.GenerateRoute][IMPORT_ERROR] layer=$layer error=${err.message}")
+            }.getOrNull()
+            val count = result?.candidates?.size ?: -1
+            println(
+                "LOG[CNV.GenerateRoute][EXTRACT] layer=$layer " +
+                    "routeCandidateCount=$count " +
+                    "polylines=${result?.polylineCount} merged=${result?.mergedPolylineCount}",
+            )
+            if (result != null && result.candidates.isNotEmpty()) {
+                return LayerImport(layer = layer, candidates = result.candidates)
+            }
+        }
+        return null
+    }
+
+    private fun resolveEffectiveConveyorLayer(drawing: Drawing): String {
+        val saved = drawing.conveyorLayerName.trim()
+        val source = drawing.dwgUri
+        val fileLayers = source?.let { peekCadLayers(it) }.orEmpty()
+        if (saved.isNotEmpty()) {
+            if (fileLayers.isEmpty()) return saved
+            fileLayers.firstOrNull { it.equals(saved, ignoreCase = true) }?.let { return it }
+            // Stale CONVEYOR (or other missing layer) after DXF without that layer.
+            if (saved.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true)) {
+                return resolveInitialConveyorLayer(fileLayers)
+            }
+            return saved
+        }
+        return resolveInitialConveyorLayer(fileLayers)
+    }
+
+    private fun logGenerateRoute(
+        selectedLayer: String?,
+        extractorLayer: String?,
+        candidateCount: Int,
+        routeSaved: Boolean,
+        drawingId: String?,
+        activated: Boolean,
+        previewRouteExists: Boolean,
+        failure: String?,
+    ) {
+        println("LOG[CNV.GenerateRoute][SELECTED_LAYER] ${selectedLayer ?: "—"}")
+        println("LOG[CNV.GenerateRoute][EXTRACTOR_LAYER] ${extractorLayer ?: "—"}")
+        println("LOG[CNV.GenerateRoute][ROUTE_CANDIDATE_COUNT] $candidateCount")
+        println("LOG[CNV.GenerateRoute][ROUTE_REPOSITORY_SAVED] $routeSaved")
+        println("LOG[CNV.GenerateRoute][DRAWING_ID] ${drawingId ?: "—"}")
+        println("LOG[CNV.GenerateRoute][ACTIVATE_ROUTE_FOR_DRAWING] $activated")
+        println("LOG[CNV.GenerateRoute][ORIGIN_PREVIEW_ROUTE_EXISTS] $previewRouteExists")
+        if (failure != null) {
+            println("LOG[CNV.GenerateRoute][FAILURE] $failure")
+        }
+    }
+
+    private data class LayerImport(
+        val layer: String,
+        val candidates: List<com.example.cnv.route.RouteCandidate>,
+    )
 
     private fun peekCadLayers(sourcePath: String): List<String> {
         return runCatching {
@@ -404,12 +641,11 @@ class SiteNavigationViewModel : ViewModel() {
     }
 
     private fun resolveInitialConveyorLayer(layers: List<String>): String {
-        if (layers.any { it.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true) }) {
-            return layers.first { it.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true) }
-        }
-        // Keep CONVEYOR as the declared initial default even when absent;
-        // user selects a real layer in Commissioning Route step.
-        return DWGConfig.DEFAULT_LAYER_FILTER
+        if (layers.isEmpty()) return DWGConfig.DEFAULT_LAYER_FILTER
+        layers.firstOrNull { it.equals(DWGConfig.DEFAULT_LAYER_FILTER, ignoreCase = true) }
+            ?.let { return it }
+        layers.firstOrNull { it.equals("0", ignoreCase = true) }?.let { return it }
+        return layers.first()
     }
 
     fun setOriginForCurrentDrawing(x: Float, y: Float): Boolean {
