@@ -8,10 +8,10 @@ import kotlin.math.roundToInt
 
 /**
  * Generates Drawing [DrawingHeatPoint]s from persisted Inspection Session events.
- * Shock strength is stored in **g**. Points below [ShockUnits.RECORDING_THRESHOLD_G] are skipped.
+ * Shock strength is stored in **g**. Points below the live Record threshold are skipped.
  */
 class HeatMapGenerator(
-    private val intensityConfig: HeatMapIntensityConfig = HeatMapIntensityConfig.DEFAULT,
+    private val intensityConfigProvider: () -> HeatMapIntensityConfig = { HeatMapIntensityConfig.active() },
 ) {
 
     fun generatePoints(
@@ -19,21 +19,21 @@ class HeatMapGenerator(
         route: Route,
         mapper: CoordinateMapper? = null,
     ): List<DrawingHeatPoint> {
+        val intensityConfig = intensityConfigProvider()
         val layout = HeatMapRouteLayout.build(route, worldMapper = mapper)
-            ?: HeatMapRouteLayout.build(route, worldMapper = null)
             ?: return emptyList()
 
         val out = ArrayList<DrawingHeatPoint>()
         for (session in sessions) {
-            out.addAll(pointsForSession(session, layout))
+            out.addAll(pointsForSession(session, layout, intensityConfig))
         }
-        val aggregated = aggregateOverlapping(out)
+        val aggregated = aggregateOverlapping(out, intensityConfig)
         println(
             "LOG[HeatMapGenerator] sessions=${sessions.size} raw=${out.size} " +
-                "aggregated=${aggregated.size} thresholdG=${ShockUnits.RECORDING_THRESHOLD_G}",
+                "aggregated=${aggregated.size} thresholdG=${ShockUnits.recordingThresholdG()}",
         )
         aggregated.forEachIndexed { i, p ->
-            if (i < 40 || p.shockStrength >= ShockUnits.RECORDING_THRESHOLD_G) {
+            if (i < 40 || p.shockStrength >= ShockUnits.recordingThresholdG()) {
                 println(
                     "HeatPoint\n" +
                         "X=${"%.1f".format(p.drawingX)}\n" +
@@ -64,6 +64,7 @@ class HeatMapGenerator(
     private fun pointsForSession(
         session: PersistedInspectionSession,
         layout: HeatMapRouteLayout.LayoutResult,
+        intensityConfig: HeatMapIntensityConfig,
     ): List<DrawingHeatPoint> {
         val sessionId = session.summary.sessionId
         val out = ArrayList<DrawingHeatPoint>()
@@ -118,7 +119,10 @@ class HeatMapGenerator(
     /**
      * Same-location stacks — accumulate shock (max + count boost) for stronger display.
      */
-    private fun aggregateOverlapping(points: List<DrawingHeatPoint>): List<DrawingHeatPoint> {
+    private fun aggregateOverlapping(
+        points: List<DrawingHeatPoint>,
+        intensityConfig: HeatMapIntensityConfig,
+    ): List<DrawingHeatPoint> {
         if (points.isEmpty()) return emptyList()
         val buckets = LinkedHashMap<String, MutableList<DrawingHeatPoint>>()
         for (p in points) {

@@ -67,6 +67,8 @@ class CameraManager(
         ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) ==
                 PackageManager.PERMISSION_GRANTED
 
+    fun videoCapture() = viewModel.videoCapture()
+
     private fun startPreview() {
         viewModel.bindPreview(activity, previewView, activity, analyzer)
     }

@@ -5,7 +5,6 @@ import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import com.example.cnv.R
 import com.example.cnv.factory.model.Drawing
-import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.ui.screen.commissioning.CommissioningWizardProgress
 
 /**
@@ -59,9 +58,7 @@ enum class DrawingState(
         fun resolve(drawing: Drawing?, zoneCount: Int = 0): DrawingState {
             if (drawing == null || !drawing.dwgRegistered) return NOT_CONFIGURED
             if (!drawing.originSet) return DWG_IMPORTED
-            val calibrationReady = drawing.calibrationReady ||
-                FactoryCatalog.get().calibrations.get(drawing.id)?.ready == true
-            if (!calibrationReady) return ORIGIN_SET
+            // Calibration walk is optional (VIO); proceed after Origin.
             if (drawing.routeId == null) return CALIBRATED
             if (zoneCount <= 0) return ROUTE_CREATED
             if (!drawing.routeLocked) return VALIDATED
@@ -71,7 +68,6 @@ enum class DrawingState(
         fun resolveFromSnapshot(snap: CommissioningWizardProgress.Snapshot): DrawingState {
             if (!snap.dwgOk) return NOT_CONFIGURED
             if (!snap.originOk) return DWG_IMPORTED
-            if (!snap.calibrationOk) return ORIGIN_SET
             if (!snap.routeOk) return CALIBRATED
             if (!snap.zoneOk) return ROUTE_CREATED
             if (!snap.validationOk) return ZONE_CREATED

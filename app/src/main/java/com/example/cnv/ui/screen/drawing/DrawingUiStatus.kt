@@ -57,7 +57,7 @@ object DrawingUiStatus {
         val state = DrawingState.resolveFromSnapshot(snap)
         val lines = mutableListOf(state.label(context))
         if (snap.calibrationOk) {
-            lines.add(context.getString(R.string.draw_overview_calibration_complete))
+            lines.add(context.getString(R.string.draw_overview_vio_scale))
         }
         if (snap.routeLocked) {
             lines.add(context.getString(R.string.draw_overview_route_locked))

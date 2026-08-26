@@ -146,7 +146,7 @@
         <com.example.cnv.ui.screen.review.HeatMapPreviewView
             android:id="@+id/report_heatmap_preview"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
+            android:layout_height="220dp"
             android:layout_marginTop="6dp" />
 
         <TextView
@@ -155,6 +155,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.CNV.Caption" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_report_open_critical_map"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/report_open_critical_map"
+            android:visibility="gone" />
 
         <TextView
             android:layout_width="match_parent"

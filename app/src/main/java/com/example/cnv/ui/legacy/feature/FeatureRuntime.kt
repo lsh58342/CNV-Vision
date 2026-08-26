@@ -106,7 +106,7 @@ class FeatureRuntime(
         cameraManager = CameraManager(activity, bootstrapPreview)
 
         fusionEngine = FusionEngine(
-            initialCalibrated = CalibrationManager.getInstance(activity).isCalibrated(),
+            initialCalibrated = true,
         )
 
         routeRepository = catalog.routes.underlying()
@@ -202,6 +202,7 @@ class FeatureRuntime(
                 deviceInformation = "${Build.MANUFACTURER} ${Build.MODEL}",
                 samplingRateHz = 1_000_000f / IMUConfig.DEFAULT_SAMPLING_PERIOD_US,
                 routeQualityScore = quality,
+                mapper = catalog.routes.underlying().currentMapper(),
             ),
         )
         return true

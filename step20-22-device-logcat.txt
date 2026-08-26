@@ -1,0 +1,264 @@
+﻿
+08-03 00:56:31.838 I/System.out(  639): ENTER SEGMENT seg-1 (RESET)
+08-03 00:56:31.838 I/System.out(  639): LOG[RouteTransition] ENTER SEGMENT seg-1
+08-03 00:56:31.860 D/SensorManager(  639): registerListener :: 41, lsm6dso LSM6DSO Gyroscope Non-wakeup, 10000, 0, com.
+example.cnv.imu.IMUManager@b506eba
+08-03 00:56:31.863 D/SensorManager(  639): registerListener :: 41, lsm6dso LSM6DSO Gyroscope Non-wakeup, 20000, 0, 
+08-03 00:56:31.869 I/System.out(  639): LOG[TrackingDebug][GYRO] listenerRegistered=true hasGyro=true hasRotation=true
+08-03 00:56:31.912 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=-1/3() prog=0.0% total=0.0% routeMm=0.0 wo
+rld=(0.0,0.0) gyroH=-0.0 ofH=0.0 fusH=-0.0 routeH=0.0 feat=0 lost=0 reinit=0 mmConf=0.00 nearest= gyroReg=true ypr=0.0/
+0.0/0.0
+08-03 00:56:32.224 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=-1/3() prog=0.0% total=0.0% routeMm=0.0 wo
+rld=(0.0,0.0) gyroH=-88.7 ofH=0.0 fusH=-60.7 routeH=0.0 feat=0 lost=0 reinit=0 mmConf=0.00 nearest= gyroReg=true ypr=-8
+8.7/-60.8/1.5
+08-03 00:56:32.407 I/System.out(  639): ENTER SEGMENT seg-1 (TRANSITION)
+08-03 00:56:32.407 I/System.out(  639): LOG[RouteTransition] ENTER SEGMENT seg-1
+08-03 00:56:32.537 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=0.0% total=0.0% routeMm=0.
+1 world=(499.5,234.5) gyroH=-88.9 ofH=55.1 fusH=-59.6 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gyr
+oReg=true ypr=-88.9/-60.6/1.4
+08-03 00:56:32.849 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=0.1% total=0.0% routeMm=0.
+3 world=(499.7,234.5) gyroH=-88.9 ofH=158.1 fusH=-121.1 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 g
+yroReg=true ypr=-88.9/-60.5/1.3
+08-03 00:56:33.162 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=0.2% total=0.1% routeMm=0.
+5 world=(499.9,234.5) gyroH=-88.9 ofH=-48.7 fusH=-75.0 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gy
+roReg=true ypr=-88.9/-60.5/1.5
+08-03 00:56:33.473 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=0.3% total=0.1% routeMm=0.
+8 world=(500.2,234.5) gyroH=-89.3 ofH=75.9 fusH=-73.3 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gyr
+oReg=true ypr=-89.3/-60.7/0.7
+08-03 00:56:33.785 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=3.7% total=1.1% routeMm=11
+.2 world=(510.6,234.5) gyroH=-87.1 ofH=95.7 fusH=-90.3 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gy
+roReg=true ypr=-86.9/-58.9/-4.4
+08-03 00:56:34.097 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=9.4% total=2.8% routeMm=28
+.3 world=(527.7,234.5) gyroH=-74.8 ofH=97.9 fusH=-66.4 routeH=0.0 feat=191 lost=9 reinit=1 mmConf=0.65 nearest=seg-1 gy
+roReg=true ypr=-74.3/-57.1/-0.7
+08-03 00:56:34.409 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=14.9% total=4.5% routeMm=4
+4.7 world=(544.2,234.5) gyroH=-62.7 ofH=86.7 fusH=-35.6 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 g
+yroReg=true ypr=-62.3/-57.2/2.4
+08-03 00:56:34.723 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=19.4% total=5.8% routeMm=5
+8.2 world=(557.7,234.5) gyroH=-47.0 ofH=87.2 fusH=-15.3 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 g
+yroReg=true ypr=-46.7/-57.1/7.3
+08-03 00:56:35.038 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=23.3% total=7.0% routeMm=6
+9.9 world=(569.3,234.5) gyroH=-28.7 ofH=83.9 fusH=3.4 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gyr
+oReg=true ypr=-28.4/-55.4/13.6
+08-03 00:56:35.353 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=26.1% total=7.8% routeMm=7
+8.4 world=(577.9,234.5) gyroH=-18.7 ofH=90.7 fusH=13.1 routeH=0.0 feat=200 lost=0 reinit=1 mmConf=0.65 nearest=seg-1 gy
+roReg=true ypr=-18.6/-52.5/18.0
+08-03 00:56:35.668 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=29.1% total=8.7% routeMm=8
+7.4 world=(586.8,234.5) gyroH=7.0 ofH=122.2 fusH=39.3 routeH=0.0 feat=11 lost=0 reinit=1 mmConf=0.35 nearest=seg-1 gyro
+Reg=true ypr=9.3/-30.6/3.9
+08-03 00:56:35.984 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=29.1% total=8.7% routeMm=8
+7.4 world=(586.8,234.5) gyroH=57.8 ofH=163.3 fusH=89.1 routeH=0.0 feat=1 lost=0 reinit=4 mmConf=0.35 nearest=seg-1 gyro
+Reg=true ypr=58.4/0.7/5.6
+08-03 00:56:36.302 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=29.5% total=8.9% routeMm=8
+8.6 world=(588.0,234.5) gyroH=55.1 ofH=-49.2 fusH=24.1 routeH=0.0 feat=73 lost=0 reinit=5 mmConf=0.65 nearest=seg-1 gyr
+oReg=true ypr=54.1/-2.5/6.0
+08-03 00:56:36.619 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=33.3% total=10.0% routeMm=
+99.8 world=(599.2,234.5) gyroH=-13.6 ofH=-107.8 fusH=-42.8 routeH=0.0 feat=107 lost=0 reinit=5 mmConf=0.30 nearest=seg-
+1 gyroReg=true ypr=-15.4/-10.3/13.4
+08-03 00:56:36.935 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=46.5% total=14.0% routeMm=
+139.6 world=(639.1,234.5) gyroH=-57.1 ofH=-114.9 fusH=-76.6 routeH=0.0 feat=15 lost=0 reinit=5 mmConf=0.25 nearest=seg-
+1 gyroReg=true ypr=-58.0/-12.0/4.9
+08-03 00:56:37.253 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=54.2% total=16.3% routeMm=
+162.6 world=(662.0,234.5) gyroH=-79.0 ofH=-91.6 fusH=-83.5 routeH=0.0 feat=99 lost=2 reinit=5 mmConf=0.38 nearest=seg-1
+ gyroReg=true ypr=-79.6/-11.1/1.0
+08-03 00:56:37.570 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=67.7% total=20.3% routeMm=
+203.1 world=(702.5,234.5) gyroH=-97.6 ofH=-88.3 fusH=-94.4 routeH=0.0 feat=200 lost=0 reinit=5 mmConf=0.45 nearest=seg-
+1 gyroReg=true ypr=-98.2/-10.6/-2.5
+08-03 00:56:37.885 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=73.1% total=21.9% routeMm=
+219.2 world=(718.7,234.5) gyroH=-116.0 ofH=-77.6 fusH=-102.8 routeH=0.0 feat=200 lost=0 reinit=5 mmConf=0.53 nearest=se
+g-1 gyroReg=true ypr=-117.9/-9.0/-5.5
+08-03 00:56:38.201 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=81.3% total=24.4% routeMm=
+243.9 world=(743.3,234.5) gyroH=-167.3 ofH=-68.5 fusH=-137.2 routeH=0.0 feat=132 lost=0 reinit=6 mmConf=0.65 nearest=se
+g-1 gyroReg=true ypr=-169.3/-0.0/-7.6
+08-03 00:56:38.517 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=81.5% total=24.4% routeMm=
+244.4 world=(743.8,234.5) gyroH=161.4 ofH=149.9 fusH=157.4 routeH=0.0 feat=66 lost=0 reinit=13 mmConf=0.65 nearest=seg-
+1 gyroReg=true ypr=161.7/5.4/-3.0
+08-03 00:56:38.838 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=81.9% total=24.6% routeMm=
+245.7 world=(745.1,234.5) gyroH=-164.5 ofH=72.4 fusH=162.9 routeH=0.0 feat=15 lost=0 reinit=16 mmConf=0.27 nearest=seg-
+1 gyroReg=true ypr=-160.7/-2.3/-7.9
+08-03 00:56:39.158 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=87.1% total=26.1% routeMm=
+261.4 world=(760.8,234.5) gyroH=-114.8 ofH=35.5 fusH=-88.1 routeH=0.0 feat=200 lost=0 reinit=21 mmConf=0.33 nearest=seg
+-1 gyroReg=true ypr=-113.6/-5.8/-8.8
+08-03 00:56:39.478 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=0/3(seg-1) prog=94.3% total=28.3% routeMm=
+283.0 world=(782.4,234.5) gyroH=-83.4 ofH=105.9 fusH=-94.0 routeH=0.0 feat=16 lost=0 reinit=21 mmConf=0.27 nearest=seg-
+1 gyroReg=true ypr=-82.6/-8.2/-6.2
+08-03 00:56:39.547 I/System.out(  639): LOG[MapMatch][HOP] seg-1 ??seg-2 carryMm=1.11 via=node-2
+08-03 00:56:39.547 I/System.out(  639): EXIT SEGMENT seg-1
+08-03 00:56:39.547 I/System.out(  639): LOG[RouteTransition] EXIT SEGMENT seg-1
+08-03 00:56:39.547 I/System.out(  639): ENTER SEGMENT seg-2 (TRANSITION)
+08-03 00:56:39.547 I/System.out(  639): LOG[RouteTransition] ENTER SEGMENT seg-2
+08-03 00:56:39.796 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=2.8% total=30.8% routeMm=3
+08.4 world=(799.4,226.1) gyroH=-51.3 ofH=105.9 fusH=-28.8 routeH=-90.0 feat=71 lost=0 reinit=23 mmConf=0.50 nearest=seg
+-2 gyroReg=true ypr=-48.6/-10.4/-1.4
+08-03 00:56:40.111 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=11.4% total=33.4% routeMm=
+334.2 world=(799.4,200.3) gyroH=-8.7 ofH=-144.4 fusH=-40.1 routeH=-90.0 feat=19 lost=0 reinit=23 mmConf=0.27 nearest=se
+g-2 gyroReg=true ypr=-6.3/-7.4/4.3
+08-03 00:56:40.431 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=12.3% total=33.7% routeMm=
+337.0 world=(799.4,197.5) gyroH=-4.4 ofH=128.3 fusH=27.6 routeH=-90.0 feat=136 lost=0 reinit=23 mmConf=0.65 nearest=seg
+-2 gyroReg=true ypr=-4.2/-4.2/2.9
+08-03 00:56:40.749 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=12.6% total=33.8% routeMm=
+337.8 world=(799.4,196.7) gyroH=-3.7 ofH=-145.6 fusH=-33.7 routeH=-90.0 feat=160 lost=0 reinit=23 mmConf=0.65 nearest=s
+eg-2 gyroReg=true ypr=-4.0/-4.0/3.6
+08-03 00:56:41.065 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=13.1% total=33.9% routeMm=
+339.2 world=(799.4,195.3) gyroH=-21.4 ofH=-89.1 fusH=-43.8 routeH=-90.0 feat=83 lost=0 reinit=23 mmConf=0.58 nearest=se
+g-2 gyroReg=true ypr=-25.1/-5.4/6.5
+08-03 00:56:41.378 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=22.3% total=36.7% routeMm=
+367.0 world=(799.4,167.5) gyroH=-100.5 ofH=-76.1 fusH=-92.0 routeH=-90.0 feat=1 lost=0 reinit=26 mmConf=0.26 nearest=se
+g-2 gyroReg=true ypr=-102.2/-6.6/0.6
+08-03 00:56:41.695 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=22.3% total=36.7% routeMm=
+367.0 world=(799.4,167.5) gyroH=-129.4 ofH=-89.7 fusH=-115.8 routeH=-90.0 feat=4 lost=1 reinit=26 mmConf=0.26 nearest=s
+eg-2 gyroReg=true ypr=-130.0/-4.4/-1.9
+08-03 00:56:42.013 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=22.3% total=36.7% routeMm=
+367.0 world=(799.4,167.5) gyroH=-144.7 ofH=-60.4 fusH=-117.7 routeH=-90.0 feat=58 lost=0 reinit=35 mmConf=0.26 nearest=
+seg-2 gyroReg=true ypr=-144.8/-5.7/-6.7
+08-03 00:56:42.331 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=22.3% total=36.7% routeMm=
+367.0 world=(799.4,167.5) gyroH=-128.4 ofH=130.3 fusH=-158.9 routeH=-90.0 feat=58 lost=0 reinit=43 mmConf=0.26 nearest=
+seg-2 gyroReg=true ypr=-126.1/-3.6/-6.2
+08-03 00:56:42.648 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=40.2% total=42.1% routeMm=
+420.6 world=(799.4,113.9) gyroH=-83.9 ofH=94.9 fusH=-82.6 routeH=-90.0 feat=75 lost=39 reinit=43 mmConf=0.37 nearest=se
+g-2 gyroReg=true ypr=-83.9/-6.6/-5.4
+08-03 00:56:42.967 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=47.1% total=44.1% routeMm=
+441.2 world=(799.4,93.3) gyroH=-84.1 ofH=-83.4 fusH=-83.9 routeH=-90.0 feat=9 lost=0 reinit=43 mmConf=0.26 nearest=seg-
+2 gyroReg=true ypr=-84.1/-7.9/-1.1
+08-03 00:56:43.285 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=58.3% total=47.5% routeMm=
+474.8 world=(799.4,59.7) gyroH=-118.0 ofH=-88.0 fusH=-107.6 routeH=-90.0 feat=197 lost=3 reinit=43 mmConf=0.29 nearest=
+seg-2 gyroReg=true ypr=-119.1/-9.6/1.1
+08-03 00:56:43.599 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=67.0% total=50.1% routeMm=
+500.9 world=(799.4,33.6) gyroH=-108.0 ofH=104.0 fusH=-135.8 routeH=-90.0 feat=200 lost=0 reinit=43 mmConf=0.28 nearest=
+seg-2 gyroReg=true ypr=-105.7/-8.8/-4.5
+08-03 00:56:43.912 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=82.1% total=54.6% routeMm=
+546.2 world=(799.4,-11.6) gyroH=-75.6 ofH=98.4 fusH=-68.8 routeH=-90.0 feat=35 lost=9 reinit=43 mmConf=0.48 nearest=seg
+-2 gyroReg=true ypr=-75.5/-9.2/-6.5
+08-03 00:56:44.231 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=85.1% total=55.5% routeMm=
+555.3 world=(799.4,-20.7) gyroH=-97.8 ofH=-81.9 fusH=-92.2 routeH=-90.0 feat=32 lost=0 reinit=45 mmConf=0.31 nearest=se
+g-2 gyroReg=true ypr=-101.4/-10.2/0.2
+08-03 00:56:44.548 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=1/3(seg-2) prog=97.4% total=59.2% routeMm=
+592.2 world=(799.4,-57.7) gyroH=-115.1 ofH=70.2 fusH=-121.2 routeH=-90.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-2 gyroReg=true ypr=-115.1/-11.1/-1.2
+08-03 00:56:44.674 I/System.out(  639): LOG[MapMatch][HOP] seg-2 ??seg-3 carryMm=0.07 via=node-3
+08-03 00:56:44.674 I/System.out(  639): EXIT SEGMENT seg-2
+08-03 00:56:44.674 I/System.out(  639): LOG[RouteTransition] EXIT SEGMENT seg-2
+08-03 00:56:44.674 I/System.out(  639): ENTER SEGMENT seg-3 (TRANSITION)
+08-03 00:56:44.674 I/System.out(  639): LOG[RouteTransition] ENTER SEGMENT seg-3
+08-03 00:56:44.859 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=2.0% total=60.8% routeMm=6
+07.9 world=(791.6,-65.5) gyroH=-108.6 ofH=109.3 fusH=-138.5 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-108.6/-10.0/-0.8
+08-03 00:56:45.171 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=2.8% total=61.1% routeMm=6
+11.3 world=(788.2,-65.5) gyroH=-106.2 ofH=109.2 fusH=-135.2 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-105.6/-9.6/0.5
+08-03 00:56:45.481 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=3.8% total=61.5% routeMm=6
+15.3 world=(784.2,-65.5) gyroH=-102.0 ofH=158.2 fusH=-132.3 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-102.0/-8.2/1.5
+08-03 00:56:45.803 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=4.0% total=61.6% routeMm=6
+15.9 world=(783.5,-65.5) gyroH=-101.8 ofH=116.4 fusH=-131.8 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-101.8/-8.1/1.5
+08-03 00:56:46.119 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=5.7% total=62.3% routeMm=6
+22.7 world=(776.7,-65.5) gyroH=-109.0 ofH=-86.9 fusH=-101.3 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-109.5/-8.1/2.1
+08-03 00:56:46.430 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=11.3% total=64.5% routeMm=
+645.3 world=(754.2,-65.5) gyroH=-119.7 ofH=-92.0 fusH=-110.1 routeH=180.0 feat=200 lost=0 reinit=45 mmConf=0.65 nearest
+=seg-3 gyroReg=true ypr=-119.5/-6.6/1.2
+08-03 00:56:46.741 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=18.6% total=67.4% routeMm=
+674.2 world=(725.2,-65.5) gyroH=-82.7 ofH=91.5 fusH=-75.9 routeH=180.0 feat=179 lost=21 reinit=45 mmConf=0.27 nearest=s
+eg-3 gyroReg=true ypr=-81.3/-4.3/3.1
+08-03 00:56:47.063 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=25.5% total=70.2% routeMm=
+701.9 world=(697.6,-65.5) gyroH=-57.1 ofH=77.7 fusH=-25.4 routeH=180.0 feat=23 lost=14 reinit=45 mmConf=0.44 nearest=se
+g-3 gyroReg=true ypr=-56.8/-4.5/0.7
+08-03 00:56:47.379 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=27.0% total=70.8% routeMm=
+708.1 world=(691.4,-65.5) gyroH=-74.6 ofH=-92.0 fusH=-80.7 routeH=180.0 feat=13 lost=0 reinit=48 mmConf=0.40 nearest=se
+g-3 gyroReg=true ypr=-77.8/-6.7/3.7
+08-03 00:56:47.690 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=32.6% total=73.0% routeMm=
+730.2 world=(669.2,-65.5) gyroH=-108.9 ofH=-73.3 fusH=-96.6 routeH=180.0 feat=197 lost=3 reinit=48 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-108.5/-7.6/0.2
+08-03 00:56:48.007 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=39.2% total=75.7% routeMm=
+756.9 world=(642.6,-65.5) gyroH=-87.0 ofH=75.2 fusH=-68.3 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.33 nearest=se
+g-3 gyroReg=true ypr=-86.1/-6.9/-3.1
+08-03 00:56:48.322 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=48.1% total=79.2% routeMm=
+792.2 world=(607.2,-65.5) gyroH=-75.6 ofH=-84.9 fusH=-78.8 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 nearest=s
+eg-3 gyroReg=true ypr=-76.0/-7.7/-2.8
+08-03 00:56:48.636 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=54.8% total=81.9% routeMm=
+819.1 world=(580.3,-65.5) gyroH=-98.0 ofH=-89.6 fusH=-95.1 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.39 nearest=s
+eg-3 gyroReg=true ypr=-99.5/-7.7/2.5
+08-03 00:56:48.947 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=60.5% total=84.2% routeMm=
+841.8 world=(557.6,-65.5) gyroH=-102.0 ofH=91.9 fusH=-117.2 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 nearest=
+seg-3 gyroReg=true ypr=-101.5/-6.9/0.3
+08-03 00:56:49.260 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=69.9% total=87.9% routeMm=
+879.5 world=(519.9,-65.5) gyroH=-80.7 ofH=96.7 fusH=-77.6 routeH=180.0 feat=16 lost=4 reinit=48 mmConf=0.28 nearest=seg
+-3 gyroReg=true ypr=-80.2/-6.9/-3.9
+08-03 00:56:49.580 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=75.3% total=90.1% routeMm=
+901.1 world=(498.4,-65.5) gyroH=-85.9 ofH=-82.8 fusH=-84.8 routeH=180.0 feat=156 lost=0 reinit=48 mmConf=0.48 nearest=s
+eg-3 gyroReg=true ypr=-86.7/-8.0/-0.1
+08-03 00:56:49.896 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=83.5% total=93.4% routeMm=
+934.1 world=(465.3,-65.5) gyroH=-105.3 ofH=-84.1 fusH=-97.9 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.28 nearest=
+seg-3 gyroReg=true ypr=-105.3/-9.2/1.3
+08-03 00:56:50.209 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=89.2% total=95.7% routeMm=
+956.7 world=(442.7,-65.5) gyroH=-88.5 ofH=86.6 fusH=-82.8 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.44 nearest=se
+g-3 gyroReg=true ypr=-87.7/-8.8/-4.7
+08-03 00:56:50.527 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=95.2% total=98.1% routeMm=
+980.7 world=(418.7,-65.5) gyroH=-86.2 ofH=-84.7 fusH=-85.7 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 nearest=s
+eg-3 gyroReg=true ypr=-86.9/-9.8/-2.3
+08-03 00:56:50.839 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-106.0 ofH=-87.3 fusH=-99.5 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.33 neare
+st=seg-3 gyroReg=true ypr=-106.0/-10.0/2.3
+08-03 00:56:51.155 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-95.2 ofH=-86.3 fusH=-92.0 routeH=180.0 feat=131 lost=69 reinit=48 mmConf=0.34 neare
+st=seg-3 gyroReg=true ypr=-94.7/-9.1/-1.5
+08-03 00:56:51.467 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-93.3 ofH=-89.1 fusH=-91.8 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-93.9/-8.0/1.0
+08-03 00:56:51.780 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-96.9 ofH=-166.7 fusH=-120.0 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 near
+est=seg-3 gyroReg=true ypr=-96.9/-8.2/1.2
+08-03 00:56:52.095 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-91.0 ofH=143.9 fusH=-123.5 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-90.8/-9.7/1.7
+08-03 00:56:52.407 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-89.9 ofH=159.5 fusH=-121.8 routeH=180.0 feat=94 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-89.8/-8.1/2.0
+08-03 00:56:52.721 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-90.5 ofH=39.0 fusH=-58.2 routeH=180.0 feat=45 lost=0 reinit=48 mmConf=0.64 nearest=
+seg-3 gyroReg=true ypr=-90.5/-6.9/2.5
+08-03 00:56:53.033 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-92.7 ofH=-31.1 fusH=-72.0 routeH=180.0 feat=111 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-92.8/-7.6/3.4
+08-03 00:56:53.348 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-93.0 ofH=105.8 fusH=-112.5 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-92.9/-9.1/2.7
+08-03 00:56:53.662 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-93.0 ofH=147.8 fusH=-125.5 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-93.1/-10.2/3.3
+08-03 00:56:53.976 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.7 ofH=-57.6 fusH=-81.9 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-94.7/-12.1/5.9
+08-03 00:56:54.289 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.7 ofH=61.8 fusH=-71.7 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 nearest
+=seg-3 gyroReg=true ypr=-94.6/-11.5/5.5
+08-03 00:56:54.605 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.6 ofH=121.1 fusH=-123.7 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-94.6/-11.0/5.1
+08-03 00:56:54.923 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.6 ofH=122.1 fusH=-124.1 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-94.6/-11.1/5.1
+08-03 00:56:55.234 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.7 ofH=170.5 fusH=-124.1 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-94.7/-10.1/4.6
+08-03 00:56:55.546 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-95.4 ofH=-82.7 fusH=-90.9 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-95.4/-11.4/6.1
+08-03 00:56:55.868 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-95.4 ofH=-43.3 fusH=-77.7 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-95.4/-11.4/6.2
+08-03 00:56:56.182 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-94.6 ofH=158.7 fusH=-126.0 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neare
+st=seg-3 gyroReg=true ypr=-94.5/-10.2/5.0
+08-03 00:56:56.493 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-95.0 ofH=-130.0 fusH=-107.1 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 near
+est=seg-3 gyroReg=true ypr=-95.1/-10.3/5.7
+08-03 00:56:56.806 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-96.0 ofH=-73.0 fusH=-88.0 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 neares
+t=seg-3 gyroReg=true ypr=-96.0/-11.2/6.9
+08-03 00:56:57.123 I/System.out(  639): LOG[TrackingDebug] state=STOPPED seg=2/3(seg-3) prog=100.0% total=100.0% routeM
+m=1000.0 world=(399.4,-65.5) gyroH=-95.5 ofH=86.9 fusH=-98.3 routeH=180.0 feat=200 lost=0 reinit=48 mmConf=0.65 nearest
+=seg-3 gyroReg=true ypr=-95.4/-10.6/6.1
+
+

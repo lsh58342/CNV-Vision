@@ -88,6 +88,26 @@
     <string name="zone_editor_saved">Zone saved</string>
 
     <string name="settings_title">Settings</string>
+    <string name="settings_shock_section">Shock thresholds (g)</string>
+    <string name="settings_shock_hint">Record = 기록 시작 / Critical = 위험. Warning·High는 두 값 사이에서 자동 계산됩니다.</string>
+    <string name="settings_shock_record_g">Record threshold (g)</string>
+    <string name="settings_shock_critical_g">Critical threshold (g)</string>
+    <string name="settings_shock_save">Save thresholds</string>
+    <string name="settings_shock_reset">Reset defaults</string>
+    <string name="settings_shock_saved">Shock thresholds saved</string>
+    <string name="settings_shock_reset_done">Reset to 1.03g / 1.20g</string>
+    <string name="settings_shock_invalid">Invalid: Critical must be greater than Record (0.5–5.0 g)</string>
+    <string name="settings_shock_derived_format">Derived — Warning: %1$.3fg · High: %2$.3fg</string>
+    <string name="settings_clip_section">Shock video clips (back camera)</string>
+    <string name="settings_clip_hint">Record threshold 이상 충격 시, 앞·뒤 구간만 MP4로 저장합니다.</string>
+    <string name="settings_clip_pre_sec">Pre-buffer (seconds before shock)</string>
+    <string name="settings_clip_post_sec">Post-buffer (seconds after shock)</string>
+    <string name="settings_clip_save">Save clip settings</string>
+    <string name="settings_clip_saved">Clip buffer settings saved</string>
+    <string name="history_play_shock_clips">Play shock clips</string>
+    <string name="history_shock_clip_item">%1$.2fg @ %2$s</string>
+    <string name="history_no_shock_clips">No shock video clips saved</string>
+    <string name="history_clip_missing">Video file missing</string>
     <string name="settings_open_commissioning">Open Commissioning</string>
     <string name="settings_inspection_profile">Inspection Profile</string>
     <string name="settings_sensor_profile">Sensor Profile</string>
@@ -263,6 +283,12 @@
     <string name="result_export_csv">Export CSV</string>
     <string name="result_finish">Finish</string>
     <string name="result_empty">No inspection result available</string>
+    <string name="result_auto_report_section">Auto Report</string>
+    <string name="result_auto_report_ready">Report generated: %1$s</string>
+    <string name="result_auto_report_pending">Generating report…</string>
+    <string name="result_open_maintenance_report">Open Maintenance Report</string>
+    <string name="result_open_auto_excel">Open Auto Excel</string>
+    <string name="result_open_auto_excel_named">Open Excel: %1$s</string>
 
     <string name="setup_building_dashboard">Building Dashboard</string>
     <string name="setup_floor_dashboard">Floor Dashboard</string>
@@ -383,7 +409,12 @@
     <string name="wiz_step_drawing">Step 3 — Drawing 생성</string>
     <string name="wiz_step_dwg">Step 4 — DWG 등록</string>
     <string name="wiz_step_origin">Step 1 — Origin 지정</string>
-    <string name="wiz_step_calibration">Step 2 — Calibration</string>
+    <string name="wiz_step_calibration">Step 2 — Scale (optional)</string>
+    <string name="wiz_hint_calibration">VIO는 공칭 속도로 거리를 추정합니다. 보정 걸기는 선택이며, Skip으로 넘어가면 됩니다.</string>
+    <string name="wiz_status_cal_vio_ok">VIO 자동 스케일 — 보정 걸기 불필요</string>
+    <string name="wiz_status_cal_vio_skip">보정 걸기 없이 진행 (권장). Legacy mmPerPixel은 선택.</string>
+    <string name="wiz_skip_calibration_vio">Skip — use VIO auto scale</string>
+    <string name="wiz_calibration_skipped_vio">VIO 자동 스케일로 진행합니다</string>
     <string name="wiz_step_route">Step 3 — Route 생성</string>
     <string name="wiz_step_zone">Step 4 — Zone 생성</string>
     <string name="wiz_step_validation">Step 5 — Validation</string>
@@ -393,10 +424,9 @@
     <string name="wiz_hint_drawing">Drawing Name을 입력하세요. DWG는 다음 단계에서 등록합니다.</string>
     <string name="wiz_hint_dwg">DWG 파일을 선택하세요. 정상 로드되면 다음 단계로 진행할 수 있습니다.</string>
     <string name="wiz_hint_origin">CAD Route를 터치하면 Origin(Route 시작점)이 즉시 지정됩니다. Drawing당 최초 1회만 가능합니다.</string>
-    <string name="wiz_hint_calibration">Calibration을 수행하세요. 완료 후 Overview 상태가 갱신됩니다.</string>
     <string name="wiz_hint_route">Route를 생성하세요. Drawing마다 Route는 하나만 존재합니다.</string>
     <string name="wiz_hint_zone">Zone을 생성하세요. Route 내부, 비겹침, 이름 중복 불가입니다.</string>
-    <string name="wiz_hint_validation">DWG / Origin / Calibration / Route / Zone을 검사합니다.</string>
+    <string name="wiz_hint_validation">DWG / Origin / Route / Zone을 검사합니다. (VIO 스케일은 보정 걸기 불필요)</string>
     <string name="wiz_hint_route_lock">Validation 통과 후 Route Lock을 수행하세요. Lock 이후 수정이 불가합니다.</string>
     <string name="wiz_status_done">완료: %1$s</string>
     <string name="wiz_status_need_building">Building을 생성하세요</string>
@@ -459,6 +489,7 @@
     <string name="draw_card_route_locked">Route Lock: Locked</string>
     <string name="draw_card_route_unlocked">Route Lock: Unlocked</string>
     <string name="draw_overview_calibration_complete">Calibration Complete</string>
+    <string name="draw_overview_vio_scale">VIO auto scale (no walk calibration)</string>
     <string name="draw_overview_route_locked">Route Locked</string>
     <string name="draw_overview_needs_lock">Route Lock Required</string>
     <string name="draw_overview_go_commissioning">Commissioning 탭에서 다음 단계를 진행하세요.</string>
@@ -603,11 +634,13 @@
     <string name="report_priority_issue">Priority Issue</string>
     <string name="report_zone_issues">Zone Issue List</string>
     <string name="report_issue_details">Issue Detail</string>
-    <string name="report_heatmap_section">HeatMap Preview</string>
+    <string name="report_heatmap_section">Critical Shock Map</string>
+    <string name="report_heatmap_meta">Critical points: %1$d · PNG: %2$s</string>
+    <string name="report_open_critical_map">Open Critical Map PNG</string>
     <string name="report_recommended_actions">Recommended Actions</string>
     <string name="report_work_orders">Work Orders</string>
     <string name="report_export_section">Export</string>
-    <string name="report_inspection_format">Inspection Date: %1$s\nInspection Time: %2$s\nDuration: %3$s\nDistance: %4$.1f mm\nCoverage: %5$.1f%%\nValidation Score: %6$.2f\nAverage Speed: %7$.2f m/min\nMaximum Shock: %8$.2f\nShock Count: %9$d</string>
+    <string name="report_inspection_format">Inspection Date: %1$s\nInspection Time: %2$s\nDuration: %3$s\nDistance: %4$.1f mm\nCoverage: %5$.1f%%\nValidation Score: %6$.2f\nAverage Speed: %7$.2f m/min\nAverage Shock: %8$.2f g\nMaximum Shock: %9$.2f g\nShock Count: %10$d</string>
     <string name="report_maintenance_format">Critical: %1$d\nHigh: %2$d\nMedium: %3$d\nLow: %4$d\nInspection Grade: %5$s\nOverall Status: %6$s</string>
     <string name="report_priority_none">No priority issues</string>
     <string name="report_issue_detail_format">Rule ID: %1$s\nRule Version: %2$d\nDescription: %3$s\nSeverity: %4$s\nRecommendation: %5$s\nTimestamp: %6$s</string>

@@ -37,12 +37,14 @@ class PositionEstimator(
 
     /**
      * @param deltaDistanceMm signed travel from Fusion (positive ≈ forward along camera motion).
+     * @param forceNextSegment when true (VIO heading at corner), hop to next segment if available.
      */
     fun estimate(
         route: Route,
         deltaDistanceMm: Float,
         timestampNs: Long,
         confidence: Float,
+        forceNextSegment: Boolean = false,
     ): RoutePosition? {
         if (confidence < config.minimumConfidence) {
             println(
@@ -58,24 +60,50 @@ class PositionEstimator(
             else -> RouteDirection.FORWARD
         }
         val travel = abs(deltaDistanceMm)
-        if (travel <= 0f) {
+        if (travel <= 0f && !forceNextSegment) {
             return buildPosition(route, current.copy(direction = direction), timestampNs, confidence)
         }
 
-        val advanced = if (direction == RouteDirection.FORWARD) {
-            advanceForward(route, current, travel)
+        var working = current
+        if (forceNextSegment && direction == RouteDirection.FORWARD) {
+            val hopped = forceHopToNext(route, working)
+            if (hopped != null) {
+                println(
+                    "LOG[ROUTE_SEGMENT] FORCE_HOP ${working.segmentId} → ${hopped.segmentId} " +
+                        "(heading corner)",
+                )
+                working = hopped
+            }
+        }
+
+        val advanced = if (travel <= 0f) {
+            working.copy(direction = direction)
+        } else if (direction == RouteDirection.FORWARD) {
+            advanceForward(route, working, travel)
         } else {
-            advanceBackward(route, current, travel)
+            advanceBackward(route, working, travel)
         } ?: return null
 
         if (advanced.segmentId != lastLoggedSegmentId) {
             lastLoggedSegmentId?.let { logExit(it) }
             logEnter(advanced.segmentId)
             lastLoggedSegmentId = advanced.segmentId
+            println("LOG[ROUTE_SEGMENT] id=${advanced.segmentId}")
         }
 
         state = advanced
         return buildPosition(route, advanced, timestampNs, confidence)
+    }
+
+    private fun forceHopToNext(route: Route, current: State): State? {
+        val segment = route.segment(current.segmentId) ?: return null
+        val nextEdge = route.preferredOutgoingEdge(segment.toNodeId) ?: return null
+        if (nextEdge.segmentId == current.segmentId) return null
+        return State(
+            segmentId = nextEdge.segmentId,
+            distanceFromSegmentStart = 0f,
+            direction = RouteDirection.FORWARD,
+        )
     }
 
     private fun ensureState(route: Route): State {

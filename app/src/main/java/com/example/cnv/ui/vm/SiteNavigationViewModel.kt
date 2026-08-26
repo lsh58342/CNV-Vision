@@ -454,8 +454,13 @@ class SiteNavigationViewModel : ViewModel() {
         }
         routeMapper = generated.mapper
         // Wire through ContextRouteRepository (persist + drawingRoutes), not only underlying.
-        catalog.routes.setRoute(generated.route, drawingId = drawing.id)
+        catalog.routes.setRoute(
+            generated.route,
+            drawingId = drawing.id,
+            mapper = generated.mapper,
+        )
         val activated = catalog.activateRouteForDrawing(drawing.id)
+        routeMapper = catalog.routes.underlying().currentMapper() ?: generated.mapper
         val latest = catalog.drawings.get(drawing.id) ?: drawing
         catalog.drawings.upsert(
             latest.copy(
@@ -535,8 +540,14 @@ class SiteNavigationViewModel : ViewModel() {
         val generator = RouteGenerator(routeRepository = catalog.routes.underlying())
         val generated = generator.generate(candidates = imported.candidates) ?: return false
         routeMapper = generated.mapper
-        catalog.routes.setRoute(generated.route, drawingId = drawing.id)
+        catalog.routes.setRoute(
+            generated.route,
+            drawingId = drawing.id,
+            mapper = generated.mapper,
+        )
         val activated = catalog.activateRouteForDrawing(drawing.id)
+        // Keep ViewModel mapper in sync after activate (repository is source of truth).
+        routeMapper = catalog.routes.underlying().currentMapper() ?: generated.mapper
         logGenerateRoute(
             selectedLayer = selectedLayer,
             extractorLayer = imported.layer,

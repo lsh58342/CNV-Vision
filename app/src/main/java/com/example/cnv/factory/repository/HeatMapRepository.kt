@@ -4,7 +4,6 @@ import com.example.cnv.factory.context.CurrentContext
 import com.example.cnv.heatmap.DrawingHeatLayer
 import com.example.cnv.heatmap.DrawingHeatPoint
 import com.example.cnv.heatmap.HeatMapGenerator
-import com.example.cnv.heatmap.HeatMapIntensityConfig
 import com.example.cnv.heatmap.HeatPointsCodec
 import com.example.cnv.inspection.InspectionRepository
 import com.example.cnv.inspection.PersistedInspectionSession
@@ -19,7 +18,7 @@ import com.example.cnv.route.CoordinateMapper
  * Session heat points are cached / restored from Session JSON for reproducibility.
  */
 class HeatMapRepository(
-    private val generator: HeatMapGenerator = HeatMapGenerator(HeatMapIntensityConfig.DEFAULT),
+    private val generator: HeatMapGenerator = HeatMapGenerator(),
 ) {
 
     data class HeatMapRef(

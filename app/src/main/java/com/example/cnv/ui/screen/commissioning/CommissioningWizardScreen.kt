@@ -209,14 +209,27 @@ class CommissioningWizardScreen : BaseScreen() {
                 }
             }
             CommissioningWizardProgress.Step.CALIBRATION -> {
-                action.setText(R.string.comm_step_calibration)
+                action.setText(R.string.wiz_skip_calibration_vio)
+                action2.isVisible = true
+                action2.setText(R.string.comm_step_calibration)
                 status.text = if (snap.calibrationOk) {
-                    getString(R.string.wiz_status_cal_ok)
+                    getString(R.string.wiz_status_cal_vio_ok)
                 } else {
-                    getString(R.string.wiz_status_need_cal)
+                    getString(R.string.wiz_status_cal_vio_skip)
                 }
                 attachCad(root)
                 action.setOnClickListener {
+                    if (!snap.originOk) {
+                        Toast.makeText(requireContext(), R.string.ws_need_origin, Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    if (siteVm.markCalibrationReadyForCurrentDrawing(mmPerPixel = null)) {
+                        Toast.makeText(requireContext(), R.string.wiz_calibration_skipped_vio, Toast.LENGTH_SHORT).show()
+                        refresh()
+                        view?.let { showStep(it) }
+                    }
+                }
+                action2.setOnClickListener {
                     if (!snap.originOk) {
                         Toast.makeText(requireContext(), R.string.ws_need_origin, Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
@@ -337,7 +350,10 @@ class CommissioningWizardScreen : BaseScreen() {
         cadController = CADController(
             routeRepository = FactoryCatalog.get().routes.underlying(),
             cadView = cadView,
-            mapperProvider = { siteVm.currentRouteMapper() },
+            mapperProvider = {
+                siteVm.currentRouteMapper()
+                    ?: FactoryCatalog.get().routes.underlying().currentMapper()
+            },
             debugHud = null,
             errorSegmentIdsProvider = { emptySet() },
             highlightSegmentIdsProvider = { highlightSegments.toSet() },

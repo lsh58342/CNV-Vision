@@ -7,10 +7,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageAnalysis
 import androidx.lifecycle.ViewModelProvider
 import com.example.cnv.config.CalibrationManager
+import com.example.cnv.position.PositionProvider
+import com.example.cnv.position.PositionProviderFactory
+import com.example.cnv.position.VisualInertialPositionProvider
 
 /**
  * OpenCV entry point: library init, distance estimator, UI binding.
  * Lifecycle: start analyzer → (camera binds separately) → stop: deactivate → release analyzer → reset OpenCV state.
+ * Default distance source: Visual-Inertial PositionProvider (legacy OF kept via factory mode).
  */
 class OpenCVManager(
     private val activity: AppCompatActivity,
@@ -20,11 +24,18 @@ class OpenCVManager(
     private val viewModel: OpenCVViewModel =
         ViewModelProvider(activity)[OpenCVViewModel::class.java]
 
-    private val distanceEstimator: DistanceEstimator =
-        OpticalFlowDistanceEstimator(CalibrationManager.getInstance(activity))
+    private val positionProvider: PositionProvider =
+        PositionProviderFactory.create(
+            context = activity,
+            calibrationManager = CalibrationManager.getInstance(activity),
+        )
+
+    private val distanceEstimator: DistanceEstimator = positionProvider.distanceEstimator()
 
     private var analyzer: GrayScaleFrameAnalyzer? = null
     private var observing: Boolean = false
+
+    fun positionProvider(): PositionProvider = positionProvider
 
     /** Rebind gray preview for Developer screen migration (wiring only). */
     fun attachGrayImageView(view: ImageView) {
@@ -35,6 +46,8 @@ class OpenCVManager(
         if (!viewModel.initialize()) {
             return null
         }
+
+        (positionProvider as? VisualInertialPositionProvider)?.startImu()
 
         if (!observing) {
             viewModel.grayFrame.observe(activity) { bitmap ->
@@ -87,6 +100,7 @@ class OpenCVManager(
         current?.setActive(false)
         current?.release()
         analyzer = null
+        (positionProvider as? VisualInertialPositionProvider)?.stopImu()
         distanceEstimator.reset()
         viewModel.clearFrames()
     }

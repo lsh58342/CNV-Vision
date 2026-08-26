@@ -130,7 +130,7 @@ class LegacyMainCompositionRoot(
         )
 
         fusionEngine = FusionEngine(
-            initialCalibrated = CalibrationManager.getInstance(activity).isCalibrated(),
+            initialCalibrated = true,
         )
         fusionDebugHud = FusionDebugHud(
             textView = activity.findViewById(R.id.fusion_debug_hud),

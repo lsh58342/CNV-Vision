@@ -55,6 +55,18 @@ object RouteSnapshotCodec {
             )
         }
         root.put("edges", edges)
+        val geometry = JSONArray()
+        snapshot.segmentGeometry.values.forEach { g ->
+            geometry.put(
+                JSONObject()
+                    .put("segmentId", g.segmentId)
+                    .put("startX", g.start.x)
+                    .put("startY", g.start.y)
+                    .put("endX", g.end.x)
+                    .put("endY", g.end.y),
+            )
+        }
+        root.put("segmentGeometry", geometry)
         return root.toString()
     }
 
@@ -96,6 +108,23 @@ object RouteSnapshotCodec {
                     preferred = o.optBoolean("preferred", true),
                 )
             }
+            val geometry = LinkedHashMap<String, com.example.cnv.route.CoordinateMapper.SegmentGeometry>()
+            val geomArr = root.optJSONArray("segmentGeometry") ?: JSONArray()
+            for (i in 0 until geomArr.length()) {
+                val o = geomArr.getJSONObject(i)
+                val id = o.getString("segmentId")
+                geometry[id] = com.example.cnv.route.CoordinateMapper.SegmentGeometry(
+                    segmentId = id,
+                    start = com.example.cnv.route.WorldCoordinate(
+                        x = o.getDouble("startX"),
+                        y = o.getDouble("startY"),
+                    ),
+                    end = com.example.cnv.route.WorldCoordinate(
+                        x = o.getDouble("endX"),
+                        y = o.getDouble("endY"),
+                    ),
+                )
+            }
             RouteSnapshot(
                 routeId = root.getString("routeId"),
                 routeName = root.optString("routeName", ""),
@@ -107,6 +136,7 @@ object RouteSnapshotCodec {
                 startNodeId = root.optString("startNodeId", ""),
                 startSegmentId = root.optString("startSegmentId", ""),
                 capturedAtMs = root.optLong("capturedAtMs", 0L),
+                segmentGeometry = geometry,
             )
         }.getOrNull()
     }

@@ -31,7 +31,8 @@ class ShockDetector(
             return closePeakIfNeeded(timestampNs)
         }
 
-        val accelTriggered = linearAccelMagnitude >= config.shockAccelerationThreshold
+        val accelThresholdMs2 = ShockUnits.recordingThresholdMs2()
+        val accelTriggered = linearAccelMagnitude >= accelThresholdMs2
         val gyroSupport = gyroMagnitude >= config.shockGyroscopeThreshold
 
         if (accelTriggered) {
@@ -108,7 +109,7 @@ class ShockDetector(
                         peakG,
                         confidence,
                         duration / 1_000_000f,
-                        ShockUnits.RECORDING_THRESHOLD_G,
+                        ShockUnits.recordingThresholdG(),
                         ShockUnits.isWarningG(peakG),
                         ShockUnits.isCriticalG(peakG),
                     ),
@@ -136,7 +137,7 @@ class ShockDetector(
         peakGyroscope: Float,
         durationNs: Long,
     ): Float {
-        val accelScore = (peakAcceleration / config.shockAccelerationThreshold)
+        val accelScore = (peakAcceleration / ShockUnits.recordingThresholdMs2().coerceAtLeast(0.01f))
             .coerceIn(0f, ACCEL_SCORE_CAP) / ACCEL_SCORE_CAP
         val gyroScore = (peakGyroscope / config.shockGyroscopeThreshold)
             .coerceIn(0f, GYRO_SCORE_CAP) / GYRO_SCORE_CAP

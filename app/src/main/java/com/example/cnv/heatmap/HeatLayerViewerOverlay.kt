@@ -164,7 +164,7 @@ class HeatLayerViewerOverlay @JvmOverloads constructor(
             for (p in points) {
                 fillPaint.color = config.colorForShockG(p.shockStrength)
                 val radius = config.pointRadiusPx *
-                    (1f + (p.shockStrength - ShockUnits.RECORDING_THRESHOLD_G).coerceAtLeast(0f) * 0.35f)
+                    (1f + (p.shockStrength - ShockUnits.recordingThresholdG()).coerceAtLeast(0f) * 0.35f)
                 canvas.drawCircle(
                     camera.worldToViewX(p.drawingX),
                     camera.worldToViewY(p.drawingY),

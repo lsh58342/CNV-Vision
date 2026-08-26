@@ -85,4 +85,10 @@ data class InspectionEventEntity(
     val peakG: Float = 0f,
     val movingAverageG: Float = 0f,
     val zoneName: String = "",
+    /** VIO / route-match enrichment (STEP VIO). */
+    val segmentId: String = "",
+    val headingDeg: Float = 0f,
+    val distanceToRouteMm: Float = 0f,
+    val trackingState: String = "",
+    val clipPath: String = "",
 )

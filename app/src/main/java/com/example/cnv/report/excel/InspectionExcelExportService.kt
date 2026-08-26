@@ -69,27 +69,16 @@ class InspectionExcelExportService(
         }
 
         val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
-        val profileSnapshot = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(
-            persisted.summary.inspectionProfileJson,
-        )
-        val dateFmt = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
-        val startLabel = if (persisted.summary.startTimeMs > 0L) {
-            dateFmt.format(java.util.Date(persisted.summary.startTimeMs))
-        } else {
-            ""
-        }
-        val baseCtx = buildContext(drawingId, profileSnapshot)
-        val input = InspectionExcelReportGenerator.Input(
+        val input = prepareInput(
+            sessionId = sessionId,
+            drawingId = drawingId,
             analysis = analysis,
             rules = rules,
             events = persisted.events,
             heatPoints = heatPoints,
-            profileSnapshot = profileSnapshot,
-            context = baseCtx.copy(
-                timestampLabel = startLabel,
-                inspectionTimeLabel = startLabel,
-            ),
-        )
+            profileJson = persisted.summary.inspectionProfileJson,
+            startTimeMs = persisted.summary.startTimeMs,
+        ) ?: return Result(false, errorMessage = "Report input unavailable")
 
         contentResolver.openOutputStream(targetUri)?.use { out ->
             generator.write(input, out)
@@ -109,6 +98,37 @@ class InspectionExcelExportService(
             success = true,
             fileUri = targetUri.toString(),
             fileName = fileName,
+        )
+    }
+
+    fun prepareInput(
+        sessionId: String,
+        drawingId: String,
+        analysis: com.example.cnv.analysis.InspectionAnalysisResult,
+        rules: com.example.cnv.rule.InspectionRuleResult,
+        events: List<com.example.cnv.inspection.PersistedInspectionEvent>,
+        heatPoints: List<com.example.cnv.heatmap.DrawingHeatPoint>,
+        profileJson: String,
+        startTimeMs: Long,
+    ): InspectionExcelReportGenerator.Input? {
+        val profileSnapshot = com.example.cnv.profile.InspectionProfileCodec.decodeSnapshot(profileJson)
+        val dateFmt = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
+        val startLabel = if (startTimeMs > 0L) {
+            dateFmt.format(java.util.Date(startTimeMs))
+        } else {
+            ""
+        }
+        val baseCtx = buildContext(drawingId, profileSnapshot)
+        return InspectionExcelReportGenerator.Input(
+            analysis = analysis,
+            rules = rules,
+            events = events,
+            heatPoints = heatPoints,
+            profileSnapshot = profileSnapshot,
+            context = baseCtx.copy(
+                timestampLabel = startLabel,
+                inspectionTimeLabel = startLabel,
+            ),
         )
     }
 

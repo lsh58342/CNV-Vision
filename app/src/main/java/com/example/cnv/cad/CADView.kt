@@ -158,6 +158,15 @@ class CADView @JvmOverloads constructor(
         invalidate()
     }
 
+    /** Fit camera to arbitrary world points (Replay overlay polyline, HeatMap, etc.). */
+    fun fitToWorldPoints(points: Collection<Pair<Double, Double>>) {
+        if (points.isEmpty()) return
+        val worlds = points.map { WorldCoordinate(it.first, it.second) }
+        val bounds = viewportInternal.boundsFromPoints(worlds)
+        viewportInternal.fitToRoute(bounds, width.toFloat(), height.toFloat())
+        invalidate()
+    }
+
     fun debugSnapshot(): CADDebugSnapshot {
         val stats = renderer.lastStats
         val pos = displayWorld ?: currentWorld

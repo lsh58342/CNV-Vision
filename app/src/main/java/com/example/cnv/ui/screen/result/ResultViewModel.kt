@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.inspection.InspectionResult
+import com.example.cnv.inspection.db.InspectionDbGate
 
 /**
  * Result Screen ViewModel — reads existing InspectionResult only (no new calculations).
@@ -18,6 +19,11 @@ class ResultViewModel : ViewModel() {
         val shockCount: Int,
         val coveragePercent: Float,
         val empty: Boolean = false,
+        val reportReady: Boolean = false,
+        val reportStatus: String? = null,
+        val excelFileName: String? = null,
+        val excelUri: String? = null,
+        val drawingId: String? = null,
     )
 
     private val catalog = FactoryCatalog.get()
@@ -27,8 +33,8 @@ class ResultViewModel : ViewModel() {
 
     fun loadLatest() {
         val result: InspectionResult? = catalog.inspections.underlying().latest()
-        _summary.value = if (result == null) {
-            SummaryUi(
+        if (result == null) {
+            _summary.value = SummaryUi(
                 sessionId = "—",
                 distanceMm = 0f,
                 durationSec = 0L,
@@ -36,17 +42,43 @@ class ResultViewModel : ViewModel() {
                 coveragePercent = 0f,
                 empty = true,
             )
-        } else {
-            val stats = result.statistics
-            SummaryUi(
-                sessionId = result.sessionId,
-                distanceMm = stats.totalDistanceMm,
-                durationSec = result.durationMs / 1000L,
-                shockCount = stats.shockCount,
-                // Existing statistic field — display only, no new coverage algorithm.
-                coveragePercent = stats.averageConfidence * 100f,
-                empty = false,
-            )
+            return
         }
+        val base = SummaryUi(
+            sessionId = result.sessionId,
+            distanceMm = result.statistics.totalDistanceMm,
+            durationSec = result.durationMs / 1000L,
+            shockCount = result.statistics.shockCount,
+            coveragePercent = result.routeQualityScore * 100f,
+            empty = false,
+        )
+        _summary.value = base
+        InspectionDbGate.submit(
+            block = {
+                val persisted = catalog.inspections.loadSession(result.sessionId)
+                val excel = catalog.excelArchives.getOrLoad(
+                    result.sessionId,
+                    catalog.inspections.underlying(),
+                )
+                val report = catalog.reports.getCached(result.sessionId)
+                Triple(persisted, excel, report)
+            },
+            onMain = { (persisted, excel, report) ->
+                val status = when {
+                    report != null -> {
+                        "${report.maintenanceSummary.overallStatus.name} · Grade ${report.maintenanceSummary.inspectionGrade.name}"
+                    }
+                    excel != null -> "Excel ready"
+                    else -> null
+                }
+                _summary.value = base.copy(
+                    reportReady = excel != null || report != null,
+                    reportStatus = status,
+                    excelFileName = excel?.fileName,
+                    excelUri = excel?.fileUri,
+                    drawingId = persisted?.summary?.drawingId,
+                )
+            },
+        )
     }
 }

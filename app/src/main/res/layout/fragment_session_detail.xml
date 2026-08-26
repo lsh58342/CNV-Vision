@@ -58,6 +58,15 @@
             android:layout_marginTop="6dp"
             android:minHeight="160dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_play_shock_clips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:text="@string/history_play_shock_clips"
+            android:visibility="gone" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

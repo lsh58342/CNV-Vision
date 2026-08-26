@@ -151,6 +151,17 @@ class ZoneInspectionRepository(
         inspectionRepository.appendEvents(sessionId, drawingId, events)
     }
 
+    fun linkClipToEvent(sessionId: String, shockTimestampNs: Long, clipPath: String): Boolean =
+        inspectionRepository.linkClipToEvent(sessionId, shockTimestampNs, clipPath)
+
+    fun updateEventClipPath(sessionId: String, timestampNs: Long, clipPath: String) {
+        inspectionRepository.updateEventClipPath(sessionId, timestampNs, clipPath)
+    }
+
+    fun registerPendingClipPath(timestampNs: Long, clipPath: String) {
+        inspectionRepository.registerPendingClipPath(timestampNs, clipPath)
+    }
+
     /** Background-thread only. */
     fun loadSession(sessionId: String): PersistedInspectionSession? =
         inspectionRepository.loadSession(sessionId)
@@ -159,6 +170,10 @@ class ZoneInspectionRepository(
         InspectionDbGate.submit(
             block = { loadSession(sessionId) },
             onMain = onResult,
+            onError = {
+                println("LOG[Review][SESSION] load failed: ${it.message}")
+                onResult(null)
+            },
         )
     }
 

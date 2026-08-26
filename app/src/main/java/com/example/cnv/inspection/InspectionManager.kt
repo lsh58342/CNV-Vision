@@ -8,6 +8,7 @@ import com.example.cnv.core.event.FusionEvent
 import com.example.cnv.core.event.PositionEvent
 import com.example.cnv.core.event.SystemEvent
 import com.example.cnv.map.Route
+import com.example.cnv.route.CoordinateMapper
 import java.util.UUID
 
 /**
@@ -30,6 +31,8 @@ class InspectionManager(
         val samplingRateHz: Float = InspectionConfig.DEFAULT_SAMPLING_RATE_HZ,
         /** Precomputed STEP 10-3 score — not recalculated here. */
         val routeQualityScore: Float,
+        /** World geometry — persisted so HeatMap/Replay keep ㄷ shape. */
+        val mapper: CoordinateMapper? = null,
     )
 
     @Volatile
@@ -53,7 +56,11 @@ class InspectionManager(
             stop()
         }
         val now = System.currentTimeMillis()
-        val snapshot = RouteSnapshot.from(request.route, capturedAtMs = now)
+        val snapshot = RouteSnapshot.from(
+            request.route,
+            capturedAtMs = now,
+            mapper = request.mapper,
+        )
         routeCache.put(snapshot)
         val freeze = InspectionFreezeSnapshot(
             routeVersion = snapshot.routeVersion,

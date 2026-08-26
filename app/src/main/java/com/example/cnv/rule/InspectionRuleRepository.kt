@@ -84,6 +84,8 @@ class InspectionRuleRepository(
                     onResult(null)
                     return@getOrAnalyzeAsync
                 }
+                // Warm analysis cache before evaluate (Review may read it immediately).
+                catalog.analysis.putCached(analysis)
                 onResult(
                     evaluateAndCache(
                         analysis = analysis,

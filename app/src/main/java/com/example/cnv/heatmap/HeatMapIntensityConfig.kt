@@ -18,10 +18,10 @@ enum class HeatIntensity {
 }
 
 data class HeatMapIntensityConfig(
-    val mediumThreshold: Float = DEFAULT_MEDIUM,
-    val highThreshold: Float = DEFAULT_HIGH,
-    val criticalThreshold: Float = DEFAULT_CRITICAL,
-    val recordThreshold: Float = DEFAULT_RECORD,
+    val mediumThreshold: Float = ShockUnits.DEFAULT_WARNING_THRESHOLD_G,
+    val highThreshold: Float = ShockUnits.DEFAULT_HIGH_THRESHOLD_G,
+    val criticalThreshold: Float = ShockUnits.DEFAULT_CRITICAL_THRESHOLD_G,
+    val recordThreshold: Float = ShockUnits.DEFAULT_RECORDING_THRESHOLD_G,
     val baseNoShockStrength: Float = DEFAULT_BASE_NO_SHOCK,
 ) {
     fun intensityFor(shockStrengthG: Float, hasShock: Boolean): HeatIntensity {
@@ -54,11 +54,21 @@ data class HeatMapIntensityConfig(
     }
 
     companion object {
+        /** Static factory defaults (compile-time). Prefer [active] at runtime. */
         val DEFAULT = HeatMapIntensityConfig()
-        const val DEFAULT_RECORD = ShockUnits.RECORDING_THRESHOLD_G // 1.03g
-        const val DEFAULT_MEDIUM = ShockUnits.WARNING_THRESHOLD_G // 1.06g
-        const val DEFAULT_HIGH = ShockUnits.HIGH_THRESHOLD_G // 1.13g
-        const val DEFAULT_CRITICAL = ShockUnits.CRITICAL_THRESHOLD_G // 1.20g
+
+        /** Live thresholds from Settings ([ShockThresholdStore]). */
+        fun active(): HeatMapIntensityConfig = HeatMapIntensityConfig(
+            recordThreshold = ShockUnits.recordingThresholdG(),
+            mediumThreshold = ShockUnits.warningThresholdG(),
+            highThreshold = ShockUnits.highThresholdG(),
+            criticalThreshold = ShockUnits.criticalThresholdG(),
+        )
+
+        const val DEFAULT_RECORD = ShockUnits.DEFAULT_RECORDING_THRESHOLD_G
+        const val DEFAULT_MEDIUM = ShockUnits.DEFAULT_WARNING_THRESHOLD_G
+        const val DEFAULT_HIGH = ShockUnits.DEFAULT_HIGH_THRESHOLD_G
+        const val DEFAULT_CRITICAL = ShockUnits.DEFAULT_CRITICAL_THRESHOLD_G
         const val DEFAULT_BASE_NO_SHOCK = 0f
         const val NORMALIZED_LOW = 0.25f
         const val NORMALIZED_MEDIUM = 0.50f

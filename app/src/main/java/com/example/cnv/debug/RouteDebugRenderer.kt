@@ -45,7 +45,11 @@ class RouteDebugRenderer(
         if (fromMapper != null && fromMapper.segmentWorld.isNotEmpty()) {
             return fromMapper
         }
-        return buildFallbackLayout(route)
+        println(
+            "LOG[RouteDebugRenderer][NO_MAPPER] refusing horizontal fallback " +
+                "segments=${route.segments.size}",
+        )
+        return Layout(nodeWorld = emptyMap(), segmentWorld = emptyMap())
     }
 
     fun draw(

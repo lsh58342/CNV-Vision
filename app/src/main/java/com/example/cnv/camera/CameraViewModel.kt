@@ -6,6 +6,10 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.video.Quality
+import androidx.camera.video.QualitySelector
+import androidx.camera.video.Recorder
+import androidx.camera.video.VideoCapture
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -29,7 +33,19 @@ class CameraViewModel : ViewModel() {
     private var boundOwner: LifecycleOwner? = null
 
     @Volatile
+    private var boundContext: Context? = null
+
+    @Volatile
     private var isBound: Boolean = false
+
+    @Volatile
+    private var videoCapture: VideoCapture<Recorder>? = null
+
+    private val recorder: Recorder = Recorder.Builder()
+        .setQualitySelector(QualitySelector.from(Quality.SD))
+        .build()
+
+    fun videoCapture(): VideoCapture<Recorder>? = videoCapture
 
     fun bindPreview(
         lifecycleOwner: LifecycleOwner,
@@ -37,7 +53,6 @@ class CameraViewModel : ViewModel() {
         context: Context,
         analyzer: ImageAnalysis.Analyzer? = null,
     ) {
-        // Skip CameraX rebind when surface + analyzer already active (STEP 20).
         if (isBound &&
             boundOwner === lifecycleOwner &&
             boundPreviewView === previewView &&
@@ -49,6 +64,7 @@ class CameraViewModel : ViewModel() {
         boundAnalyzer = analyzer
         boundPreviewView = previewView
         boundOwner = lifecycleOwner
+        boundContext = context.applicationContext
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener(
             {
@@ -72,14 +88,29 @@ class CameraViewModel : ViewModel() {
                     }
 
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
-                        lifecycleOwner,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
-                        *useCases.toTypedArray(),
-                    )
+                    val capture = VideoCapture.withOutput(recorder)
+                    val boundWithVideo = runCatching {
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            *(useCases + capture).toTypedArray(),
+                        )
+                        capture
+                    }.getOrElse {
+                        ProductionLog.error("CNV.Camera", "VideoCapture bind failed; preview-only", it)
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            *useCases.toTypedArray(),
+                        )
+                        null
+                    }
+                    videoCapture = boundWithVideo
                     isBound = true
                 }.onFailure { err ->
                     isBound = false
+                    videoCapture = null
                     ProductionLog.error("CNV.Camera", "Camera bind failed", err)
                 }
             },
@@ -87,7 +118,6 @@ class CameraViewModel : ViewModel() {
         )
     }
 
-    /** Force rebind (recovery path). */
     fun rebindIfPossible(context: Context) {
         val owner = boundOwner ?: return
         val preview = boundPreviewView ?: return
@@ -95,10 +125,10 @@ class CameraViewModel : ViewModel() {
         bindPreview(owner, preview, context, boundAnalyzer)
     }
 
-    /** Stops analysis / preview binding. Safe to call from Activity onStop. */
     fun unbind() {
         isBound = false
         boundAnalyzer = null
+        videoCapture = null
         cameraProviderRef.get()?.unbindAll()
     }
 

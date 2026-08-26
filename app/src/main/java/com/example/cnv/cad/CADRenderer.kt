@@ -44,9 +44,27 @@ class CADRenderer(
     fun buildLayout(route: Route, mapper: CoordinateMapper?): Layout {
         val fromMapper = mapper?.let { buildFromMapper(route, it) }
         if (fromMapper != null && fromMapper.segmentWorld.isNotEmpty()) {
+            val ys = fromMapper.segmentWorld.values.flatMap { listOf(it.first.y, it.second.y) }
+            val ySpan = (ys.maxOrNull() ?: 0.0) - (ys.minOrNull() ?: 0.0)
+            println(
+                "LOG[CADRenderer][WORLD] segments=${fromMapper.segmentWorld.size} ySpan=$ySpan",
+            )
             return fromMapper
         }
-        return buildFallbackLayout(route)
+        // Never unwrap multi-segment routes onto Y=0 — that draws a fake straight line.
+        println(
+            "LOG[CADRenderer][NO_MAPPER] refusing horizontal fallback " +
+                "segments=${route.segments.size} hasMapper=${mapper != null}",
+        )
+        return buildEmptyLayout(route)
+    }
+
+    private fun buildEmptyLayout(route: Route): Layout {
+        return finalizeLayout(
+            route = route,
+            nodeWorld = emptyMap(),
+            segmentWorld = emptyMap(),
+        )
     }
 
     fun draw(

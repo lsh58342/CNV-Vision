@@ -539,7 +539,11 @@ class RouteGeometryTraceTest {
         )
         val repo = RouteRepository()
         val gen = RouteGenerator(repo).generate(candidates, "u")!!
-        val horizontal = com.example.cnv.heatmap.HeatMapRouteLayout.build(gen.route, worldMapper = null)!!
+        val horizontal = com.example.cnv.heatmap.HeatMapRouteLayout.build(
+            gen.route,
+            worldMapper = null,
+            allowHorizontalFallback = true,
+        )!!
         val world = com.example.cnv.heatmap.HeatMapRouteLayout.build(gen.route, worldMapper = gen.mapper)!!
 
         val hYs = gen.route.segments.mapNotNull { seg ->

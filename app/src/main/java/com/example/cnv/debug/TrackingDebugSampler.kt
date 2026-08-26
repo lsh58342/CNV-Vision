@@ -55,11 +55,17 @@ class TrackingDebugSampler(
         val routeHeading = routeHeadingDeg(route, position?.segmentId, mapperProvider())
         val gyroH = attitudeProbe.gyroIntegratedHeadingDeg
         val ofH = OpticalFlowDebugHub.headingDeg
-        val fusionH = TrackingAttitudeProbe.blendHeading(gyroH, ofH, 0.65f)
+        val fusionH = if (com.example.cnv.vio.VioStateHub.latestPose != null) {
+            com.example.cnv.vio.VioStateHub.deviceHeadingDeg
+        } else {
+            TrackingAttitudeProbe.blendHeading(gyroH, ofH, 0.65f)
+        }
+        val vio = com.example.cnv.vio.VioStateHub.quality
         val state = when {
             inspectionManager.state() != InspectionState.RUNNING -> "STOPPED"
-            trackingLabel == "LOST" -> "LOST"
-            trackingLabel == "SEARCHING" -> "SEARCHING"
+            trackingLabel == "LOST" || vio == com.example.cnv.position.TrackingQuality.LOST -> "LOST"
+            trackingLabel == "SEARCHING" || vio == com.example.cnv.position.TrackingQuality.WARNING ->
+                "WARNING"
             trackingLabel == "GOOD" || position != null -> "GOOD"
             else -> "SEARCHING"
         }
@@ -72,24 +78,35 @@ class TrackingDebugSampler(
             routeSegmentProgress = position?.progress ?: 0f,
             routeTotalProgress = totalProg,
             routeSegmentCount = ordered.size,
-            worldX = world?.x ?: 0.0,
-            worldY = world?.y ?: 0.0,
-            routePositionMm = routeMm,
+            worldX = world?.x ?: com.example.cnv.vio.VioStateHub.projectedX,
+            worldY = world?.y ?: com.example.cnv.vio.VioStateHub.projectedY,
+            routePositionMm = if (com.example.cnv.vio.VioStateHub.routeProgressMm > 0f) {
+                com.example.cnv.vio.VioStateHub.routeProgressMm
+            } else {
+                routeMm
+            },
             gyroHeadingDeg = gyroH,
             opticalFlowHeadingDeg = ofH,
             fusionHeadingDeg = fusionH,
-            routeHeadingDeg = routeHeading,
+            routeHeadingDeg = if (com.example.cnv.vio.VioStateHub.routeHeadingDeg != 0f) {
+                com.example.cnv.vio.VioStateHub.routeHeadingDeg
+            } else {
+                routeHeading
+            },
             trackingState = state,
-            trackedFeatureCount = OpticalFlowDebugHub.trackedFeatureCount
+            trackedFeatureCount = com.example.cnv.vio.VioStateHub.trackedFeatureCount
                 .takeIf { it > 0 }
+                ?: OpticalFlowDebugHub.trackedFeatureCount
+                    .takeIf { it > 0 }
                 ?: (fusion?.trackingCount ?: 0),
             lostFeatureCount = OpticalFlowDebugHub.lostFeatureCount,
             reinitializeCount = OpticalFlowDebugHub.reinitializeCount,
             nearestSegmentId = position?.segmentId.orEmpty(),
-            distanceToSegmentMm = 0f,
+            distanceToSegmentMm = com.example.cnv.vio.VioStateHub.distanceToRouteMm,
             currentCandidate = candidate,
             mapMatchConfidence = position?.confidence ?: fusion?.confidence ?: 0f,
-            gyroListenerRegistered = attitudeProbe.gyroRegistered || imuManager.isRunning(),
+            gyroListenerRegistered = attitudeProbe.gyroRegistered || imuManager.isRunning() ||
+                com.example.cnv.vio.VioStateHub.gyroAvailable,
             yawDeg = attitudeProbe.yawDeg,
             pitchDeg = attitudeProbe.pitchDeg,
             rollDeg = attitudeProbe.rollDeg,

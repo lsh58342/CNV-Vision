@@ -46,6 +46,14 @@ interface InspectionEventDao {
     @Query("SELECT * FROM inspection_events WHERE sessionId = :sessionId ORDER BY timestampNs ASC")
     fun eventsForSession(sessionId: String): List<InspectionEventEntity>
 
+    @Query(
+        """
+        UPDATE inspection_events SET clipPath = :path
+        WHERE sessionId = :sessionId AND timestampNs = :timestampNs
+        """,
+    )
+    fun updateClipPath(sessionId: String, timestampNs: Long, path: String)
+
     @Query("DELETE FROM inspection_events WHERE sessionId = :sessionId")
     fun deleteEventsForSession(sessionId: String)
 

@@ -1,5 +1,6 @@
 package com.example.cnv.ui.screen.result
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -135,38 +136,85 @@ class InspectionResultScreen : BaseScreen() {
         val shockValue = shockCard.findViewById<TextView>(R.id.status_card_value)
         val coverageValue = coverageCard.findViewById<TextView>(R.id.status_card_value)
 
-        viewModel.summary.observe(viewLifecycleOwner) { summary ->
-            if (summary.empty) {
-                view.findViewById<TextView>(R.id.result_toolbar_subtitle).text =
-                    getString(R.string.result_empty)
-            }
-            distanceValue.text = getString(R.string.insp_distance_value, summary.distanceMm)
-            durationValue.text = getString(R.string.result_duration_value, summary.durationSec)
-            shockValue.text = getString(R.string.insp_shock_value, summary.shockCount)
-            coverageValue.text = getString(R.string.result_coverage_value, summary.coveragePercent)
-        }
-        viewModel.loadLatest()
-
         val actionsHeader = view.findViewById<FrameLayout>(R.id.result_actions_header_slot)
         actionsHeader.addView(
             UiComponents.inflateSectionHeader(actionsHeader, getString(R.string.result_actions_section)),
         )
 
+        val reportHeader = view.findViewById<FrameLayout>(R.id.result_report_status_slot)
+        reportHeader.addView(
+            UiComponents.inflateSectionHeader(reportHeader, getString(R.string.result_auto_report_section)),
+        )
+        val reportStatus = TextView(requireContext()).apply {
+            setTextAppearance(com.google.android.material.R.style.TextAppearance_MaterialComponents_Body2)
+            setTextColor(requireContext().getColor(R.color.cnv_text_secondary))
+        }
+        reportHeader.addView(reportStatus)
+
+        val reportSlot = view.findViewById<FrameLayout>(R.id.result_report_slot)
+        val maintenanceBtn = UiComponents.inflatePrimaryButton(
+            reportSlot,
+            getString(R.string.result_open_maintenance_report),
+        )
+        reportSlot.addView(maintenanceBtn)
+
+        val autoExcelSlot = view.findViewById<FrameLayout>(R.id.result_auto_excel_slot)
+        val autoExcelBtn = UiComponents.inflateSecondaryButton(
+            autoExcelSlot,
+            getString(R.string.result_open_auto_excel),
+        )
+        autoExcelSlot.addView(autoExcelBtn)
+
+        maintenanceBtn.setOnClickListener {
+            val summary = viewModel.summary.value
+            val drawingId = summary?.drawingId ?: CurrentContext.get().drawingId
+            if (summary == null || summary.empty || drawingId.isNullOrBlank()) {
+                Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            nav().navigate(
+                CnvDestination.MAINTENANCE_REPORT,
+                args = Bundle().apply {
+                    putString(NavArgs.SESSION_ID, summary.sessionId)
+                    putString(NavArgs.DRAWING_ID, drawingId)
+                },
+            )
+        }
+
+        autoExcelBtn.setOnClickListener {
+            val summary = viewModel.summary.value
+            val uri = summary?.excelUri?.takeIf { it.isNotBlank() }?.let(Uri::parse)
+            if (uri == null) {
+                Toast.makeText(requireContext(), R.string.excel_open_fail, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            runCatching {
+                startActivity(ExcelExportUi.openIntent(uri))
+            }.onFailure {
+                Toast.makeText(requireContext(), R.string.excel_open_fail, Toast.LENGTH_SHORT).show()
+            }
+        }
+
         val heatmapSlot = view.findViewById<FrameLayout>(R.id.result_heatmap_slot)
-        val heatmapBtn = UiComponents.inflatePrimaryButton(heatmapSlot, getString(R.string.result_open_heatmap))
-        heatmapSlot.addView(heatmapBtn)
-        heatmapBtn.setOnClickListener {
+        val reviewBtn = UiComponents.inflatePrimaryButton(
+            heatmapSlot,
+            getString(R.string.review_title),
+        )
+        heatmapSlot.addView(reviewBtn)
+        reviewBtn.setOnClickListener {
             val summary = viewModel.summary.value
             val drawingId = CurrentContext.get().drawingId
             if (summary == null || summary.empty || drawingId.isNullOrBlank()) {
                 Toast.makeText(requireContext(), R.string.history_no_session_selected, Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val args = Bundle().apply {
-                putString(NavArgs.SESSION_ID, summary.sessionId)
-                putString(NavArgs.DRAWING_ID, drawingId)
-            }
-            nav().navigate(CnvDestination.HEATMAP_VIEWER, args = args)
+            nav().navigate(
+                CnvDestination.INSPECTION_REVIEW,
+                args = Bundle().apply {
+                    putString(NavArgs.SESSION_ID, summary.sessionId)
+                    putString(NavArgs.DRAWING_ID, drawingId)
+                },
+            )
         }
 
         val historySlot = view.findViewById<FrameLayout>(R.id.result_history_slot)
@@ -208,5 +256,31 @@ class InspectionResultScreen : BaseScreen() {
         finishBtn.setOnClickListener {
             nav().navigateClearTo(CnvDestination.DRAWING_WORKSPACE)
         }
+
+        viewModel.summary.observe(viewLifecycleOwner) { summary ->
+            if (summary.empty) {
+                view.findViewById<TextView>(R.id.result_toolbar_subtitle).text =
+                    getString(R.string.result_empty)
+            }
+            distanceValue.text = getString(R.string.insp_distance_value, summary.distanceMm)
+            durationValue.text = getString(R.string.result_duration_value, summary.durationSec)
+            shockValue.text = getString(R.string.insp_shock_value, summary.shockCount)
+            coverageValue.text = getString(R.string.result_coverage_value, summary.coveragePercent)
+            reportStatus.text = when {
+                summary.reportStatus != null ->
+                    getString(R.string.result_auto_report_ready, summary.reportStatus)
+                summary.empty -> ""
+                else -> getString(R.string.result_auto_report_pending)
+            }
+            maintenanceBtn.isEnabled = !summary.empty
+            val hasExcel = !summary.excelUri.isNullOrBlank()
+            autoExcelBtn.isEnabled = hasExcel
+            autoExcelBtn.text = if (hasExcel && !summary.excelFileName.isNullOrBlank()) {
+                getString(R.string.result_open_auto_excel_named, summary.excelFileName)
+            } else {
+                getString(R.string.result_open_auto_excel)
+            }
+        }
+        viewModel.loadLatest()
     }
 }

@@ -91,8 +91,33 @@ class InspectionAnalysisRepository(
         heatPointsOverride: List<DrawingHeatPoint>? = null,
         allowRecompute: Boolean = false,
     ): InspectionAnalysisResult? {
+        return runCatching {
+            analyzeSyncInternal(
+                sessionId = sessionId,
+                preferredDrawingId = preferredDrawingId,
+                routeOverride = routeOverride,
+                heatPointsOverride = heatPointsOverride,
+                allowRecompute = allowRecompute,
+            )
+        }.onFailure {
+            println("LOG[Analysis][FAIL] session=$sessionId err=${it.message}")
+        }.getOrNull()
+    }
+
+    private fun analyzeSyncInternal(
+        sessionId: String,
+        preferredDrawingId: String? = null,
+        routeOverride: Route? = null,
+        heatPointsOverride: List<DrawingHeatPoint>? = null,
+        allowRecompute: Boolean = false,
+    ): InspectionAnalysisResult? {
+        val mustRecompute = allowRecompute || heatPointsOverride != null || routeOverride != null
         synchronized(lock) {
-            cache[sessionId]?.let { return it }
+            if (mustRecompute) {
+                cache.remove(sessionId)
+            } else {
+                cache[sessionId]?.let { return it }
+            }
         }
         val persisted = catalog.inspections.loadSession(sessionId) ?: return null
         if (preferredDrawingId != null && persisted.summary.drawingId != preferredDrawingId) {
@@ -106,35 +131,43 @@ class InspectionAnalysisRepository(
             }
         }
         val drawingId = persisted.summary.drawingId
+        val snap = RouteSnapshotCodec.decode(persisted.summary.routeSnapshotJson)
         val route = routeOverride
-            ?: RouteSnapshotCodec.decode(persisted.summary.routeSnapshotJson)?.toRoute()
+            ?: snap?.toRoute()
             ?: catalog.routes.currentRoute()
         val zones = catalog.zones.forDrawing(drawingId)
-        val layout = route?.let { HeatMapRouteLayout.build(it) }
+        val layout = route?.let {
+            HeatMapRouteLayout.build(
+                it,
+                worldMapper = snap?.toMapper()
+                    ?: catalog.routes.underlying().currentMapper(),
+            )
+        }
+        val sessionHeatPoints = heatPointsOverride
+            ?: com.example.cnv.heatmap.HeatPointsCodec.decode(persisted.summary.heatPointsJson)
         val heatLayer = when {
             heatPointsOverride != null -> DrawingHeatLayer(
                 drawingId = drawingId,
                 points = heatPointsOverride,
                 sourceSessionIds = listOf(sessionId),
             )
-            else -> {
-                val fromSession = com.example.cnv.heatmap.HeatPointsCodec
-                    .decode(persisted.summary.heatPointsJson)
-                if (fromSession.isNotEmpty()) {
-                    DrawingHeatLayer(
-                        drawingId = drawingId,
-                        points = fromSession,
-                        sourceSessionIds = listOf(sessionId),
-                    )
-                } else {
-                    catalog.heatMaps.loadHeatLayer(drawingId)
-                }
-            }
+            sessionHeatPoints.isNotEmpty() -> DrawingHeatLayer(
+                drawingId = drawingId,
+                points = sessionHeatPoints,
+                sourceSessionIds = listOf(sessionId),
+            )
+            else -> catalog.heatMaps.loadHeatLayer(drawingId)
+        }
+        val drawingHeatForCoverage = if (sessionHeatPoints.isNotEmpty()) {
+            catalog.heatMaps.loadHeatLayer(drawingId)
+        } else {
+            null
         }
         val result = engine.analyze(
             InspectionAnalysisInput(
                 session = persisted,
                 heatLayer = heatLayer,
+                drawingHeatLayerForCoverage = drawingHeatForCoverage,
                 zones = zones,
                 route = route,
                 layout = layout,

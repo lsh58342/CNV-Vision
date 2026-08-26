@@ -3,26 +3,30 @@ package com.example.cnv.imu
 /**
  * Shock unit helpers. Detection works in m/s²; storage / HeatMap / Export use g.
  *
- * Record  = 1.03 g
- * Warning = 1.06 g
- * Critical = 1.20 g
+ * Defaults: Record 1.03 g · Warning 1.06 g · Critical 1.20 g
+ * Live values come from [ShockThresholdStore] (Settings).
  */
 object ShockUnits {
     const val STANDARD_GRAVITY_MS2 = 9.80665f
 
-    /** Record Threshold — ≥ this must be recorded (HeatMap / Peak / Export). */
-    const val RECORDING_THRESHOLD_G = 1.03f
+    /** Default Record Threshold. */
+    const val DEFAULT_RECORDING_THRESHOLD_G = 1.03f
 
-    /** Warning Threshold — yellow / elevated band. */
-    const val WARNING_THRESHOLD_G = 1.06f
+    /** Default Warning Threshold. */
+    const val DEFAULT_WARNING_THRESHOLD_G = 1.06f
 
-    /** Critical Threshold — red / critical band. */
-    const val CRITICAL_THRESHOLD_G = 1.20f
+    /** Default Critical Threshold. */
+    const val DEFAULT_CRITICAL_THRESHOLD_G = 1.20f
 
-    /** Soft orange band between Warning and Critical (display only). */
-    const val HIGH_THRESHOLD_G = 1.13f
+    /** Default soft orange band between Warning and Critical. */
+    const val DEFAULT_HIGH_THRESHOLD_G = 1.13f
 
-    // Legacy aliases used by HeatMapIntensityConfig.
+    // Legacy aliases — prefer [recordingThresholdG] / store for runtime.
+    const val RECORDING_THRESHOLD_G = DEFAULT_RECORDING_THRESHOLD_G
+    const val WARNING_THRESHOLD_G = DEFAULT_WARNING_THRESHOLD_G
+    const val CRITICAL_THRESHOLD_G = DEFAULT_CRITICAL_THRESHOLD_G
+    const val HIGH_THRESHOLD_G = DEFAULT_HIGH_THRESHOLD_G
+
     const val BAND_GREEN_MAX_G = WARNING_THRESHOLD_G
     const val BAND_YELLOW_MAX_G = HIGH_THRESHOLD_G
     const val BAND_ORANGE_MAX_G = CRITICAL_THRESHOLD_G
@@ -45,23 +49,31 @@ object ShockUnits {
 
     fun gToMs2(g: Float): Float = g * STANDARD_GRAVITY_MS2
 
-    fun recordingThresholdMs2(): Float = gToMs2(RECORDING_THRESHOLD_G)
+    fun recordingThresholdG(): Float = ShockThresholdStore.recordingThresholdG()
 
-    fun warningThresholdMs2(): Float = gToMs2(WARNING_THRESHOLD_G)
+    fun warningThresholdG(): Float = ShockThresholdStore.warningThresholdG()
 
-    fun criticalThresholdMs2(): Float = gToMs2(CRITICAL_THRESHOLD_G)
+    fun highThresholdG(): Float = ShockThresholdStore.highThresholdG()
 
-    fun isRecordableG(shockG: Float): Boolean = shockG >= RECORDING_THRESHOLD_G
+    fun criticalThresholdG(): Float = ShockThresholdStore.criticalThresholdG()
 
-    fun isWarningG(shockG: Float): Boolean = shockG >= WARNING_THRESHOLD_G
+    fun recordingThresholdMs2(): Float = gToMs2(recordingThresholdG())
 
-    fun isCriticalG(shockG: Float): Boolean = shockG >= CRITICAL_THRESHOLD_G
+    fun warningThresholdMs2(): Float = gToMs2(warningThresholdG())
+
+    fun criticalThresholdMs2(): Float = gToMs2(criticalThresholdG())
+
+    fun isRecordableG(shockG: Float): Boolean = shockG >= recordingThresholdG()
+
+    fun isWarningG(shockG: Float): Boolean = shockG >= warningThresholdG()
+
+    fun isCriticalG(shockG: Float): Boolean = shockG >= criticalThresholdG()
 
     /**
      * Normalize a profile / UI threshold that may be stored as g or m/s² into g.
      */
     fun asThresholdG(raw: Float): Float {
-        if (raw <= 0f) return RECORDING_THRESHOLD_G
+        if (raw <= 0f) return recordingThresholdG()
         return if (raw > 4f) ms2ToG(raw) else raw
     }
 

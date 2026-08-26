@@ -1,5 +1,6 @@
 package com.example.cnv.ui.screen.history
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,7 +9,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.FileProvider
+import androidx.core.view.isVisible
 import com.example.cnv.R
+import com.example.cnv.camera.ShockClipStorage
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.heatmap.HeatPointsCodec
@@ -26,6 +30,7 @@ import com.example.cnv.ui.screen.inspection.ShockGraphState
 import com.example.cnv.ui.screen.inspection.ShockGraphView
 import com.example.cnv.ui.screen.review.HeatMapPreviewView
 import com.google.android.material.button.MaterialButton
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -128,6 +133,7 @@ class SessionDetailScreen : BaseScreen() {
             }
             bindDetail(view, summary)
             bindShockGraph(view, persisted.events, summary)
+            bindShockClips(view, persisted.events)
             bindHeatMap(view, summary, did)
             bindActions(view, did, sid)
             catalog.analysis.getOrAnalyzeAsync(sid, did) { analysis ->
@@ -153,7 +159,7 @@ class SessionDetailScreen : BaseScreen() {
         )
         val thr = ShockUnits.asThresholdG(snap.sensor.minimumShockThreshold)
             .takeIf { it > 0f }
-            ?: ShockUnits.RECORDING_THRESHOLD_G
+            ?: ShockUnits.recordingThresholdG()
         val state = ShockGraphState.fromSamples(
             samples = samples,
             threshold = thr,
@@ -179,6 +185,54 @@ class SessionDetailScreen : BaseScreen() {
                 "shockEvents=${events.count { it.hasShock }} graphPoints=${state.samples.size} " +
                 "historyLoad=true",
         )
+    }
+
+    private fun bindShockClips(view: View, events: List<PersistedInspectionEvent>) {
+        val clips = events.filter { it.hasShock && it.clipPath.isNotBlank() }
+        val button = view.findViewById<MaterialButton>(R.id.button_play_shock_clips)
+        if (clips.isEmpty()) {
+            button.isVisible = false
+            return
+        }
+        button.isVisible = true
+        button.text = getString(R.string.history_play_shock_clips) + " (${clips.size})"
+        button.setOnClickListener {
+            val labels = clips.map { event ->
+                getString(
+                    R.string.history_shock_clip_item,
+                    event.peakG.coerceAtLeast(event.shockStrength),
+                    dateFmt.format(Date(event.timestampNs / 1_000_000L)),
+                )
+            }.toTypedArray()
+            AlertDialog.Builder(requireContext())
+                .setTitle(R.string.history_play_shock_clips)
+                .setItems(labels) { _, which ->
+                    playClip(clips[which].clipPath)
+                }
+                .show()
+        }
+    }
+
+    private fun playClip(path: String) {
+        val file = ShockClipStorage.resolveClipFile(path)
+        if (file == null) {
+            Toast.makeText(requireContext(), R.string.history_clip_missing, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val uri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            file,
+        )
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "video/mp4")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        runCatching {
+            startActivity(intent)
+        }.onFailure {
+            Toast.makeText(requireContext(), R.string.history_clip_missing, Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun bindHeatMap(

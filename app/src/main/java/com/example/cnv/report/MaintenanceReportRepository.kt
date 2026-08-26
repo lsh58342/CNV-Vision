@@ -54,6 +54,16 @@ class MaintenanceReportRepository(
         }
     }
 
+    fun cacheReport(report: MaintenanceReport) {
+        synchronized(lock) {
+            cache[report.sessionId] = report
+            while (cache.size > MAX_CACHE) {
+                val oldest = cache.keys.firstOrNull() ?: break
+                cache.remove(oldest)
+            }
+        }
+    }
+
     private fun assembleAndCache(
         analysis: com.example.cnv.analysis.InspectionAnalysisResult,
         rules: com.example.cnv.rule.InspectionRuleResult,

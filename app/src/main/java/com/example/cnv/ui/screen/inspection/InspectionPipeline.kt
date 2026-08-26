@@ -1,14 +1,20 @@
 package com.example.cnv.ui.screen.inspection
 
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.view.PreviewView
 import com.example.cnv.camera.CameraManager
+import com.example.cnv.camera.ShockClipRecorder
+import com.example.cnv.camera.ShockClipSettingsStore
 import com.example.cnv.config.CalibrationManager
 import com.example.cnv.core.config.IMUConfig
+import com.example.cnv.core.event.CoreEventModule
+import com.example.cnv.core.event.ShockEvent
 import com.example.cnv.debug.RouteDebugController
 import com.example.cnv.debug.RouteDebugView
 import com.example.cnv.debug.TrackingAttitudeProbe
@@ -58,7 +64,8 @@ class InspectionPipeline(
     private val cameraManager = CameraManager(activity, bootstrapPreview)
     private val imuManager = IMUManager(activity)
     private val fusionEngine = FusionEngine(
-        initialCalibrated = CalibrationManager.getInstance(activity).isCalibrated(),
+        // VIO scale does not use walk mmPerPixel; treat as ready for fusion confidence.
+        initialCalibrated = true,
     )
     private val speedValidatorEngine = SpeedValidatorEngine(
         profileProvider = { catalog.drawings.current()?.conveyorProfile },
@@ -97,9 +104,22 @@ class InspectionPipeline(
     private var lastOverlayMarkerX: Double? = null
     private var lastOverlayMarkerY: Double? = null
 
+    private val shockClipRecorder = ShockClipRecorder(activity)
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     /** Ring buffer for live shock graph (g). */
     private val shockSeries = ArrayDeque<Float>(SHOCK_SERIES_CAP)
-    private val shockThreshold: Float = com.example.cnv.imu.ShockUnits.RECORDING_THRESHOLD_G
+    private val shockThreshold: Float
+        get() = com.example.cnv.imu.ShockUnits.recordingThresholdG()
+
+    private val onShockClip: (ShockEvent) -> Unit = { event ->
+        if (inspectionManager.state() == InspectionState.RUNNING) {
+            val peakG = com.example.cnv.imu.ShockUnits.ms2ToG(event.peakAcceleration)
+            if (com.example.cnv.imu.ShockUnits.isRecordableG(peakG)) {
+                shockClipRecorder.onRecordableShock(event.timestampNs, peakG)
+            }
+        }
+    }
 
     init {
         // Route must already exist from Commissioning — never auto-generate sample routes.
@@ -128,6 +148,23 @@ class InspectionPipeline(
             },
             layoutProvider = { ensureDashboardLayout() },
         )
+        shockClipRecorder.setOnClipSaved { result ->
+            InspectionDbGate.execute {
+                catalog.inspections.updateEventClipPath(
+                    result.sessionId,
+                    result.timestampNs,
+                    result.file.absolutePath,
+                )
+            }
+        }
+        CoreEventModule.eventDispatcher().subscribe(ShockEvent::class.java, onShockClip)
+    }
+
+    private fun attachShockVideoCapture() {
+        mainHandler.postDelayed({
+            if (detached) return@postDelayed
+            cameraManager.videoCapture()?.let { shockClipRecorder.attachVideoCapture(it) }
+        }, 800L)
     }
 
     fun speedValidator(): SpeedValidatorEngine = speedValidatorEngine
@@ -140,6 +177,7 @@ class InspectionPipeline(
             val analyzer = openCvManager.start()
             cameraManager.start(analyzer)
             cameraRunning = true
+            attachShockVideoCapture()
         }
         bindProductionWatchdog()
     }
@@ -147,11 +185,13 @@ class InspectionPipeline(
     fun detach() {
         if (detached) return
         detached = true
+        CoreEventModule.eventDispatcher().unsubscribe(ShockEvent::class.java, onShockClip)
         unbindProductionWatchdog()
         if (inspectionManager.state() == InspectionState.RUNNING) {
             stopSession()
         }
         if (cameraRunning) {
+            shockClipRecorder.endSession()
             cameraManager.stop()
             openCvManager.release()
             cameraRunning = false
@@ -164,6 +204,7 @@ class InspectionPipeline(
         com.example.cnv.production.RecoveryCoordinator.registerCameraReinit {
             if (!detached && cameraRunning) {
                 cameraManager.reinitialize()
+                attachShockVideoCapture()
             }
         }
         watchdog.setListener(
@@ -261,6 +302,8 @@ class InspectionPipeline(
                 deviceInformation = "${Build.MANUFACTURER} ${Build.MODEL}",
                 samplingRateHz = 1_000_000f / IMUConfig.DEFAULT_SAMPLING_PERIOD_US,
                 routeQualityScore = quality,
+                mapper = routeRepository.currentMapper()
+                    ?: routeGenerator.latestResult()?.mapper,
             ),
         )
         val drawingId = CurrentContext.get().drawingId
@@ -326,6 +369,10 @@ class InspectionPipeline(
                 catalog.inspectionProfiles.saveSync(drawingId, profile)
             }
         }
+        if (ShockClipSettingsStore.isEnabled(activity)) {
+            attachShockVideoCapture()
+            shockClipRecorder.beginSession(session.sessionId)
+        }
         return InspectionStartResult(started = true, preflight = InspectionPreflight.ready())
     }
 
@@ -338,6 +385,7 @@ class InspectionPipeline(
         val appVersion = active?.freeze?.appVersion.orEmpty()
         val profileSnap = sessionConveyorSnapshot
         sessionConveyorSnapshot = null
+        shockClipRecorder.endSession()
         val speedSummary = speedValidatorEngine.endSession()
         val result = inspectionManager.stop()
         val drawingId = CurrentContext.get().drawingId
@@ -348,7 +396,13 @@ class InspectionPipeline(
                 }.getOrNull().orEmpty().ifBlank { "1.0" }
             }
             val routeForHeat = sessionRoute?.toRoute()
-            val mapper = routeGenerator.latestResult()?.mapper
+            val mapper = sessionRoute?.toMapper()
+                ?: routeRepository.currentMapper()
+                ?: routeGenerator.latestResult()?.mapper
+            println(
+                "LOG[Inspection][FINISH] session=$sessionId " +
+                    "hasRoute=${routeForHeat != null} hasMapper=${mapper != null}",
+            )
             InspectionDbGate.execute {
                 val persisted = catalog.inspections.loadSession(sessionId)
                 val heatPoints = if (persisted != null && routeForHeat != null) {
@@ -361,22 +415,34 @@ class InspectionPipeline(
                 } else {
                     emptyList()
                 }
+                println("LOG[Inspection][FINISH] heatPoints=${heatPoints.size}")
                 val heatJson = com.example.cnv.heatmap.HeatPointsCodec.encode(heatPoints)
-                val analysis = catalog.analysis.analyzeAndPersistSync(
-                    sessionId = sessionId,
-                    preferredDrawingId = drawingId,
-                    routeOverride = routeForHeat,
-                    heatPointsOverride = heatPoints,
-                )
-                val rules = if (analysis != null) {
-                    catalog.rules.evaluateAndPersistSync(
+                val analysis = runCatching {
+                    catalog.analysis.analyzeAndPersistSync(
                         sessionId = sessionId,
                         preferredDrawingId = drawingId,
-                        analysisOverride = analysis,
+                        routeOverride = routeForHeat,
+                        heatPointsOverride = heatPoints,
                     )
+                }.onFailure {
+                    println("LOG[Inspection][FINISH] analysis failed: ${it.message}")
+                }.getOrNull()
+                val rules = if (analysis != null) {
+                    runCatching {
+                        catalog.rules.evaluateAndPersistSync(
+                            sessionId = sessionId,
+                            preferredDrawingId = drawingId,
+                            analysisOverride = analysis,
+                        )
+                    }.onFailure {
+                        println("LOG[Inspection][FINISH] rules failed: ${it.message}")
+                    }.getOrNull()
                 } else {
                     null
                 }
+                println(
+                    "LOG[Inspection][FINISH] analysis=${analysis != null} rules=${rules != null}",
+                )
                 catalog.inspections.finishSession(
                     drawingId = drawingId,
                     result = result,
@@ -392,6 +458,16 @@ class InspectionPipeline(
                     }.orEmpty(),
                     heatPointsJson = heatJson,
                 )
+                if (analysis != null && rules != null) {
+                    com.example.cnv.report.AutoReportService.generateSync(
+                        catalog = catalog,
+                        sessionId = sessionId,
+                        drawingId = drawingId,
+                        analysis = analysis,
+                        rules = rules,
+                        heatPoints = heatPoints,
+                    )
+                }
                 val finished = catalog.inspections.loadSession(sessionId)
                 logSessionVerification(
                     sessionId = sessionId,
@@ -433,7 +509,7 @@ class InspectionPipeline(
         println(
             "LOG[STEP20-20][VERIFY] session=$sessionId " +
                 "heatPoints=${heatPoints.size} graphPoints=$graphPoints " +
-                "peakEvents=${peaks.size} thresholdG=${com.example.cnv.imu.ShockUnits.RECORDING_THRESHOLD_G} " +
+                "peakEvents=${peaks.size} thresholdG=${com.example.cnv.imu.ShockUnits.recordingThresholdG()} " +
                 "maxShockG=${"%.2f".format(maxShock)} avgShockG=${"%.2f".format(avgShock)} " +
                 "historyLoad=$historyOk",
         )
@@ -458,10 +534,13 @@ class InspectionPipeline(
         val layout = ensureDashboardLayout()
         val position = mapMatchingEngine.latestPosition()
         val running = inspectionManager.state() == InspectionState.RUNNING
+        val vioQuality = com.example.cnv.vio.VioStateHub.quality
         val tracking = when {
             !running && position == null && lastOverlayMarkerX == null -> LiveTrackingVisual.STOPPED
             !running -> LiveTrackingVisual.STOPPED
+            vioQuality == com.example.cnv.position.TrackingQuality.LOST -> LiveTrackingVisual.LOST
             position == null -> LiveTrackingVisual.SEARCHING
+            vioQuality == com.example.cnv.position.TrackingQuality.WARNING -> LiveTrackingVisual.SEARCHING
             position.confidence < 0.25f -> LiveTrackingVisual.LOST
             else -> LiveTrackingVisual.GOOD
         }

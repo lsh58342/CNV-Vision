@@ -1,0 +1,527 @@
+--------- beginning of main
+08-03 00:50:11.518 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:11.545 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:11.570 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:11.770 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:11.970 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:12.173 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:12.375 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:12.576 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:12.778 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:12.981 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:13.184 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:13.386 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:13.588 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:13.790 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:13.992 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:14.193 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:14.396 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:50:17.841 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:50:17.924 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.078 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.231 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.385 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.538 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.693 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:18.847 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.002 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.157 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.312 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.465 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.619 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.773 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:19.927 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.083 I/System.out(30171): LOG[ShockGraph][LIVE] points=5 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.238 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.392 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.547 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.701 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:20.855 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.009 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.165 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.321 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.478 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.636 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.790 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:21.946 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.102 I/System.out(30171): LOG[ShockGraph][LIVE] points=7 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.256 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.411 I/System.out(30171): LOG[ShockGraph][LIVE] points=9 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.565 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.719 I/System.out(30171): LOG[ShockGraph][LIVE] points=11 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:22.877 I/System.out(30171): LOG[ShockGraph][LIVE] points=12 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.031 I/System.out(30171): LOG[ShockGraph][LIVE] points=13 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.184 I/System.out(30171): LOG[ShockGraph][LIVE] points=14 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.338 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.493 I/System.out(30171): LOG[ShockGraph][LIVE] points=16 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.647 I/System.out(30171): LOG[ShockGraph][LIVE] points=17 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.801 I/System.out(30171): LOG[ShockGraph][LIVE] points=18 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:23.957 I/System.out(30171): LOG[ShockGraph][LIVE] points=19 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.113 I/System.out(30171): LOG[ShockGraph][LIVE] points=20 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.269 I/System.out(30171): LOG[ShockGraph][LIVE] points=21 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.425 I/System.out(30171): LOG[ShockGraph][LIVE] points=22 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.585 I/System.out(30171): LOG[ShockGraph][LIVE] points=23 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.740 I/System.out(30171): LOG[ShockGraph][LIVE] points=24 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:24.895 I/System.out(30171): LOG[ShockGraph][LIVE] points=25 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.050 I/System.out(30171): LOG[ShockGraph][LIVE] points=26 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.206 I/System.out(30171): LOG[ShockGraph][LIVE] points=27 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.362 I/System.out(30171): LOG[ShockGraph][LIVE] points=28 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.517 I/System.out(30171): LOG[ShockGraph][LIVE] points=29 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.671 I/System.out(30171): LOG[ShockGraph][LIVE] points=30 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.825 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:25.981 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.135 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.291 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.445 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.601 I/System.out(30171): LOG[ShockGraph][LIVE] points=32 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.762 I/System.out(30171): LOG[ShockGraph][LIVE] points=32 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:26.924 I/System.out(30171): LOG[ShockGraph][LIVE] points=33 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.080 I/System.out(30171): LOG[ShockGraph][LIVE] points=34 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.234 I/System.out(30171): LOG[ShockGraph][LIVE] points=35 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.390 I/System.out(30171): LOG[ShockGraph][LIVE] points=36 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.543 I/System.out(30171): LOG[ShockGraph][LIVE] points=37 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.697 I/System.out(30171): LOG[ShockGraph][LIVE] points=38 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:27.852 I/System.out(30171): LOG[ShockGraph][LIVE] points=39 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.006 I/System.out(30171): LOG[ShockGraph][LIVE] points=40 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.162 I/System.out(30171): LOG[ShockGraph][LIVE] points=41 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.317 I/System.out(30171): LOG[ShockGraph][LIVE] points=42 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.474 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.630 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.787 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:28.945 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.101 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.257 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.410 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.563 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.717 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:29.870 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.024 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.181 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.337 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.496 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.651 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.806 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:30.961 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.118 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.274 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.432 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.591 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.748 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:31.905 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:32.060 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:32.214 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:32.370 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:32.407 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:50.821 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:50:50.854 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.007 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.160 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.314 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.468 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.622 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.775 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:51.930 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.085 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.238 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.392 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.545 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.700 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.844 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:50:52.851 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:52.859 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.013 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.167 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.321 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.475 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.630 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.783 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:53.939 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.094 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.250 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.405 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.562 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.597 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=20.952 peakG=2.137 conf=0.81 durationNs=39352500
+08-03 00:50:54.646 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=19.754 peakG=2.014 conf=0.75 durationNs=29279584
+08-03 00:50:54.720 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:54.878 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.034 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.192 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.345 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.463 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=16.951 peakG=1.728 conf=0.64 durationNs=29514584
+08-03 00:50:55.500 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.572 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=56.378 peakG=5.749 conf=1.00 durationNs=98382084
+08-03 00:50:55.630 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=32.076 peakG=3.271 conf=0.96 durationNs=49191250
+08-03 00:50:55.656 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.813 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:55.970 I/System.out(30171): LOG[ShockGraph][LIVE] points=5 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.128 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.285 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.445 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.564 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=63.278 peakG=6.453 conf=1.00 durationNs=176852916
+08-03 00:50:56.602 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.756 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:56.911 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.068 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.223 I/System.out(30171): LOG[ShockGraph][LIVE] points=7 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.376 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.532 I/System.out(30171): LOG[ShockGraph][LIVE] points=9 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.688 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:57.844 I/System.out(30171): LOG[ShockGraph][LIVE] points=11 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.001 I/System.out(30171): LOG[ShockGraph][LIVE] points=11 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.158 I/System.out(30171): LOG[ShockGraph][LIVE] points=12 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.321 I/System.out(30171): LOG[ShockGraph][LIVE] points=13 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.477 I/System.out(30171): LOG[ShockGraph][LIVE] points=13 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.632 I/System.out(30171): LOG[ShockGraph][LIVE] points=14 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.788 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:58.818 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=20.441 peakG=2.084 conf=0.76 durationNs=29280000
+08-03 00:50:58.946 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.102 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.261 I/System.out(30171): LOG[ShockGraph][LIVE] points=16 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.415 I/System.out(30171): LOG[ShockGraph][LIVE] points=17 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.571 I/System.out(30171): LOG[ShockGraph][LIVE] points=18 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.728 I/System.out(30171): LOG[ShockGraph][LIVE] points=19 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:50:59.884 I/System.out(30171): LOG[ShockGraph][LIVE] points=20 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.038 I/System.out(30171): LOG[ShockGraph][LIVE] points=21 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.192 I/System.out(30171): LOG[ShockGraph][LIVE] points=22 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.345 I/System.out(30171): LOG[ShockGraph][LIVE] points=23 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.500 I/System.out(30171): LOG[ShockGraph][LIVE] points=24 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.658 I/System.out(30171): LOG[ShockGraph][LIVE] points=25 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.814 I/System.out(30171): LOG[ShockGraph][LIVE] points=26 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:00.968 I/System.out(30171): LOG[ShockGraph][LIVE] points=27 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.126 I/System.out(30171): LOG[ShockGraph][LIVE] points=28 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.297 I/System.out(30171): LOG[ShockGraph][LIVE] points=29 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.450 I/System.out(30171): LOG[ShockGraph][LIVE] points=30 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.605 I/System.out(30171): LOG[ShockGraph][LIVE] points=31 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.760 I/System.out(30171): LOG[ShockGraph][LIVE] points=32 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:01.914 I/System.out(30171): LOG[ShockGraph][LIVE] points=33 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.067 I/System.out(30171): LOG[ShockGraph][LIVE] points=34 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.223 I/System.out(30171): LOG[ShockGraph][LIVE] points=35 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.376 I/System.out(30171): LOG[ShockGraph][LIVE] points=36 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.532 I/System.out(30171): LOG[ShockGraph][LIVE] points=37 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.688 I/System.out(30171): LOG[ShockGraph][LIVE] points=38 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.841 I/System.out(30171): LOG[ShockGraph][LIVE] points=39 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:02.998 I/System.out(30171): LOG[ShockGraph][LIVE] points=40 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.154 I/System.out(30171): LOG[ShockGraph][LIVE] points=41 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.315 I/System.out(30171): LOG[ShockGraph][LIVE] points=42 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.471 I/System.out(30171): LOG[ShockGraph][LIVE] points=43 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.630 I/System.out(30171): LOG[ShockGraph][LIVE] points=44 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.784 I/System.out(30171): LOG[ShockGraph][LIVE] points=45 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:03.942 I/System.out(30171): LOG[ShockGraph][LIVE] points=46 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.097 I/System.out(30171): LOG[ShockGraph][LIVE] points=47 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.251 I/System.out(30171): LOG[ShockGraph][LIVE] points=48 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.405 I/System.out(30171): LOG[ShockGraph][LIVE] points=49 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.560 I/System.out(30171): LOG[ShockGraph][LIVE] points=50 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.715 I/System.out(30171): LOG[ShockGraph][LIVE] points=51 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:04.871 I/System.out(30171): LOG[ShockGraph][LIVE] points=52 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.025 I/System.out(30171): LOG[ShockGraph][LIVE] points=53 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.182 I/System.out(30171): LOG[ShockGraph][LIVE] points=54 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.337 I/System.out(30171): LOG[ShockGraph][LIVE] points=55 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.491 I/System.out(30171): LOG[ShockGraph][LIVE] points=56 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.647 I/System.out(30171): LOG[ShockGraph][LIVE] points=57 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.802 I/System.out(30171): LOG[ShockGraph][LIVE] points=58 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:05.957 I/System.out(30171): LOG[ShockGraph][LIVE] points=59 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.111 I/System.out(30171): LOG[ShockGraph][LIVE] points=60 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.267 I/System.out(30171): LOG[ShockGraph][LIVE] points=61 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.420 I/System.out(30171): LOG[ShockGraph][LIVE] points=62 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.576 I/System.out(30171): LOG[ShockGraph][LIVE] points=63 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.731 I/System.out(30171): LOG[ShockGraph][LIVE] points=64 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:06.885 I/System.out(30171): LOG[ShockGraph][LIVE] points=65 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.040 I/System.out(30171): LOG[ShockGraph][LIVE] points=66 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.194 I/System.out(30171): LOG[ShockGraph][LIVE] points=67 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.349 I/System.out(30171): LOG[ShockGraph][LIVE] points=68 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.503 I/System.out(30171): LOG[ShockGraph][LIVE] points=69 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.656 I/System.out(30171): LOG[ShockGraph][LIVE] points=70 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.812 I/System.out(30171): LOG[ShockGraph][LIVE] points=71 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:07.968 I/System.out(30171): LOG[ShockGraph][LIVE] points=72 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.121 I/System.out(30171): LOG[ShockGraph][LIVE] points=73 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.279 I/System.out(30171): LOG[ShockGraph][LIVE] points=74 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.433 I/System.out(30171): LOG[ShockGraph][LIVE] points=75 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.586 I/System.out(30171): LOG[ShockGraph][LIVE] points=76 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.742 I/System.out(30171): LOG[ShockGraph][LIVE] points=77 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:08.911 I/System.out(30171): LOG[ShockGraph][LIVE] points=78 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.066 I/System.out(30171): LOG[ShockGraph][LIVE] points=79 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.223 I/System.out(30171): LOG[ShockGraph][LIVE] points=80 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.376 I/System.out(30171): LOG[ShockGraph][LIVE] points=81 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.530 I/System.out(30171): LOG[ShockGraph][LIVE] points=82 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.688 I/System.out(30171): LOG[ShockGraph][LIVE] points=83 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:09.846 I/System.out(30171): LOG[ShockGraph][LIVE] points=84 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.002 I/System.out(30171): LOG[ShockGraph][LIVE] points=85 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.158 I/System.out(30171): LOG[ShockGraph][LIVE] points=86 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.314 I/System.out(30171): LOG[ShockGraph][LIVE] points=87 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.470 I/System.out(30171): LOG[ShockGraph][LIVE] points=88 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.623 I/System.out(30171): LOG[ShockGraph][LIVE] points=89 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.780 I/System.out(30171): LOG[ShockGraph][LIVE] points=90 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:10.935 I/System.out(30171): LOG[ShockGraph][LIVE] points=91 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.091 I/System.out(30171): LOG[ShockGraph][LIVE] points=92 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.248 I/System.out(30171): LOG[ShockGraph][LIVE] points=93 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.403 I/System.out(30171): LOG[ShockGraph][LIVE] points=94 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.560 I/System.out(30171): LOG[ShockGraph][LIVE] points=95 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.717 I/System.out(30171): LOG[ShockGraph][LIVE] points=96 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:11.870 I/System.out(30171): LOG[ShockGraph][LIVE] points=97 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.026 I/System.out(30171): LOG[ShockGraph][LIVE] points=98 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.191 I/System.out(30171): LOG[ShockGraph][LIVE] points=99 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.357 I/System.out(30171): LOG[ShockGraph][LIVE] points=100 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.512 I/System.out(30171): LOG[ShockGraph][LIVE] points=101 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.668 I/System.out(30171): LOG[ShockGraph][LIVE] points=102 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.826 I/System.out(30171): LOG[ShockGraph][LIVE] points=103 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:12.980 I/System.out(30171): LOG[ShockGraph][LIVE] points=104 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.139 I/System.out(30171): LOG[ShockGraph][LIVE] points=105 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.307 I/System.out(30171): LOG[ShockGraph][LIVE] points=106 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.463 I/System.out(30171): LOG[ShockGraph][LIVE] points=107 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.619 I/System.out(30171): LOG[ShockGraph][LIVE] points=108 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.774 I/System.out(30171): LOG[ShockGraph][LIVE] points=109 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:13.930 I/System.out(30171): LOG[ShockGraph][LIVE] points=110 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.085 I/System.out(30171): LOG[ShockGraph][LIVE] points=111 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.239 I/System.out(30171): LOG[ShockGraph][LIVE] points=112 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.397 I/System.out(30171): LOG[ShockGraph][LIVE] points=113 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.551 I/System.out(30171): LOG[ShockGraph][LIVE] points=114 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.705 I/System.out(30171): LOG[ShockGraph][LIVE] points=115 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:14.861 I/System.out(30171): LOG[ShockGraph][LIVE] points=116 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.015 I/System.out(30171): LOG[ShockGraph][LIVE] points=117 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.169 I/System.out(30171): LOG[ShockGraph][LIVE] points=118 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.323 I/System.out(30171): LOG[ShockGraph][LIVE] points=119 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.491 I/System.out(30171): LOG[ShockGraph][LIVE] points=120 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.644 I/System.out(30171): LOG[ShockGraph][LIVE] points=121 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.797 I/System.out(30171): LOG[ShockGraph][LIVE] points=122 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:15.952 I/System.out(30171): LOG[ShockGraph][LIVE] points=123 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.110 I/System.out(30171): LOG[ShockGraph][LIVE] points=124 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.277 I/System.out(30171): LOG[ShockGraph][LIVE] points=125 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.432 I/System.out(30171): LOG[ShockGraph][LIVE] points=126 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.585 I/System.out(30171): LOG[ShockGraph][LIVE] points=127 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.739 I/System.out(30171): LOG[ShockGraph][LIVE] points=128 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:16.892 I/System.out(30171): LOG[ShockGraph][LIVE] points=129 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.045 I/System.out(30171): LOG[ShockGraph][LIVE] points=130 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.199 I/System.out(30171): LOG[ShockGraph][LIVE] points=131 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.354 I/System.out(30171): LOG[ShockGraph][LIVE] points=132 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.508 I/System.out(30171): LOG[ShockGraph][LIVE] points=133 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.661 I/System.out(30171): LOG[ShockGraph][LIVE] points=134 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.813 I/System.out(30171): LOG[ShockGraph][LIVE] points=135 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:17.965 I/System.out(30171): LOG[ShockGraph][LIVE] points=136 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.127 I/System.out(30171): LOG[ShockGraph][LIVE] points=137 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.294 I/System.out(30171): LOG[ShockGraph][LIVE] points=138 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.469 I/System.out(30171): LOG[ShockGraph][LIVE] points=139 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.629 I/System.out(30171): LOG[ShockGraph][LIVE] points=140 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.798 I/System.out(30171): LOG[ShockGraph][LIVE] points=141 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:18.952 I/System.out(30171): LOG[ShockGraph][LIVE] points=142 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.107 I/System.out(30171): LOG[ShockGraph][LIVE] points=143 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.260 I/System.out(30171): LOG[ShockGraph][LIVE] points=144 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.430 I/System.out(30171): LOG[ShockGraph][LIVE] points=145 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.584 I/System.out(30171): LOG[ShockGraph][LIVE] points=146 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.738 I/System.out(30171): LOG[ShockGraph][LIVE] points=147 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:19.892 I/System.out(30171): LOG[ShockGraph][LIVE] points=148 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.048 I/System.out(30171): LOG[ShockGraph][LIVE] points=149 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.202 I/System.out(30171): LOG[ShockGraph][LIVE] points=149 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.357 I/System.out(30171): LOG[ShockGraph][LIVE] points=150 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.513 I/System.out(30171): LOG[ShockGraph][LIVE] points=151 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.670 I/System.out(30171): LOG[ShockGraph][LIVE] points=152 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.824 I/System.out(30171): LOG[ShockGraph][LIVE] points=153 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:20.977 I/System.out(30171): LOG[ShockGraph][LIVE] points=154 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.130 I/System.out(30171): LOG[ShockGraph][LIVE] points=155 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.284 I/System.out(30171): LOG[ShockGraph][LIVE] points=156 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.439 I/System.out(30171): LOG[ShockGraph][LIVE] points=157 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.592 I/System.out(30171): LOG[ShockGraph][LIVE] points=158 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.747 I/System.out(30171): LOG[ShockGraph][LIVE] points=158 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:21.901 I/System.out(30171): LOG[ShockGraph][LIVE] points=159 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.055 I/System.out(30171): LOG[ShockGraph][LIVE] points=160 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.210 I/System.out(30171): LOG[ShockGraph][LIVE] points=161 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.262 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=24.890 peakG=2.538 conf=0.85 durationNs=29282084
+08-03 00:51:22.364 I/System.out(30171): LOG[ShockGraph][LIVE] points=161 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.520 I/System.out(30171): LOG[ShockGraph][LIVE] points=162 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.674 I/System.out(30171): LOG[ShockGraph][LIVE] points=163 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.827 I/System.out(30171): LOG[ShockGraph][LIVE] points=164 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:22.981 I/System.out(30171): LOG[ShockGraph][LIVE] points=165 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.138 I/System.out(30171): LOG[ShockGraph][LIVE] points=166 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.291 I/System.out(30171): LOG[ShockGraph][LIVE] points=167 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.445 I/System.out(30171): LOG[ShockGraph][LIVE] points=168 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.600 I/System.out(30171): LOG[ShockGraph][LIVE] points=169 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.756 I/System.out(30171): LOG[ShockGraph][LIVE] points=169 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.912 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:23.946 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=46.754 peakG=4.768 conf=0.90 durationNs=30058021
+08-03 00:51:24.066 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.225 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.382 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.538 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.692 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.742 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=18.231 peakG=1.859 conf=0.71 durationNs=29517500
+08-03 00:51:24.846 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:24.999 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.153 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.308 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.462 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.616 I/System.out(30171): LOG[ShockGraph][LIVE] points=170 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.770 I/System.out(30171): LOG[ShockGraph][LIVE] points=171 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:25.923 I/System.out(30171): LOG[ShockGraph][LIVE] points=172 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.076 I/System.out(30171): LOG[ShockGraph][LIVE] points=173 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.230 I/System.out(30171): LOG[ShockGraph][LIVE] points=174 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.385 I/System.out(30171): LOG[ShockGraph][LIVE] points=175 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.538 I/System.out(30171): LOG[ShockGraph][LIVE] points=176 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.695 I/System.out(30171): LOG[ShockGraph][LIVE] points=177 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:26.862 I/System.out(30171): LOG[ShockGraph][LIVE] points=178 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.019 I/System.out(30171): LOG[ShockGraph][LIVE] points=179 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.172 I/System.out(30171): LOG[ShockGraph][LIVE] points=180 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.325 I/System.out(30171): LOG[ShockGraph][LIVE] points=181 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.478 I/System.out(30171): LOG[ShockGraph][LIVE] points=182 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.632 I/System.out(30171): LOG[ShockGraph][LIVE] points=183 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.799 I/System.out(30171): LOG[ShockGraph][LIVE] points=183 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:27.963 I/System.out(30171): LOG[ShockGraph][LIVE] points=184 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.122 I/System.out(30171): LOG[ShockGraph][LIVE] points=185 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.276 I/System.out(30171): LOG[ShockGraph][LIVE] points=186 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.430 I/System.out(30171): LOG[ShockGraph][LIVE] points=186 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.585 I/System.out(30171): LOG[ShockGraph][LIVE] points=186 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.739 I/System.out(30171): LOG[ShockGraph][LIVE] points=187 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:28.758 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=35.114 peakG=3.581 conf=0.91 durationNs=39357500
+08-03 00:51:28.894 I/System.out(30171): LOG[ShockGraph][LIVE] points=187 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.048 I/System.out(30171): LOG[ShockGraph][LIVE] points=188 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.081 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=34.451 peakG=3.513 conf=0.96 durationNs=48913385
+08-03 00:51:29.204 I/System.out(30171): LOG[ShockGraph][LIVE] points=188 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.358 I/System.out(30171): LOG[ShockGraph][LIVE] points=189 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.436 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=55.421 peakG=5.651 conf=0.93 durationNs=39357813
+08-03 00:51:29.513 I/System.out(30171): LOG[ShockGraph][LIVE] points=190 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.669 I/System.out(30171): LOG[ShockGraph][LIVE] points=190 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.780 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=34.973 peakG=3.566 conf=0.91 durationNs=48962500
+08-03 00:51:29.823 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:29.979 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.095 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=50.261 peakG=5.125 conf=0.96 durationNs=49197084
+08-03 00:51:30.135 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.291 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.400 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=51.897 peakG=5.292 conf=0.92 durationNs=39357917
+08-03 00:51:30.445 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.601 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.756 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.912 I/System.out(30171): LOG[ShockGraph][LIVE] points=191 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:30.981 I/System.out(30171): LOG[ShockGraph][LIVE] points=192 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:31.035 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:31.057 I/System.out(30171): LOG[HeatMapGenerator] sessions=1 raw=0 aggregated=0 thresholdG=1.1
+08-03 00:51:31.078 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:31.144 I/System.out(30171): LOG[STEP20-20][VERIFY] session=6beb60d9-3c5a-4f22-913b-8ce254ae593c heatPoints=0 graphPoints=0 peakEvents=0 thresholdG=1.1 maxShockG=0.00 avgShockG=0.00 historyLoad=true
+08-03 00:51:31.159 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:31.174 I/System.out(30171): LOG[HeatMapGenerator] sessions=1 raw=0 aggregated=0 thresholdG=1.1
+08-03 00:51:34.267 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:34.302 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:34.455 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:34.609 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:34.762 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:34.923 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.077 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.126 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:35.130 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.232 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.387 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.541 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.638 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=67.946 peakG=6.929 conf=0.96 durationNs=48961666
+08-03 00:51:35.695 I/System.out(30171): LOG[ShockGraph][LIVE] points=5 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.849 I/System.out(30171): LOG[ShockGraph][LIVE] points=5 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:35.933 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=43.203 peakG=4.405 conf=0.93 durationNs=39122500
+08-03 00:51:36.003 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.157 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.230 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=45.634 peakG=4.653 conf=0.96 durationNs=49196666
+08-03 00:51:36.311 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.466 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.514 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=30.643 peakG=3.125 conf=0.90 durationNs=29517916
+08-03 00:51:36.620 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.775 I/System.out(30171): LOG[ShockGraph][LIVE] points=7 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:36.809 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=32.432 peakG=3.307 conf=0.93 durationNs=39357083
+08-03 00:51:36.928 I/System.out(30171): LOG[ShockGraph][LIVE] points=7 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.081 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.094 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=34.673 peakG=3.536 conf=1.00 durationNs=58800833
+08-03 00:51:37.235 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.370 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=52.225 peakG=5.325 conf=1.00 durationNs=59035833
+08-03 00:51:37.389 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.541 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.645 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=43.293 peakG=4.415 conf=0.93 durationNs=39122084
+08-03 00:51:37.695 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.849 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:37.931 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=22.166 peakG=2.260 conf=0.83 durationNs=39357084
+08-03 00:51:38.005 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.159 I/System.out(30171): LOG[ShockGraph][LIVE] points=9 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.313 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.467 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.623 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.779 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:38.935 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.090 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.247 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.403 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.559 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.714 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.871 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:39.918 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=42.643 peakG=4.348 conf=1.00 durationNs=59035833
+08-03 00:51:40.025 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.179 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.334 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.489 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.644 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.800 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:40.954 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.110 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.265 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.295 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=60.703 peakG=6.190 conf=0.96 durationNs=49196614
+08-03 00:51:41.420 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.577 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.732 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:41.887 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.034 I/System.out(30171): LOG[ShockDetector][PEAK] peakMs2=49.451 peakG=5.043 conf=0.96 durationNs=49196250
+08-03 00:51:42.044 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.199 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.357 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.511 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.666 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.821 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:42.975 I/System.out(30171): LOG[ShockGraph][LIVE] points=11 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.129 I/System.out(30171): LOG[ShockGraph][LIVE] points=12 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.284 I/System.out(30171): LOG[ShockGraph][LIVE] points=13 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.437 I/System.out(30171): LOG[ShockGraph][LIVE] points=14 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.594 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.750 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:43.906 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.063 I/System.out(30171): LOG[ShockGraph][LIVE] points=15 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.225 I/System.out(30171): LOG[ShockGraph][LIVE] points=16 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.379 I/System.out(30171): LOG[ShockGraph][LIVE] points=17 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.532 I/System.out(30171): LOG[ShockGraph][LIVE] points=18 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.542 I/System.out(30171): LOG[ShockGraph][LIVE] points=19 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:44.552 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:44.553 I/System.out(30171): LOG[HeatMapGenerator] sessions=1 raw=0 aggregated=0 thresholdG=1.1
+08-03 00:51:44.556 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:44.566 I/System.out(30171): LOG[STEP20-20][VERIFY] session=2bda8f7d-497a-4d49-95f2-7c49d1aa788a heatPoints=0 graphPoints=19 peakEvents=0 thresholdG=1.1 maxShockG=0.00 avgShockG=0.00 historyLoad=true
+08-03 00:51:44.586 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:44.587 I/System.out(30171): LOG[HeatMapGenerator] sessions=1 raw=0 aggregated=0 thresholdG=1.1
+08-03 00:51:44.587 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:44.599 I/System.out(30171): LOG[HeatMapGenerator] sessions=1 raw=0 aggregated=0 thresholdG=1.1
+08-03 00:51:47.929 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:47.965 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:47.984 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:48.184 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:48.385 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:48.587 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:48.790 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:48.993 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:49.196 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:49.399 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:49.601 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:49.802 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:50.004 I/System.out(30171): LOG[CADController][REFRESH] hasRoute=true hasMapper=false segments=3
+08-03 00:51:50.204 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:50.238 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:50.392 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:50.545 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:50.697 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:50.850 I/System.out(30171): LOG[ShockGraph][LIVE] points=0 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.004 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.158 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.311 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.367 I/System.out(30171): LOG[HeatMapRouteLayout][HORIZONTAL_FALLBACK] segments=3 (no worldMapper — route drawn as a line)
+08-03 00:51:51.370 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.465 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.620 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.775 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:51.929 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.083 I/System.out(30171): LOG[ShockGraph][LIVE] points=1 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.238 I/System.out(30171): LOG[ShockGraph][LIVE] points=2 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.391 I/System.out(30171): LOG[ShockGraph][LIVE] points=3 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.543 I/System.out(30171): LOG[ShockGraph][LIVE] points=4 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.698 I/System.out(30171): LOG[ShockGraph][LIVE] points=5 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:52.852 I/System.out(30171): LOG[ShockGraph][LIVE] points=6 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:53.006 I/System.out(30171): LOG[ShockGraph][LIVE] points=7 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:53.158 I/System.out(30171): LOG[ShockGraph][LIVE] points=8 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:53.311 I/System.out(30171): LOG[ShockGraph][LIVE] points=9 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0
+08-03 00:51:53.464 I/System.out(30171): LOG[ShockGraph][LIVE] points=10 current=0.00 avg=0.00 max=0.00 thr=1.1 peaks=0

@@ -24,16 +24,11 @@ object InspectionDbGate {
     }
 
     fun <T> submit(block: () -> T, onMain: (T) -> Unit) {
-        AppDispatchers.backgroundExecutor.execute {
-            val result = runCatching {
-                assertBackgroundThread()
-                RecoveryCoordinator.withRoomRetry(block = block)
-            }
-            AppDispatchers.mainExecutor.execute {
-                result.onSuccess(onMain)
-                    .onFailure { ProductionLog.error("CNV.Room", "Submit failed", it) }
-            }
-        }
+        submit(
+            block = block,
+            onMain = onMain,
+            onError = { ProductionLog.error("CNV.Room", "Submit failed", it) },
+        )
     }
 
     fun <T> submit(

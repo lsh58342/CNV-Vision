@@ -15,8 +15,7 @@ import com.example.cnv.rule.InspectionWarning
 
 /**
  * Inspection Review ViewModel (STEP 17-1 / 18 / 20-3).
- * Loads Analysis / Rule / HeatMap via Repositories only — no Engine direct calls.
- * Warning / Issue / Zone sections display Rule Result; rules are not re-evaluated in UI.
+ * Loads Analysis / Rule / HeatMap via Repositories — recompute when Session JSON is empty.
  */
 class InspectionReviewViewModel(
     private val catalog: FactoryCatalog = FactoryCatalog.get(),
@@ -44,50 +43,77 @@ class InspectionReviewViewModel(
     fun load(sessionId: String, drawingId: String) {
         val gen = ++loadGeneration
         _state.value = UiState(loading = true, sessionId = sessionId, drawingId = drawingId)
+        println("LOG[Review][LOAD] session=$sessionId drawing=$drawingId")
 
         catalog.inspections.loadSessionAsync(sessionId) { persisted ->
             if (gen != loadGeneration) return@loadSessionAsync
-            val heatPoints = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
-                .ifEmpty {
-                    catalog.heatMaps.restoreSessionPoints(
-                        sessionId,
-                        persisted?.summary?.heatPointsJson.orEmpty(),
-                    )
-                }
-            // Ensure Analysis cache is warm from Session snapshot before Rule callback.
-            AnalysisResultCodec.decode(persisted?.summary?.analysisResultJson)?.let {
+            if (persisted == null) {
+                println("LOG[Review][LOAD] session missing")
+                _state.value = UiState(
+                    loading = false,
+                    errorMessage = "Session not found",
+                    sessionId = sessionId,
+                    drawingId = drawingId,
+                )
+                return@loadSessionAsync
+            }
+
+            val heatPoints = runCatching {
+                catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
+                    .ifEmpty {
+                        catalog.heatMaps.restoreSessionPoints(
+                            sessionId,
+                            persisted.summary.heatPointsJson,
+                        )
+                    }
+            }.getOrElse {
+                println("LOG[Review][HEAT] restore failed: ${it.message}")
+                emptyList()
+            }
+
+            AnalysisResultCodec.decode(persisted.summary.analysisResultJson)?.let {
                 catalog.analysis.putCached(it)
             }
-            catalog.rules.getOrEvaluateAsync(sessionId, drawingId) { rules ->
-                if (gen != loadGeneration) return@getOrEvaluateAsync
-                val analysis = catalog.analysis.getCached(sessionId)
-                    ?: AnalysisResultCodec.decode(persisted?.summary?.analysisResultJson)
-                if (analysis == null || rules == null) {
+
+            // Always resolve Analysis (stored or recompute), then Rules — never leave UI loading.
+            catalog.analysis.getOrAnalyzeAsync(sessionId, drawingId) { analysis ->
+                if (gen != loadGeneration) return@getOrAnalyzeAsync
+                println(
+                    "LOG[Review][ANALYSIS] ok=${analysis != null} " +
+                        "storedLen=${persisted.summary.analysisResultJson.length}",
+                )
+                catalog.rules.getOrEvaluateAsync(sessionId, drawingId) { rules ->
+                    if (gen != loadGeneration) return@getOrEvaluateAsync
+                    val resolvedAnalysis = analysis
+                        ?: catalog.analysis.getCached(sessionId)
+                        ?: AnalysisResultCodec.decode(persisted.summary.analysisResultJson)
+                    val resolvedRules = rules ?: catalog.rules.getCached(sessionId)
+                    println(
+                        "LOG[Review][RULES] ok=${resolvedRules != null} " +
+                            "storedLen=${persisted.summary.ruleResultJson.length}",
+                    )
                     _state.value = UiState(
                         loading = false,
                         errorMessage = when {
-                            analysis == null -> "Analysis Result unavailable"
-                            else -> "Rule Result unavailable"
+                            resolvedAnalysis == null && resolvedRules == null ->
+                                "Analysis / Rule Result unavailable — re-run Inspection"
+                            resolvedAnalysis == null ->
+                                "Analysis Result unavailable (rules loaded)"
+                            resolvedRules == null ->
+                                "Rule Result unavailable (summary loaded)"
+                            else -> null
                         },
                         sessionId = sessionId,
                         drawingId = drawingId,
+                        analysis = resolvedAnalysis,
+                        rules = resolvedRules,
+                        warnings = resolvedRules?.warnings.orEmpty(),
+                        issues = resolvedRules?.issues.orEmpty(),
+                        zoneSummaries = resolvedRules?.zoneSummaries.orEmpty(),
                         heatPoints = heatPoints,
                         heatPointCount = heatPoints.size,
                     )
-                    return@getOrEvaluateAsync
                 }
-                _state.value = UiState(
-                    loading = false,
-                    sessionId = sessionId,
-                    drawingId = drawingId,
-                    analysis = analysis,
-                    rules = rules,
-                    warnings = rules.warnings,
-                    issues = rules.issues,
-                    zoneSummaries = rules.zoneSummaries,
-                    heatPoints = heatPoints,
-                    heatPointCount = heatPoints.size,
-                )
             }
         }
     }

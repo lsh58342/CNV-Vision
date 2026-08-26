@@ -47,6 +47,7 @@ data class MaintenanceReport(
     val coverage: Float = 0f,
     val validationScore: Float = 0f,
     val averageSpeedMmPerSec: Float = 0f,
+    val averageShock: Float = 0f,
     val maximumShock: Float = 0f,
     val shockCount: Int = 0,
     val maintenanceSummary: MaintenanceSummary = MaintenanceSummary(),

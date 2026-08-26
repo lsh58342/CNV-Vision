@@ -2,6 +2,7 @@ package com.example.cnv.inspection
 
 import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.map.Route
+import com.example.cnv.vio.VioStateHub
 
 /**
  * Session-scoped geometry helpers for Shock Event persistence (STEP 20-20).
@@ -14,6 +15,10 @@ object InspectionShockGeo {
         val worldX: Float,
         val worldY: Float,
         val zoneName: String,
+        val segmentId: String = "",
+        val headingDeg: Float = 0f,
+        val distanceToRouteMm: Float = 0f,
+        val trackingState: String = "",
     )
 
     @Volatile
@@ -29,7 +34,6 @@ object InspectionShockGeo {
     ) {
         layout = if (route != null) {
             HeatMapRouteLayout.build(route, worldMapper = worldMapper)
-                ?: HeatMapRouteLayout.build(route, worldMapper = null)
         } else {
             null
         }
@@ -46,11 +50,16 @@ object InspectionShockGeo {
         val routeMm = HeatMapRouteLayout.absoluteRouteMm(lay, segmentId, progress) ?: return null
         val world = HeatMapRouteLayout.toDrawingCoordinate(lay, segmentId, progress) ?: return null
         val zone = zones.firstOrNull { routeMm in it.second }?.first.orEmpty()
+        val useHub = VioStateHub.segmentId == segmentId && VioStateHub.routeProgressMm > 0f
         return Resolved(
-            routePositionMm = routeMm,
-            worldX = world.x.toFloat(),
-            worldY = world.y.toFloat(),
+            routePositionMm = if (useHub) VioStateHub.routeProgressMm else routeMm,
+            worldX = if (useHub) VioStateHub.projectedX.toFloat() else world.x.toFloat(),
+            worldY = if (useHub) VioStateHub.projectedY.toFloat() else world.y.toFloat(),
             zoneName = zone,
+            segmentId = segmentId,
+            headingDeg = VioStateHub.deviceHeadingDeg,
+            distanceToRouteMm = VioStateHub.distanceToRouteMm,
+            trackingState = VioStateHub.quality.name,
         )
     }
 }

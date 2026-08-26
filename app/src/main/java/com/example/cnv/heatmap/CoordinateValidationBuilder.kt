@@ -17,17 +17,9 @@ object CoordinateValidationBuilder {
         sessions: List<PersistedInspectionSession>,
         mapper: CoordinateMapper? = null,
     ): CoordinateValidationSnapshot {
-        val base = HeatMapRouteLayout.build(route)
+        val base = HeatMapRouteLayout.build(route, worldMapper = mapper)
             ?: return CoordinateValidationSnapshot.empty(drawing.id)
-        val layout = if (mapper != null) {
-            HeatMapRouteLayout.LayoutResult(
-                mapper = mapper,
-                segmentStartMm = base.segmentStartMm,
-                totalLengthMm = base.totalLengthMm,
-            )
-        } else {
-            base
-        }
+        val layout = base
 
         val session = sessions.lastOrNull()
             ?: return CoordinateValidationSnapshot.empty(drawing.id)

@@ -97,6 +97,10 @@ class CADController(
 
     fun fitToRoute() = interaction.fitToRoute()
 
+    fun fitToWorldPoints(points: Collection<Pair<Double, Double>>) {
+        cadView.fitToWorldPoints(points)
+    }
+
     fun goToCurrentPosition() = interaction.goToCurrentPosition()
 
     fun goToStart() = interaction.goToStart()
@@ -164,7 +168,7 @@ class CADController(
     }
 
     private fun applyPosition(event: PositionEvent) {
-        val mapper = mapperProvider() ?: return
+        val mapper = mapperProvider() ?: routeRepository.currentMapper() ?: return
         val routePosition = RoutePosition(
             segmentId = event.segmentId,
             nodeId = event.nodeId,

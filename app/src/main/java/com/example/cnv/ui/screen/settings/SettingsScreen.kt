@@ -8,14 +8,17 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.example.cnv.R
+import com.example.cnv.camera.ShockClipSettingsStore
 import com.example.cnv.factory.context.CurrentContext
+import com.example.cnv.imu.ShockThresholdStore
+import com.example.cnv.imu.ShockUnits
 import com.example.cnv.ui.navigation.CnvDestination
 import com.example.cnv.ui.navigation.NavArgs
 import com.example.cnv.ui.screen.BaseScreen
+import com.google.android.material.textfield.TextInputEditText
 
 /**
- * Settings — Inspection profiles + Developer Options + About (STEP 20-4).
- * Always accessible; no Role checks.
+ * Settings — shock thresholds + Inspection profiles + Developer Options + About.
  */
 class SettingsScreen : BaseScreen() {
 
@@ -28,9 +31,13 @@ class SettingsScreen : BaseScreen() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         siteVm.bootstrap()
+        ShockThresholdStore.ensureLoaded(requireContext())
         siteVm.contextSummary.observe(viewLifecycleOwner) {
             view.findViewById<TextView>(R.id.screen_body).text = it
         }
+
+        bindShockThresholds(view)
+        bindShockClipSettings(view)
 
         val openProfile = View.OnClickListener {
             val drawingId = CurrentContext.get().drawingId
@@ -60,5 +67,62 @@ class SettingsScreen : BaseScreen() {
             Toast.makeText(requireContext(), R.string.settings_about_msg, Toast.LENGTH_SHORT).show()
         }
         view.findViewById<Button>(R.id.button_screen_back).setOnClickListener { nav().navigateBack() }
+    }
+
+    private fun bindShockThresholds(view: View) {
+        val recordInput = view.findViewById<TextInputEditText>(R.id.input_shock_record_g)
+        val criticalInput = view.findViewById<TextInputEditText>(R.id.input_shock_critical_g)
+        val derived = view.findViewById<TextView>(R.id.settings_shock_derived)
+
+        fun refreshFields() {
+            recordInput.setText("%.3f".format(ShockUnits.recordingThresholdG()))
+            criticalInput.setText("%.3f".format(ShockUnits.criticalThresholdG()))
+            derived.text = getString(
+                R.string.settings_shock_derived_format,
+                ShockUnits.warningThresholdG(),
+                ShockUnits.highThresholdG(),
+            )
+        }
+        refreshFields()
+
+        view.findViewById<Button>(R.id.button_shock_save).setOnClickListener {
+            val rec = recordInput.text?.toString()?.toFloatOrNull()
+            val crit = criticalInput.text?.toString()?.toFloatOrNull()
+            if (rec == null || crit == null) {
+                Toast.makeText(requireContext(), R.string.settings_shock_invalid, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!ShockThresholdStore.save(requireContext(), rec, crit)) {
+                Toast.makeText(requireContext(), R.string.settings_shock_invalid, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            refreshFields()
+            Toast.makeText(requireContext(), R.string.settings_shock_saved, Toast.LENGTH_SHORT).show()
+        }
+        view.findViewById<Button>(R.id.button_shock_reset).setOnClickListener {
+            ShockThresholdStore.resetToDefaults(requireContext())
+            refreshFields()
+            Toast.makeText(requireContext(), R.string.settings_shock_reset_done, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun bindShockClipSettings(view: View) {
+        val preInput = view.findViewById<TextInputEditText>(R.id.input_clip_pre_sec)
+        val postInput = view.findViewById<TextInputEditText>(R.id.input_clip_post_sec)
+        preInput.setText("%.1f".format(ShockClipSettingsStore.preSec(requireContext())))
+        postInput.setText("%.1f".format(ShockClipSettingsStore.postSec(requireContext())))
+        view.findViewById<Button>(R.id.button_clip_save).setOnClickListener {
+            val pre = preInput.text?.toString()?.toFloatOrNull()
+            val post = postInput.text?.toString()?.toFloatOrNull()
+            if (pre == null || post == null) {
+                Toast.makeText(requireContext(), R.string.settings_shock_invalid, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!ShockClipSettingsStore.save(requireContext(), pre, post)) {
+                Toast.makeText(requireContext(), R.string.settings_shock_invalid, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            Toast.makeText(requireContext(), R.string.settings_clip_saved, Toast.LENGTH_SHORT).show()
+        }
     }
 }

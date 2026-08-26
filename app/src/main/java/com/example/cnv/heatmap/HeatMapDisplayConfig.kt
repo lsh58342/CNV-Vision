@@ -30,7 +30,7 @@ data class HeatMapDisplayConfig(
     }
 
     fun colorForShockG(shockG: Float): Int =
-        HeatMapIntensityConfig.DEFAULT.colorForShockG(shockG)
+        HeatMapIntensityConfig.active().colorForShockG(shockG)
 
     companion object {
         val DEFAULT = HeatMapDisplayConfig()

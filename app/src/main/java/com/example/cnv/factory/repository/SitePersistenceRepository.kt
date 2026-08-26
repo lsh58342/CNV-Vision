@@ -18,6 +18,7 @@ import com.example.cnv.inspection.db.SiteFloorEntity
 import com.example.cnv.inspection.db.SiteHierarchySnapshot
 import com.example.cnv.inspection.db.SiteZoneEntity
 import com.example.cnv.map.Route
+import com.example.cnv.route.CoordinateMapper
 
 /**
  * Persists Factory site hierarchy via Room (STEP 20-10 P0).
@@ -61,11 +62,19 @@ object SitePersistenceRepository {
         }
     }
 
-    fun saveDrawingRouteAsync(drawingId: String, route: Route) {
-        val json = RouteSnapshotCodec.encode(RouteSnapshot.from(route))
+    fun saveDrawingRouteAsync(
+        drawingId: String,
+        route: Route,
+        mapper: CoordinateMapper? = null,
+    ) {
+        val json = RouteSnapshotCodec.encode(RouteSnapshot.from(route, mapper = mapper))
         InspectionDbGate.execute {
             dao()?.upsertDrawingRoute(SiteDrawingRouteEntity(drawingId = drawingId, routeJson = json))
         }
+        println(
+            "LOG[RoutePersist] drawingId=$drawingId hasGeometry=${mapper != null} " +
+                "jsonBytes=${json.length}",
+        )
     }
 
     fun deleteBuildingAsync(id: String) {
@@ -109,6 +118,11 @@ object SitePersistenceRepository {
 
     fun decodeRoute(json: String): Route? =
         RouteSnapshotCodec.decode(json)?.toRoute()
+
+    fun decodeRouteWithMapper(json: String): Pair<Route, CoordinateMapper?>? {
+        val snap = RouteSnapshotCodec.decode(json) ?: return null
+        return snap.toRoute() to snap.toMapper()
+    }
 
     private fun dao() = InspectionRepository.database()?.siteHierarchyDao()
 }

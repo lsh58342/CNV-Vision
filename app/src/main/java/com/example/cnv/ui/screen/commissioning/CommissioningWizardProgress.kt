@@ -52,12 +52,12 @@ object CommissioningWizardProgress {
         val drawing = catalog.drawings.current(context)
         val dwgOk = drawing?.dwgRegistered == true
         val originOk = drawing?.originSet == true
-        val calibrationOk = drawing?.calibrationReady == true ||
-            (drawing != null && catalog.calibrations.get(drawing.id)?.ready == true)
+        // VIO uses route/nominal speed — walk mmPerPixel calibration is not required.
+        val calibrationOk = true
         val routeOk = drawing?.routeId != null && catalog.routes.hasRoute()
         val zoneCount = drawing?.let { catalog.zones.forDrawing(it.id).size } ?: 0
         val zoneOk = zoneCount > 0
-        val validationOk = dwgOk && originOk && calibrationOk && routeOk && zoneOk
+        val validationOk = dwgOk && originOk && routeOk && zoneOk
         val routeLocked = drawing?.routeLocked == true
         val completed = listOf(
             originOk, calibrationOk, routeOk, zoneOk, validationOk, routeLocked,
@@ -97,7 +97,6 @@ object CommissioningWizardProgress {
         val out = mutableListOf<String>()
         if (!snap.dwgOk) out.add(context.getString(R.string.wiz_fail_dwg))
         if (!snap.originOk) out.add(context.getString(R.string.wiz_fail_origin))
-        if (!snap.calibrationOk) out.add(context.getString(R.string.wiz_fail_calibration))
         if (!snap.routeOk) out.add(context.getString(R.string.wiz_fail_route))
         if (!snap.zoneOk) out.add(context.getString(R.string.wiz_fail_zone))
         return out

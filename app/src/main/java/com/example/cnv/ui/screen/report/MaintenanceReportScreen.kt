@@ -1,5 +1,6 @@
 package com.example.cnv.ui.screen.report
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -15,6 +16,8 @@ import com.example.cnv.R
 import com.example.cnv.factory.repository.FactoryCatalog
 import com.example.cnv.factory.repository.ReplayMetadataRepository
 import com.example.cnv.report.MaintenanceReport
+import com.example.cnv.report.ReportMapBuilder
+import com.example.cnv.report.ReportStorage
 import com.example.cnv.report.ReportExportFormat
 import com.example.cnv.report.ZoneIssueRow
 import com.example.cnv.report.excel.ExcelExportUi
@@ -113,6 +116,9 @@ class MaintenanceReportScreen : BaseScreen() {
         view.findViewById<MaterialButton>(R.id.button_report_open_excel).setOnClickListener {
             openArchivedExcel(sessionId)
         }
+        view.findViewById<MaterialButton>(R.id.button_report_open_critical_map).setOnClickListener {
+            openCriticalMap(sessionId)
+        }
         view.findViewById<MaterialButton>(R.id.button_report_export_pdf).setOnClickListener {
             vm.export(ReportExportFormat.PDF)
         }
@@ -165,6 +171,25 @@ class MaintenanceReportScreen : BaseScreen() {
         )
     }
 
+    private fun openCriticalMap(sessionId: String) {
+        val file = ReportStorage.criticalMapFile(sessionId)
+        if (!file.exists()) {
+            Toast.makeText(requireContext(), R.string.excel_open_fail, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val uri = ReportStorage.fileUri(file)
+        runCatching {
+            startActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "image/png")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                },
+            )
+        }.onFailure {
+            Toast.makeText(requireContext(), R.string.excel_open_fail, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun openArchivedExcel(sessionId: String) {
         val entry = catalog.excelArchives.get(sessionId) ?: return
         val uri = Uri.parse(entry.fileUri)
@@ -205,10 +230,14 @@ class MaintenanceReportScreen : BaseScreen() {
         bindIssues(view, report?.issueDetails.orEmpty())
         bindWorkOrders(view, state)
 
+        val criticalCount = state.criticalPointCount
         view.findViewById<HeatMapPreviewView>(R.id.report_heatmap_preview)
-            .setHeatPoints(state.heatPoints)
+            .setMapData(state.heatPoints, state.routePolyline, criticalOnly = true)
+        val mapLabel = if (state.criticalMapReady) "critical_shock_map.png" else "—"
         view.findViewById<TextView>(R.id.report_heatmap_meta).text =
-            getString(R.string.review_heatmap_meta, state.heatPoints.size)
+            getString(R.string.report_heatmap_meta, criticalCount, mapLabel)
+        view.findViewById<MaterialButton>(R.id.button_report_open_critical_map).isVisible =
+            state.criticalMapReady
 
         view.findViewById<TextView>(R.id.report_actions).text =
             formatActions(report)
@@ -227,6 +256,7 @@ class MaintenanceReportScreen : BaseScreen() {
             r.coverage * 100f,
             r.validationScore,
             avgSpeed,
+            r.averageShock,
             r.maximumShock,
             r.shockCount,
         )

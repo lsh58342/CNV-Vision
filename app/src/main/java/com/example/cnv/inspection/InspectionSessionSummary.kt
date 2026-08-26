@@ -66,4 +66,9 @@ data class PersistedInspectionEvent(
     val peakG: Float = 0f,
     val movingAverageG: Float = 0f,
     val zoneName: String = "",
+    val segmentId: String = "",
+    val headingDeg: Float = 0f,
+    val distanceToRouteMm: Float = 0f,
+    val trackingState: String = "",
+    val clipPath: String = "",
 )

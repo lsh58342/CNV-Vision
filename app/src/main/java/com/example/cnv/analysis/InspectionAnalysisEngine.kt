@@ -4,6 +4,7 @@ import com.example.cnv.factory.model.RouteAnchor
 import com.example.cnv.factory.model.Zone
 import com.example.cnv.heatmap.HeatMapRouteLayout
 import com.example.cnv.inspection.PersistedInspectionEvent
+import com.example.cnv.inspection.RouteSnapshotCodec
 import com.example.cnv.map.Route
 import com.example.cnv.ui.screen.drawing.RouteHighlightHelper
 import kotlin.math.max
@@ -24,7 +25,10 @@ class InspectionAnalysisEngine(
         val events = session.events
         val profile = summary.conveyorProfile
         val layout = input.layout
-            ?: input.route?.let { HeatMapRouteLayout.build(it) }
+            ?: input.route?.let { r ->
+                val snap = RouteSnapshotCodec.decode(input.session.summary.routeSnapshotJson)
+                HeatMapRouteLayout.build(r, worldMapper = snap?.toMapper())
+            }
 
         val distance = computeDistance(events, summary.totalDistanceMm)
         val speed = computeSpeed(events, summary.averageSpeedMmPerSec, profile.nominalSpeedMPerMin)
@@ -36,6 +40,7 @@ class InspectionAnalysisEngine(
             events = events,
             layout = layout,
             heatLayer = input.heatLayer,
+            drawingHeatLayerForCoverage = input.drawingHeatLayerForCoverage,
             sessionId = summary.sessionId,
         )
         val validationScore = validationCalculator.compute(
@@ -226,6 +231,7 @@ class InspectionAnalysisEngine(
         events: List<PersistedInspectionEvent>,
         layout: HeatMapRouteLayout.LayoutResult?,
         heatLayer: com.example.cnv.heatmap.DrawingHeatLayer?,
+        drawingHeatLayerForCoverage: com.example.cnv.heatmap.DrawingHeatLayer?,
         sessionId: String,
     ): CoverageStatistics {
         val routeCoverage = if (layout != null && layout.totalLengthMm > 0f && events.isNotEmpty()) {
@@ -235,9 +241,10 @@ class InspectionAnalysisEngine(
             summaryCoverage.coerceIn(0f, 1f)
         }
         val sessionHeat = heatLayer?.points?.count { it.sessionId == sessionId } ?: 0
+        val coverageDenominator = drawingHeatLayerForCoverage ?: heatLayer
         val drawingCoverage = when {
-            heatLayer != null && heatLayer.pointCount > 0 ->
-                (sessionHeat.toFloat() / heatLayer.pointCount.toFloat()).coerceIn(0f, 1f)
+            coverageDenominator != null && coverageDenominator.pointCount > 0 ->
+                (sessionHeat.toFloat() / coverageDenominator.pointCount.toFloat()).coerceIn(0f, 1f)
             else -> summaryCoverage.coerceIn(0f, 1f)
         }
         val inspectionRatio = if (events.isEmpty()) {

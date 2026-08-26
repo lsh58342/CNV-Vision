@@ -12,6 +12,8 @@ import com.example.cnv.map.Route
 data class InspectionAnalysisInput(
     val session: PersistedInspectionSession,
     val heatLayer: DrawingHeatLayer? = null,
+    /** Full drawing heat for coverage denominator when [heatLayer] is session-scoped only. */
+    val drawingHeatLayerForCoverage: DrawingHeatLayer? = null,
     val zones: List<Zone> = emptyList(),
     val route: Route? = null,
     val layout: HeatMapRouteLayout.LayoutResult? = null,

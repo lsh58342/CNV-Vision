@@ -37,6 +37,8 @@ class ReplayScreen : BaseScreen() {
     private var cadController: CADController? = null
     private var drawListener: ViewTreeObserver.OnDrawListener? = null
     private var filterReady = false
+    private var lastFittedPolylineSize: Int = -1
+    private var lastRoutePolyline: List<Pair<Double, Double>> = emptyList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,18 +59,26 @@ class ReplayScreen : BaseScreen() {
 
         val cadView = view.findViewById<CADView>(R.id.replay_cad_view)
         val overlay = view.findViewById<ReplayOverlay>(R.id.replay_overlay)
+        val catalog = FactoryCatalog.get()
 
         cadController = CADController(
-            routeRepository = FactoryCatalog.get().routes.underlying(),
+            routeRepository = catalog.routes.underlying(),
             cadView = cadView,
-            mapperProvider = { null },
+            mapperProvider = {
+                catalog.routes.underlying().currentMapper()
+                    ?: arguments?.getString(NavArgs.DRAWING_ID)?.let {
+                        catalog.routes.drawingRoutes().getMapper(it)
+                    }
+            },
             debugHud = null,
         ).also {
             it.setLayerEnabled(CADLayer.DEBUG, false)
-            it.setLayerEnabled(CADLayer.ROUTE, false)
+            // Show DXF route under Replay overlay (was disabled → blank map).
+            it.setLayerEnabled(CADLayer.ROUTE, true)
+            it.setLayerEnabled(CADLayer.NODE, true)
             it.setLayerEnabled(CADLayer.POSITION, false)
             it.start()
-            it.fitToRoute()
+            cadView.post { it.fitToRoute() }
         }
         overlay.setCameraProvider { cadView.viewport().camera }
 
@@ -82,7 +92,11 @@ class ReplayScreen : BaseScreen() {
             nav().navigateBack()
         }
         view.findViewById<MaterialButton>(R.id.button_replay_fit).setOnClickListener {
-            cadController?.fitToRoute()
+            if (lastRoutePolyline.size >= 2) {
+                cadController?.fitToWorldPoints(lastRoutePolyline)
+            } else {
+                cadController?.fitToRoute()
+            }
             overlay.invalidate()
         }
 
@@ -92,6 +106,19 @@ class ReplayScreen : BaseScreen() {
         bindSearch(view)
 
         vm.state.observe(viewLifecycleOwner) { state -> bindState(view, overlay, state) }
+
+        // Old Drawing routes may have topology without world geometry. Restore mapper
+        // from DXF (same path as Commissioning) before Replay builds layout/CAD.
+        if (!drawingId.isNullOrBlank()) {
+            siteVm.selectDrawing(drawingId)
+        }
+        val ensured = siteVm.ensureRoutePreviewForCurrentDrawing()
+        val mapperNow = catalog.routes.underlying().currentMapper()
+        println(
+            "LOG[Replay][ENSURE] drawingId=$drawingId ensured=$ensured " +
+                "hasMapper=${mapperNow != null} hasRoute=${catalog.routes.hasRoute()}",
+        )
+
         vm.load(sessionId, drawingId)
     }
 
@@ -255,12 +282,21 @@ class ReplayScreen : BaseScreen() {
             s.validationScore,
         )
 
+        lastRoutePolyline = state.routePolyline
         overlay.setRoutePolyline(state.routePolyline)
         overlay.setZones(state.zones)
         overlay.setHighlightedZone(state.highlightedZoneId)
         overlay.setShockFrames(state.shockFrames)
         overlay.setLowConfidenceFrames(state.lowConfidenceFrames)
         overlay.setCurrent(state.current, state.highlight)
+        // Fit camera to route world bounds once polyline arrives (DXF coords are large).
+        if (state.routePolyline.size >= 2 && state.routePolyline.size != lastFittedPolylineSize) {
+            lastFittedPolylineSize = state.routePolyline.size
+            view.findViewById<CADView>(R.id.replay_cad_view).post {
+                cadController?.fitToWorldPoints(state.routePolyline)
+                overlay.invalidate()
+            }
+        }
         overlay.invalidate()
     }
 

@@ -7,7 +7,11 @@ import com.example.cnv.core.event.PositionEvent
 import com.example.cnv.factory.model.ConveyorDirection
 import com.example.cnv.factory.model.ConveyorMotionProfile
 import com.example.cnv.factory.model.ConveyorProfileConfig
+import java.io.File
+import com.example.cnv.camera.ShockClipStorage
+import com.example.cnv.report.ReportStorage
 import com.example.cnv.factory.model.ConveyorProfileSnapshot
+import com.example.cnv.fusion.FusionConfig
 import com.example.cnv.inspection.db.CnvInspectionDatabase
 import com.example.cnv.inspection.db.InspectionEventEntity
 import com.example.cnv.inspection.db.InspectionSessionEntity
@@ -34,11 +38,21 @@ class InspectionRepository(
     private var lastWorldX: Float = 0f
     private var lastWorldY: Float = 0f
     private var lastZoneName: String = ""
+    private var lastHeadingDeg: Float = 0f
+    private var lastDistanceToRouteMm: Float = 0f
+    private var lastTrackingState: String = ""
     private var lastTimestampNs: Long = 0L
     private var lastSpeedMmPerSec: Float = 0f
     private val recentShockG = ArrayDeque<Float>()
     private val movingAvgWindow: Int =
         com.example.cnv.imu.ShockUnits.MOVING_AVERAGE_WINDOW_DEFAULT
+
+    /** Clip finished before FusionEvent persisted — attach on insert. */
+    private val pendingClipPaths = java.util.concurrent.ConcurrentHashMap<Long, String>()
+
+    fun registerPendingClipPath(timestampNs: Long, path: String) {
+        if (path.isNotBlank()) pendingClipPaths[timestampNs] = path
+    }
 
     fun save(result: InspectionResult) {
         synchronized(lock) {
@@ -116,6 +130,46 @@ class InspectionRepository(
         val db = database() ?: return
         if (events.isEmpty()) return
         db.eventDao().insertEvents(events.map { toEntity(sessionId, drawingId, it) })
+    }
+
+    /**
+     * Links a finished clip to the nearest recordable shock row.
+     * Shock events use IMU timestamps; persisted Fusion rows may use min(distance, shock) time.
+     */
+    fun linkClipToEvent(sessionId: String, shockTimestampNs: Long, clipPath: String): Boolean {
+        ensureBackground()
+        val db = database() ?: return false
+        if (clipPath.isBlank()) return false
+        if (ShockClipStorage.resolveClipFile(clipPath) == null) {
+            println("LOG[ShockClip][DB] rejected clip path outside shock_clips: $clipPath")
+            return false
+        }
+
+        db.eventDao().updateClipPath(sessionId, shockTimestampNs, clipPath)
+        val linked = db.eventDao().eventsForSession(sessionId).any {
+            it.timestampNs == shockTimestampNs && it.clipPath == clipPath
+        }
+        if (linked) {
+            logClipLinked(sessionId, shockTimestampNs, clipPath)
+            return true
+        }
+
+        val nearest = db.eventDao().eventsForSession(sessionId)
+            .filter { it.hasShock && it.clipPath.isBlank() }
+            .minByOrNull { kotlin.math.abs(it.timestampNs - shockTimestampNs) }
+            ?: return false
+        if (kotlin.math.abs(nearest.timestampNs - shockTimestampNs) > CLIP_LINK_WINDOW_NS) {
+            return false
+        }
+        db.eventDao().updateClipPath(sessionId, nearest.timestampNs, clipPath)
+        logClipLinked(sessionId, nearest.timestampNs, clipPath)
+        return true
+    }
+
+    fun updateEventClipPath(sessionId: String, timestampNs: Long, clipPath: String) {
+        if (!linkClipToEvent(sessionId, timestampNs, clipPath)) {
+            registerPendingClipPath(timestampNs, clipPath)
+        }
     }
 
     fun finishSession(
@@ -271,6 +325,10 @@ class InspectionRepository(
         val db = database() ?: return
         db.eventDao().deleteEventsForSession(sessionId)
         db.sessionDao().deleteSession(sessionId)
+        runCatching {
+            ShockClipStorage.deleteSession(sessionId)
+            ReportStorage.deleteSession(sessionId)
+        }
         synchronized(lock) {
             results.removeAll { it.sessionId == sessionId }
         }
@@ -288,6 +346,12 @@ class InspectionRepository(
         val sessions = db.sessionDao().historyForDrawing(drawingId).map { it.sessionId }.toSet()
         db.eventDao().deleteEventsForDrawing(drawingId)
         db.sessionDao().deleteSessionsForDrawing(drawingId)
+        sessions.forEach { sessionId ->
+            runCatching {
+                ShockClipStorage.deleteSession(sessionId)
+                ReportStorage.deleteSession(sessionId)
+            }
+        }
         synchronized(lock) {
             results.removeAll { sessions.contains(it.sessionId) }
         }
@@ -307,6 +371,9 @@ class InspectionRepository(
         lastWorldX = 0f
         lastWorldY = 0f
         lastZoneName = ""
+        lastHeadingDeg = 0f
+        lastDistanceToRouteMm = 0f
+        lastTrackingState = ""
         lastTimestampNs = 0L
         lastSpeedMmPerSec = 0f
         recentShockG.clear()
@@ -339,6 +406,19 @@ class InspectionRepository(
                             "shockG=${"%.2f".format(shockG)} peakG=${"%.2f".format(shockG)} " +
                             "avgG=${"%.2f".format(avgG)} zone=$lastZoneName",
                     )
+                    println(
+                        "LOG[SHOCK] ts=${event.timestampNs} g=${"%.2f".format(shockG)} " +
+                            "routeMm=${"%.1f".format(lastRouteMm)} seg=$lastSegmentId " +
+                            "xy=(${"%.1f".format(lastWorldX)},${"%.1f".format(lastWorldY)}) " +
+                            "heading=${"%.1f".format(lastHeadingDeg)} " +
+                            "distRoute=${"%.1f".format(lastDistanceToRouteMm)} " +
+                            "track=$lastTrackingState",
+                    )
+                    println(
+                        "LOG[HEATMAP] routeMm=${"%.1f".format(lastRouteMm)} " +
+                            "x=${"%.1f".format(lastWorldX)} y=${"%.1f".format(lastWorldY)} " +
+                            "g=${"%.2f".format(shockG)}",
+                    )
                 }
                 InspectionEventEntity(
                     sessionId = sessionId,
@@ -357,6 +437,11 @@ class InspectionRepository(
                     peakG = if (recordable) shockG else 0f,
                     movingAverageG = avgG,
                     zoneName = lastZoneName,
+                    segmentId = lastSegmentId,
+                    headingDeg = lastHeadingDeg,
+                    distanceToRouteMm = lastDistanceToRouteMm,
+                    trackingState = lastTrackingState,
+                    clipPath = consumePendingClipPath(event.timestampNs),
                 )
             }
             is PositionEvent -> {
@@ -377,6 +462,9 @@ class InspectionRepository(
                     lastWorldX = resolved.worldX
                     lastWorldY = resolved.worldY
                     lastZoneName = resolved.zoneName
+                    lastHeadingDeg = resolved.headingDeg
+                    lastDistanceToRouteMm = resolved.distanceToRouteMm
+                    lastTrackingState = resolved.trackingState
                 } else {
                     lastRouteMm = event.distanceFromSegmentStart
                 }
@@ -398,6 +486,10 @@ class InspectionRepository(
                     peakG = 0f,
                     movingAverageG = 0f,
                     zoneName = lastZoneName,
+                    segmentId = lastSegmentId,
+                    headingDeg = lastHeadingDeg,
+                    distanceToRouteMm = lastDistanceToRouteMm,
+                    trackingState = lastTrackingState,
                 )
             }
             else -> InspectionEventEntity(
@@ -491,9 +583,36 @@ class InspectionRepository(
         peakG = peakG,
         movingAverageG = movingAverageG,
         zoneName = zoneName,
+        segmentId = segmentId,
+        headingDeg = headingDeg,
+        distanceToRouteMm = distanceToRouteMm,
+        trackingState = trackingState,
+        clipPath = clipPath,
     )
 
+    private fun consumePendingClipPath(fusionTimestampNs: Long): String {
+        if (pendingClipPaths.isEmpty()) return ""
+        var bestKey: Long? = null
+        var bestDelta = Long.MAX_VALUE
+        for ((key, path) in pendingClipPaths) {
+            if (path.isBlank()) continue
+            val delta = kotlin.math.abs(key - fusionTimestampNs)
+            if (delta <= CLIP_LINK_WINDOW_NS && delta < bestDelta) {
+                bestDelta = delta
+                bestKey = key
+            }
+        }
+        return bestKey?.let { pendingClipPaths.remove(it) }.orEmpty()
+    }
+
+    private fun logClipLinked(sessionId: String, timestampNs: Long, clipPath: String) {
+        println("LOG[ShockClip][DB] session=$sessionId ts=$timestampNs path=$clipPath")
+    }
+
     companion object {
+        /** Covers IMU shock ts vs fused min(distance, shock) ts drift. */
+        private const val CLIP_LINK_WINDOW_NS = FusionConfig.DEFAULT_MAXIMUM_DELAY_NS
+
         @Volatile
         private var database: CnvInspectionDatabase? = null
 

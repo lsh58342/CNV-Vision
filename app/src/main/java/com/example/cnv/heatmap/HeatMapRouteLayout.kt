@@ -25,6 +25,7 @@ object HeatMapRouteLayout {
         route: Route,
         worldMapper: CoordinateMapper? = null,
         scale: Double = 1.0,
+        allowHorizontalFallback: Boolean = false,
     ): LayoutResult? {
         if (route.segments.isEmpty()) return null
         val ordered = orderSegments(route)
@@ -40,6 +41,13 @@ object HeatMapRouteLayout {
             return null
         }
 
+        if (!allowHorizontalFallback) {
+            println(
+                "LOG[HeatMapRouteLayout] no worldMapper — refusing horizontal fallback " +
+                    "(segments=${ordered.size})",
+            )
+            return null
+        }
         return buildHorizontalFallback(route, ordered, scale)
     }
 
@@ -60,10 +68,15 @@ object HeatMapRouteLayout {
         for (segmentId in ordered) {
             val segment = route.segment(segmentId) ?: continue
             val start = worldMapper.toWorld(position(segmentId, segment.fromNodeId, 0f, 0f))
-                ?: return null
             val end = worldMapper.toWorld(
                 position(segmentId, segment.toNodeId, 1f, segment.lengthMm),
-            ) ?: return null
+            )
+            if (start == null || end == null) {
+                println(
+                    "LOG[HeatMapRouteLayout] skip $segmentId — missing world endpoints",
+                )
+                continue
+            }
             geometry[segmentId] = CoordinateMapper.SegmentGeometry(
                 segmentId = segmentId,
                 start = start,

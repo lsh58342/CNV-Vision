@@ -109,9 +109,15 @@ class FactoryCatalog(
             drawings.replaceAll(snap.drawings)
             zones.replaceAll(snap.zones)
             calibrations.replaceAll(snap.calibrations)
-            val routeMap = LinkedHashMap<String, Route>()
+            val routeMap = LinkedHashMap<String, DrawingRouteRepository.StoredDrawingRoute>()
             snap.routesByDrawingId.forEach { (drawingId, json) ->
-                SitePersistenceRepository.decodeRoute(json)?.let { routeMap[drawingId] = it }
+                SitePersistenceRepository.decodeRouteWithMapper(json)?.let { (route, mapper) ->
+                    routeMap[drawingId] = DrawingRouteRepository.StoredDrawingRoute(route, mapper)
+                    println(
+                        "LOG[RouteHydrate] drawingId=$drawingId route=${route.id} " +
+                            "segments=${route.segments.size} hasMapper=${mapper != null}",
+                    )
+                }
             }
             routes.drawingRoutes().replaceAll(routeMap)
             onDone?.invoke()

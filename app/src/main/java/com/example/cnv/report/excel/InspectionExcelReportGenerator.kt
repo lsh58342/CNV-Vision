@@ -2,8 +2,10 @@ package com.example.cnv.report.excel
 
 import com.example.cnv.analysis.InspectionAnalysisResult
 import com.example.cnv.heatmap.DrawingHeatPoint
+import com.example.cnv.imu.ShockUnits
 import com.example.cnv.inspection.PersistedInspectionEvent
 import com.example.cnv.profile.InspectionProfileSnapshot
+import com.example.cnv.report.ReportMapBuilder
 import com.example.cnv.rule.InspectionRuleResult
 import com.example.cnv.rule.RuleSeverity
 import java.io.OutputStream
@@ -58,6 +60,7 @@ class InspectionExcelReportGenerator {
         writer.addSheet("Inspection Timeline", buildTimeline(input, timeFmt))
         writer.addSheet("Inspection Events", buildEvents(input, timeFmt))
         writer.addSheet("Inspection Profile", buildProfileSheet(input))
+        writer.addStyledSheet("Critical Map", buildCriticalMapSheet(input))
 
         val zoneEnd = rankings.size + 1
         if (rankings.isNotEmpty()) {
@@ -149,7 +152,14 @@ class InspectionExcelReportGenerator {
         rows.add(listOf(cell("Validation Score"), cell(a.validationScore)))
         rows.add(listOf(cell("Distance (mm)"), cell(a.distance.totalDistanceMm)))
         rows.add(listOf(cell("Shock Count"), cell(a.shock.shockCount)))
+        val clipCount = input.events.count { it.hasShock && it.clipPath.isNotBlank() }
+        rows.add(listOf(cell("Shock Video Clips"), cell(clipCount)))
+        rows.add(listOf(cell("Avg Shock (G)"), cell(a.shock.averageShock, shockStyle(a.shock.averageShock))))
         rows.add(listOf(cell("Max Shock"), cell(a.shock.maximumShock, shockStyle(a.shock.maximumShock))))
+        val criticalCount = input.events.count {
+            it.hasShock && ShockUnits.isCriticalG(it.peakG.coerceAtLeast(it.shockStrength))
+        }
+        rows.add(listOf(cell("Critical Shocks"), cell(criticalCount)))
         rows.add(listOf(cell("Avg Speed (mm/s)"), cell(a.speed.averageSpeedMmPerSec)))
         rows.add(
             listOf(
@@ -269,6 +279,10 @@ class InspectionExcelReportGenerator {
             listOf("Minimum Speed (mm/s)", a.speed.minimumSpeedMmPerSec),
             listOf("Average Shock (G)", a.shock.averageShock),
             listOf("Maximum Shock (G)", a.shock.maximumShock),
+            listOf(
+                "Critical Shocks",
+                input.events.count { it.hasShock && ShockUnits.isCriticalG(it.peakG.coerceAtLeast(it.shockStrength)) },
+            ),
             listOf("Shock Events", a.shock.shockCount),
             listOf("Threshold (G)", c.shockThreshold),
             listOf("Calibration(mmPerPixel)", c.mmPerPixel ?: ""),
@@ -421,7 +435,7 @@ class InspectionExcelReportGenerator {
                 "Timestamp", "Building", "Floor", "Drawing", "Zone",
                 "Route Position", "World X", "World Y",
                 "Shock(G)", "Peak(G)", "Average(G)", "Speed",
-                "Calibration(mmPerPixel)", "Origin",
+                "Calibration(mmPerPixel)", "Origin", "Video Clip",
             ),
         )
         val events = input.events.filter { it.hasShock }.sortedBy { it.timestampNs }
@@ -467,8 +481,64 @@ class InspectionExcelReportGenerator {
                     speed,
                     cal,
                     origin,
+                    if (e.clipPath.isNotBlank()) "yes" else "",
                 ),
             )
+        }
+        return rows
+    }
+
+    private fun buildCriticalMapSheet(input: Input): List<List<XlsxWorkbookWriter.Cell>> {
+        val H = XlsxWorkbookWriter.CellStyle.HEADER
+        val critical = ReportMapBuilder.criticalPoints(input.heatPoints, input.events)
+        val avgCritical = if (critical.isEmpty()) {
+            0f
+        } else {
+            critical.map { it.shockG }.average().toFloat()
+        }
+        val rows = ArrayList<List<XlsxWorkbookWriter.Cell>>()
+        rows.add(listOf(cell("Critical Shock Map", H), cell("Route + critical markers only", H)))
+        rows.add(listOf(cell("Critical Threshold (G)"), cell(ShockUnits.criticalThresholdG())))
+        rows.add(listOf(cell("Critical Count"), cell(critical.size)))
+        rows.add(listOf(cell("Average Critical Shock (G)"), cell(avgCritical, shockStyle(avgCritical))))
+        rows.add(listOf(cell("Average Shock All (G)"), cell(input.analysis.shock.averageShock)))
+        rows.add(listOf(cell("Map Image File"), cell("critical_shock_map.png")))
+        rows.add(emptyList())
+        rows.add(
+            listOf(
+                cell("Timestamp", H),
+                cell("World X", H),
+                cell("World Y", H),
+                cell("Shock (G)", H),
+                cell("Route mm", H),
+                cell("Video Clip", H),
+            ),
+        )
+        val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
+        for (point in critical) {
+            val matched = input.events.firstOrNull { event ->
+                event.hasShock &&
+                    kotlin.math.abs(event.worldX - point.x) < 0.5f &&
+                    kotlin.math.abs(event.worldY - point.y) < 0.5f
+            }
+            rows.add(
+                listOf(
+                    cell(
+                        matched?.let { dateFmt.format(Date(it.timestampNs / 1_000_000L)) }
+                            ?: "",
+                    ),
+                    cell(point.x),
+                    cell(point.y),
+                    cell(point.shockG, shockStyle(point.shockG)),
+                    cell(point.routePositionMm),
+                    cell(
+                        if (matched?.clipPath?.isNotBlank() == true) "yes" else "",
+                    ),
+                ),
+            )
+        }
+        if (critical.isEmpty()) {
+            rows.add(listOf(cell("—"), cell("No critical shocks")))
         }
         return rows
     }

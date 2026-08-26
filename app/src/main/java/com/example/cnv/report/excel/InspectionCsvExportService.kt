@@ -83,6 +83,7 @@ class InspectionCsvExportService(
             ctx: InspectionExportContext,
             analysis: InspectionAnalysisResult,
             events: List<PersistedInspectionEvent>,
+            shockClipCount: Int = events.count { it.hasShock && it.clipPath.isNotBlank() },
         ): String = buildString {
             fun row(k: String, v: Any?) {
                 append(escape(k)).append(',').append(escape(v?.toString().orEmpty())).append('\n')
@@ -105,7 +106,12 @@ class InspectionCsvExportService(
             row("Maximum Speed (mm/s)", analysis.speed.maximumSpeedMmPerSec)
             row("Average Shock (G)", analysis.shock.averageShock)
             row("Maximum Shock (G)", analysis.shock.maximumShock)
+            row(
+                "Critical Shocks",
+                events.count { it.hasShock && com.example.cnv.imu.ShockUnits.isCriticalG(it.peakG.coerceAtLeast(it.shockStrength)) },
+            )
             row("Shock Events", analysis.shock.shockCount)
+            row("Shock Video Clips", shockClipCount)
             row("Threshold (G)", ctx.shockThreshold)
             row("Calibration(mmPerPixel)", ctx.mmPerPixel ?: "")
             row("Origin", origin)
@@ -117,7 +123,7 @@ class InspectionCsvExportService(
             appendLine(
                 "Timestamp,Building,Floor,Drawing,Zone,Route Position," +
                     "World X,World Y,Shock(G),Peak(G),Average(G),Speed," +
-                    "Calibration(mmPerPixel),Origin",
+                    "Calibration(mmPerPixel),Origin,Video Clip",
             )
             val dateFmt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
             val shockEvents = events.filter { it.hasShock }.sortedBy { it.timestampNs }
@@ -147,7 +153,8 @@ class InspectionCsvExportService(
                 append(e.movingAverageG).append(',')
                 append(speed).append(',')
                 append(ctx.mmPerPixel ?: "").append(',')
-                append(escape(origin)).append('\n')
+                append(escape(origin)).append(',')
+                append(escape(if (e.clipPath.isNotBlank()) "yes" else "")).append('\n')
             }
         }
 

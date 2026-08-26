@@ -56,6 +56,24 @@
             android:layout_marginTop="16dp" />
 
         <FrameLayout
+            android:id="@+id/result_report_status_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" />
+
+        <FrameLayout
+            android:id="@+id/result_report_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
+            android:id="@+id/result_auto_excel_slot"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" />
+
+        <FrameLayout
             android:id="@+id/result_heatmap_slot"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

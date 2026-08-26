@@ -30,6 +30,9 @@ class MaintenanceReportViewModel(
         val drawingId: String? = null,
         val report: MaintenanceReport? = null,
         val heatPoints: List<DrawingHeatPoint> = emptyList(),
+        val routePolyline: List<Pair<Double, Double>> = emptyList(),
+        val criticalMapReady: Boolean = false,
+        val criticalPointCount: Int = 0,
         val workOrders: List<WorkOrder> = emptyList(),
         val lastExport: ReportExportPayload? = null,
         val toastMessage: String? = null,
@@ -69,6 +72,18 @@ class MaintenanceReportViewModel(
             )
             catalog.reports.getOrAssembleAsync(sessionId, drawingId) { report ->
                 if (gen != loadGeneration) return@getOrAssembleAsync
+                val routePolyline = com.example.cnv.report.ReportMapBuilder.routePolyline(
+                    com.example.cnv.inspection.RouteSnapshotCodec.decode(
+                        persisted?.summary?.routeSnapshotJson,
+                    ),
+                )
+                val criticalMapReady = com.example.cnv.report.ReportStorage
+                    .criticalMapFile(sessionId)
+                    .exists()
+                val criticalCount = com.example.cnv.report.ReportMapBuilder.criticalPoints(
+                    heatPoints,
+                    persisted?.events.orEmpty(),
+                ).size
                 if (report == null) {
                     _state.value = UiState(
                         loading = false,
@@ -76,6 +91,9 @@ class MaintenanceReportViewModel(
                         sessionId = sessionId,
                         drawingId = drawingId,
                         heatPoints = heatPoints,
+                        routePolyline = routePolyline,
+                        criticalMapReady = criticalMapReady,
+                        criticalPointCount = criticalCount,
                         workOrders = catalog.workOrders.forSession(sessionId),
                     )
                     return@getOrAssembleAsync
@@ -86,6 +104,9 @@ class MaintenanceReportViewModel(
                     drawingId = drawingId,
                     report = report,
                     heatPoints = heatPoints,
+                    routePolyline = routePolyline,
+                    criticalMapReady = criticalMapReady,
+                    criticalPointCount = criticalCount,
                     workOrders = catalog.workOrders.forSession(sessionId),
                 )
             }
@@ -112,10 +133,19 @@ class MaintenanceReportViewModel(
     fun export(format: ReportExportFormat) {
         val report = _state.value?.report ?: return
         val payload = ReportExporter.export(report, format)
+        val file = when (format) {
+            ReportExportFormat.JSON -> com.example.cnv.report.ReportStorage.maintenanceJsonFile(report.sessionId)
+            ReportExportFormat.CSV -> com.example.cnv.report.ReportStorage.maintenanceCsvFile(report.sessionId)
+            ReportExportFormat.PDF -> com.example.cnv.report.ReportStorage.maintenanceTextFile(report.sessionId)
+        }
+        runCatching {
+            file.parentFile?.mkdirs()
+            file.writeText(payload.content)
+        }
         val cur = _state.value ?: return
         _state.value = cur.copy(
             lastExport = payload,
-            toastMessage = "Exported ${payload.fileName} (${payload.format})",
+            toastMessage = "Saved ${file.name} (${payload.format})",
         )
     }
 

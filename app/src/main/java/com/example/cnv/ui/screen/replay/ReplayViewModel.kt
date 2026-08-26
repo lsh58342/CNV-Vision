@@ -92,18 +92,71 @@ class ReplayViewModel(
         val drawingId = preferredDrawingId ?: drawing?.id
         zones = drawingId?.let { catalog.zones.forDrawing(it) }.orEmpty()
 
+        // Ensure Drawing route + world mapper are active before building layout.
+        if (drawingId != null) {
+            catalog.activateRouteForDrawing(drawingId)
+        }
+
         catalog.inspections.loadSessionAsync(sessionId) { persisted ->
-            val route = com.example.cnv.inspection.RouteSnapshotCodec
+            val snap = com.example.cnv.inspection.RouteSnapshotCodec
                 .decode(persisted?.summary?.routeSnapshotJson)
-                ?.toRoute()
-                ?: catalog.routes.currentRoute()
-            val layout = route?.let { HeatMapRouteLayout.build(it) }
+            val drawingRoute = drawingId?.let { catalog.routes.drawingRoutes().get(it) }
+            val drawingMapper = drawingId?.let { catalog.routes.drawingRoutes().getMapper(it) }
+                ?: drawingRoute?.let { catalog.routes.drawingRoutes().findCompatibleMapper(it) }
+                ?: catalog.routes.underlying().currentMapper()
+            val snapRoute = snap?.toRoute()
+            val snapMapper = snap?.toMapper()
+                ?: snapRoute?.let { catalog.routes.drawingRoutes().findCompatibleMapper(it) }
+
+            // Prefer a consistent route+mapper pair so segment IDs always match geometry.
+            val (route, mapper) = when {
+                snapRoute != null && snapMapper != null -> snapRoute to snapMapper
+                drawingRoute != null && drawingMapper != null -> drawingRoute to drawingMapper
+                snapRoute != null && drawingMapper != null -> snapRoute to drawingMapper
+                else -> (snapRoute ?: drawingRoute ?: catalog.routes.currentRoute()) to
+                    (snapMapper ?: drawingMapper)
+            }
+            // Push resolved mapper into the live repo so CADController can draw.
+            if (route != null && mapper != null) {
+                catalog.routes.setRoute(route, drawingId = drawingId, mapper = mapper)
+            } else if (route != null) {
+                // Last resort: activate whatever is in drawing store (may still lack mapper).
+                drawingId?.let { catalog.activateRouteForDrawing(it) }
+            }
+            var layout = route?.let { HeatMapRouteLayout.build(it, worldMapper = mapper) }
+            // Display-only unwrap when no world geometry exists (legacy DB). Overlay+CAD
+            // would otherwise stay blank; real ㄷ shape requires Generate Route / DXF.
+            if (layout == null && route != null) {
+                layout = HeatMapRouteLayout.build(
+                    route,
+                    worldMapper = null,
+                    allowHorizontalFallback = true,
+                )
+                println(
+                    "LOG[Replay][LAYOUT] using horizontal display fallback " +
+                        "(no world mapper — regenerate route from DXF for true geometry)",
+                )
+            }
+            // Always sync layout mapper into CAD so ROUTE layer is not empty.
+            if (route != null && layout != null) {
+                catalog.routes.setRoute(route, drawingId = drawingId, mapper = layout.mapper)
+            }
             routePolyline = buildRoutePolyline(layout)
             zoneOverlays = if (drawingId != null && route != null && layout != null) {
                 buildZoneOverlays(drawingId, route, layout)
             } else {
                 emptyList()
             }
+            println(
+                "LOG[Replay][LAYOUT] session=$sessionId route=${route?.id} " +
+                    "snapGeom=${snap?.segmentGeometry?.size ?: 0} " +
+                    "hasMapper=${mapper != null || layout != null} layout=${layout != null} " +
+                    "polyline=${routePolyline.size} ySpan=" +
+                    run {
+                        val ys = routePolyline.map { it.second }
+                        if (ys.isEmpty()) 0.0 else (ys.maxOrNull()!! - ys.minOrNull()!!)
+                    },
+            )
 
             val loadContext = ReplayLoadContext(
                 preferredDrawingId = preferredDrawingId,

@@ -41,7 +41,12 @@ internal class ReplaySessionLoader(
                     catalog.zones.forDrawing(persisted.summary.drawingId)
                 }
                 val layout = context.layout
-                    ?: route?.let { HeatMapRouteLayout.build(it) }
+                    ?: route?.let {
+                        HeatMapRouteLayout.build(
+                            it,
+                            worldMapper = catalog.routes.underlying().currentMapper(),
+                        )
+                    }
                 val frames = ReplayFrameBuilder.build(
                     session = persisted,
                     route = route,

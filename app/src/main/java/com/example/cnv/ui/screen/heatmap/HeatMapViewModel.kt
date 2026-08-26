@@ -84,8 +84,9 @@ class HeatMapViewModel(
             return
         }
         val route = catalog.routes.currentRoute()
+        val mapper = catalog.routes.underlying().currentMapper()
         val layer = catalog.heatMaps.loadHeatLayer(drawing.id)
-        val layout = route?.let { HeatMapRouteLayout.build(it) }
+        val layout = route?.let { HeatMapRouteLayout.build(it, worldMapper = mapper) }
         val gen = ++loadGeneration
         catalog.inspections.loadHistorySummariesAsync(drawing.id) { sessions ->
             if (gen != loadGeneration) return@loadHistorySummariesAsync
@@ -98,11 +99,14 @@ class HeatMapViewModel(
                 ?: sessions.lastOrNull()?.sessionId
 
             fun publish(points: List<com.example.cnv.heatmap.DrawingHeatPoint>, summary: com.example.cnv.inspection.InspectionSessionSummary?) {
-                val sessionRoute = com.example.cnv.inspection.RouteSnapshotCodec
+                val snap = com.example.cnv.inspection.RouteSnapshotCodec
                     .decode(summary?.routeSnapshotJson)
-                    ?.toRoute()
+                val sessionRoute = snap?.toRoute()
+                val sessionMapper = snap?.toMapper() ?: mapper
                 val displayRoute = sessionRoute ?: route
-                val displayLayout = sessionRoute?.let { HeatMapRouteLayout.build(it) } ?: layout
+                val displayLayout = sessionRoute?.let {
+                    HeatMapRouteLayout.build(it, worldMapper = sessionMapper)
+                } ?: layout
                 _state.value = UiState(
                     drawingName = drawing.name,
                     drawingId = drawing.id,
@@ -162,10 +166,14 @@ class HeatMapViewModel(
         val memory = catalog.heatMaps.loadHeatPointsForSession(drawingId, sessionId)
         val summary = cur.sessions.firstOrNull { it.sessionId == sessionId }
         fun apply(points: List<com.example.cnv.heatmap.DrawingHeatPoint>) {
-            val sessionRoute = com.example.cnv.inspection.RouteSnapshotCodec
+            val snap = com.example.cnv.inspection.RouteSnapshotCodec
                 .decode(summary?.routeSnapshotJson)
-                ?.toRoute()
-            val layout = sessionRoute?.let { HeatMapRouteLayout.build(it) }
+            val sessionRoute = snap?.toRoute()
+            val sessionMapper = snap?.toMapper()
+                ?: catalog.routes.underlying().currentMapper()
+            val layout = sessionRoute?.let {
+                HeatMapRouteLayout.build(it, worldMapper = sessionMapper)
+            }
             _state.value = cur.copy(
                 selectedSessionId = sessionId,
                 selectedSummary = summary,

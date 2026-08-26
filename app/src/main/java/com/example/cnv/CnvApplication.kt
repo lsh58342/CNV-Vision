@@ -17,6 +17,10 @@ class CnvApplication : Application() {
         instance = this
         inspectionDatabase = CnvInspectionDatabase.build(this)
         InspectionRepository.bindDatabase(inspectionDatabase)
+        com.example.cnv.imu.ShockThresholdStore.load(this)
+        com.example.cnv.camera.ShockClipStorage.bind(this)
+        com.example.cnv.report.ReportStorage.bind(this)
+        com.example.cnv.report.AutoReportSettingsStore.bind(this)
     }
 
     companion object {

@@ -37,6 +37,7 @@ object MaintenanceReportAssembler {
             coverage = maxOf(analysis.coverage.drawingCoverage, analysis.coverage.routeCoverage),
             validationScore = analysis.validationScore,
             averageSpeedMmPerSec = analysis.speed.averageSpeedMmPerSec,
+            averageShock = analysis.shock.averageShock,
             maximumShock = analysis.shock.maximumShock,
             shockCount = analysis.shock.shockCount,
             maintenanceSummary = summary,
